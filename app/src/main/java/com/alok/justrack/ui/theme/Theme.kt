@@ -22,6 +22,7 @@ fun JusTrackTheme(
 ) {
     MaterialTheme(
         colorScheme = DarkColorScheme,
+        typography = Typography,
         content = content
     )
 }

@@ -17,4 +17,7 @@ interface WatchlistDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM watchlist WHERE id = :id LIMIT 1)")
     suspend fun exists(id: String): Boolean
+
+    @Query("UPDATE watchlist SET isWatched = :watched WHERE id = :id")
+    suspend fun updateWatched(id: String, watched: Boolean)
 }

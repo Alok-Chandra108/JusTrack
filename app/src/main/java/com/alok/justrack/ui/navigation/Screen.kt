@@ -1,12 +1,14 @@
 package com.alok.justrack.ui.navigation
 
 sealed class Screen(val route: String, val label: String) {
-    object Watchlist : Screen("watchlist", "Watchlist")
-    object Lists : Screen("lists", "Lists")
-    object Search : Screen("search", "Search")
-    object Stats : Screen("stats", "Stats")
+    object Shows : Screen("shows", "Shows")
+    object Movies : Screen("movies", "Movies")
+    object Explore : Screen("explore", "Explore")
     object Profile : Screen("profile", "Profile")
     object Detail : Screen("detail/{id}", "Detail") {
         fun createRoute(id: String) = "detail/$id"
+    }
+    object ViewAll : Screen("view_all/{title}/{type}", "View All") {
+        fun createRoute(title: String, type: String) = "view_all/$title/$type"
     }
 }

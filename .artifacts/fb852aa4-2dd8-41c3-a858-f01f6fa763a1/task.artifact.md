@@ -1,0 +1,3 @@
+- `[x]` Update `ProfileScreen` signature in `PlaceholderScreens.kt`
+- `[x]` Implement navigation for watchlist items in `ProfileScreen`
+- `[x]` Verify build success with `./gradlew :app:compileDebugKotlin`

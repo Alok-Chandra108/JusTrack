@@ -19,5 +19,26 @@ data class TmdbMediaDto(
     @SerializedName("vote_average") val voteAverage: Double?,
     @SerializedName("release_date") val releaseDate: String?,
     @SerializedName("first_air_date") val firstAirDate: String?,
-    @SerializedName("media_type") val mediaType: String?
+    @SerializedName("media_type") val mediaType: String?,
+    @SerializedName("runtime") val runtime: Int?,
+    @SerializedName("episode_run_time") val episodeRunTime: List<Int>?,
+    @SerializedName("credits") val credits: TmdbCreditsDto?
+)
+
+data class TmdbCreditsDto(
+    @SerializedName("cast") val cast: List<TmdbCastDto>?,
+    @SerializedName("crew") val crew: List<TmdbCrewDto>?
+)
+
+data class TmdbCastDto(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String,
+    @SerializedName("character") val character: String,
+    @SerializedName("profile_path") val profilePath: String?
+)
+
+data class TmdbCrewDto(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String,
+    @SerializedName("job") val job: String
 )

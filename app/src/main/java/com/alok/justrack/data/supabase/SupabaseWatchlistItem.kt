@@ -18,7 +18,8 @@ import kotlinx.serialization.Serializable
  *   rating        double precision default 0.0,
  *   release_date  text default '',
  *   media_type    text not null,
- *   added_at      bigint default extract(epoch from now())::bigint
+ *   added_at      bigint default extract(epoch from now())::bigint,
+ *   is_watched    boolean default false
  * );
  *
  * -- Enable Row Level Security (recommended once auth is added)
@@ -36,5 +37,6 @@ data class SupabaseWatchlistItem(
     @SerialName("rating")        val rating: Double = 0.0,
     @SerialName("release_date")  val releaseDate: String = "",
     @SerialName("media_type")    val mediaType: String,
-    @SerialName("added_at")      val addedAt: Long = System.currentTimeMillis()
+    @SerialName("added_at")      val addedAt: Long = System.currentTimeMillis(),
+    @SerialName("is_watched")    val isWatched: Boolean = false
 )

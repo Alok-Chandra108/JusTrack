@@ -21,6 +21,9 @@ class DetailViewModel @Inject constructor(
     private val _isWatchlisted = MutableStateFlow(false)
     val isWatchlisted: StateFlow<Boolean> = _isWatchlisted
 
+    private val _isWatched = MutableStateFlow(false)
+    val isWatched: StateFlow<Boolean> = _isWatched
+
     fun loadDetail(id: String) {
         viewModelScope.launch {
             _uiState.value = DetailUiState.Loading
@@ -29,6 +32,7 @@ class DetailViewModel @Inject constructor(
                 if (item != null) {
                     _uiState.value = DetailUiState.Success(item)
                     _isWatchlisted.value = repository.isInWatchlist(id)
+                    _isWatched.value = repository.isWatched(id)
                 } else {
                     _uiState.value = DetailUiState.Error("Media not found")
                 }
@@ -38,21 +42,38 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun toggleWatchlist(item: MediaItem) {
+    fun toggleWatchlist(movie: com.alok.justrack.data.model.MovieDetails) {
         viewModelScope.launch {
             if (_isWatchlisted.value) {
-                repository.removeFromWatchlist(item.id)
+                repository.removeFromWatchlist(movie.id)
                 _isWatchlisted.value = false
             } else {
+                val item = com.alok.justrack.data.model.MediaItem(
+                    id = movie.id,
+                    title = movie.title,
+                    overview = movie.overview,
+                    posterPath = movie.posterPath,
+                    backdropPath = movie.backdropPath,
+                    rating = movie.rating,
+                    releaseDate = movie.releaseDate
+                )
                 repository.addToWatchlist(item)
                 _isWatchlisted.value = true
             }
+        }
+    }
+
+    fun toggleWatched(id: String) {
+        viewModelScope.launch {
+            val currentWatched = _isWatched.value
+            repository.setWatched(id, !currentWatched)
+            _isWatched.value = !currentWatched
         }
     }
 }
 
 sealed class DetailUiState {
     object Loading : DetailUiState()
-    data class Success(val item: MediaItem) : DetailUiState()
+    data class Success(val item: com.alok.justrack.data.model.MovieDetails) : DetailUiState()
     data class Error(val message: String) : DetailUiState()
 }

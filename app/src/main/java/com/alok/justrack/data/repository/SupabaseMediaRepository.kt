@@ -2,8 +2,7 @@ package com.alok.justrack.data.repository
 
 import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.api.TmdbMediaDto
-import com.alok.justrack.data.model.MediaItem
-import com.alok.justrack.data.model.MediaType
+import com.alok.justrack.data.model.*
 import com.alok.justrack.data.supabase.SupabaseClientProvider
 import com.alok.justrack.data.supabase.SupabaseWatchlistItem
 import io.github.jan.supabase.postgrest.postgrest
@@ -79,7 +78,33 @@ class SupabaseMediaRepository @Inject constructor(
         }
     }
 
-    override suspend fun getMediaDetail(id: String): MediaItem? {
+    override suspend fun setWatched(id: String, watched: Boolean) {
+        try {
+            postgrest.update({
+                set("is_watched", watched)
+            }) {
+                filter {
+                    eq("id", id)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun isWatched(id: String): Boolean {
+        return try {
+            val result = postgrest.select(columns = Columns.list("is_watched")) {
+                filter { eq("id", id) }
+            }.decodeList<SupabaseWatchlistItem>()
+            result.firstOrNull()?.isWatched ?: false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    override suspend fun getMediaDetail(id: String): MovieDetails? {
         return try {
             val movieDto = try {
                 apiService.getMovieDetails(id)
@@ -87,10 +112,10 @@ class SupabaseMediaRepository @Inject constructor(
                 null
             }
             if (movieDto != null && movieDto.title != null) {
-                return movieDto.toMediaItem(MediaType.MOVIE)
+                return movieDto.toMovieDetails(MediaType.MOVIE)
             }
             val tvDto = apiService.getTvDetails(id)
-            tvDto.toMediaItem(MediaType.TV)
+            tvDto.toMovieDetails(MediaType.TV)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -138,6 +163,48 @@ class SupabaseMediaRepository @Inject constructor(
         )
     }
 
+    private fun TmdbMediaDto.toMovieDetails(type: MediaType): MovieDetails {
+        val displayTitle = title ?: name ?: "Untitled"
+        val rawDate = releaseDate ?: firstAirDate ?: ""
+        val posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
+        val backdropUrl = backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" }
+
+        val runtimeStr = when {
+            runtime != null -> "${runtime / 60}h ${runtime % 60}m"
+            episodeRunTime != null && episodeRunTime.isNotEmpty() -> "${episodeRunTime.first()}m"
+            else -> "-"
+        }
+
+        val castMembers = credits?.cast?.map {
+            CastMember(
+                id = it.id.toString(),
+                name = it.name,
+                character = it.character,
+                profilePath = it.profilePath?.let { path -> "https://image.tmdb.org/t/p/w185$path" }
+            )
+        } ?: emptyList()
+
+        val director = credits?.crew?.find { it.job == "Director" || it.job == "Executive Producer" }?.name ?: "-"
+
+        return MovieDetails(
+            id = id.toString(),
+            title = displayTitle,
+            overview = overview ?: "",
+            posterPath = posterUrl,
+            backdropPath = backdropUrl,
+            rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
+            releaseDate = rawDate,
+            runtime = runtimeStr,
+            certification = "-",
+            director = director,
+            cast = castMembers,
+            ratings = listOf(
+                RatingSource("TMDb", String.format("%.1f", voteAverage ?: 0.0))
+            ),
+            recommendations = emptyList()
+        )
+    }
+
     private fun SupabaseWatchlistItem.toMediaItem(): MediaItem = MediaItem(
         id = id,
         title = title,
@@ -146,7 +213,8 @@ class SupabaseMediaRepository @Inject constructor(
         backdropPath = backdropPath,
         rating = rating,
         releaseDate = releaseDate,
-        mediaType = MediaType.valueOf(mediaType)
+        mediaType = MediaType.valueOf(mediaType),
+        isWatched = isWatched
     )
 
     private fun MediaItem.toSupabaseItem(): SupabaseWatchlistItem = SupabaseWatchlistItem(
@@ -157,6 +225,7 @@ class SupabaseMediaRepository @Inject constructor(
         backdropPath = backdropPath,
         rating = rating,
         releaseDate = releaseDate,
-        mediaType = mediaType.name
+        mediaType = mediaType.name,
+        isWatched = isWatched
     )
 }

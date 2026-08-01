@@ -1,0 +1,9 @@
+- [ ] Fix imports in `PlaceholderScreens.kt`
+- [ ] Fix `MoviesScreen` `LazyVerticalGrid` `items` call
+- [ ] Fix `ExploreScreen` `LazyColumn` `items` call
+- [ ] Fix `ProfileScreen` `LazyColumn` `items` call
+- [ ] Fix `DetailScreen` `Row` modifier and parameters
+- [ ] Fix `DetailScreen` `Row` inside `NeuButton` modifiers
+- [ ] Fix `DetailScreen` `Column` parameter (`crossAxisAlignment` -> `horizontalAlignment`)
+- [ ] Fix any remaining `??` operators
+- [ ] Verify build with `./gradlew :app:assembleDebug`

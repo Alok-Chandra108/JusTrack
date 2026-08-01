@@ -8,7 +8,8 @@ data class MediaItem(
     val backdropPath: String?,
     val rating: Double,
     val releaseDate: String,
-    val mediaType: MediaType = MediaType.MOVIE
+    val mediaType: MediaType = MediaType.MOVIE,
+    val isWatched: Boolean = false
 )
 
 enum class MediaType {

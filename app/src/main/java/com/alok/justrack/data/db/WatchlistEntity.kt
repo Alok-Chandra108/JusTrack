@@ -13,5 +13,6 @@ data class WatchlistEntity(
     val rating: Double,
     val releaseDate: String,
     val mediaType: String, // Store enum name ("MOVIE" or "TV")
-    val addedAt: Long = System.currentTimeMillis()
+    val addedAt: Long = System.currentTimeMillis(),
+    val isWatched: Boolean = false
 )
