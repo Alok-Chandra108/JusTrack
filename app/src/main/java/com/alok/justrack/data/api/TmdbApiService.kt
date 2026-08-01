@@ -17,12 +17,12 @@ interface TmdbApiService {
     @GET("3/movie/{movie_id}")
     suspend fun getMovieDetails(
         @Path("movie_id") id: String,
-        @Query("append_to_response") appendToResponse: String = "credits"
+        @Query("append_to_response") appendToResponse: String = "credits,release_dates"
     ): TmdbMediaDto
 
     @GET("3/tv/{tv_id}")
     suspend fun getTvDetails(
         @Path("tv_id") id: String,
-        @Query("append_to_response") appendToResponse: String = "credits"
+        @Query("append_to_response") appendToResponse: String = "credits,content_ratings"
     ): TmdbMediaDto
 }

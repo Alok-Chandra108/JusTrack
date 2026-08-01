@@ -138,7 +138,23 @@ class TmdbMediaRepository @Inject constructor(
             )
         } ?: emptyList()
 
-        val director = credits?.crew?.find { it.job == "Director" || it.job == "Executive Producer" }?.name ?: "-"
+        val directorNames = when (type) {
+            MediaType.MOVIE -> credits?.crew?.filter { it.job == "Director" }?.map { it.name }?.distinct() ?: emptyList()
+            MediaType.TV -> {
+                val creators = createdBy?.map { it.name }?.distinct()
+                if (!creators.isNullOrEmpty()) creators
+                else credits?.crew?.filter { it.job == "Executive Producer" }?.map { it.name }?.distinct() ?: emptyList()
+            }
+        }.ifEmpty { listOf("-") }
+
+        val cert = when (type) {
+            MediaType.MOVIE -> {
+                releaseDates?.results?.find { it.iso31661 == "US" }?.releaseDates?.firstOrNull { it.certification.isNotBlank() }?.certification
+            }
+            MediaType.TV -> {
+                contentRatings?.results?.find { it.iso31661 == "US" }?.rating
+            }
+        } ?: "-"
 
         return MovieDetails(
             id = id.toString(),
@@ -149,8 +165,9 @@ class TmdbMediaRepository @Inject constructor(
             rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
             releaseDate = rawDate,
             runtime = runtimeStr,
-            certification = "-", // Certification requires another API call or complex filtering
-            director = director,
+            certification = cert,
+            director = directorNames,
+            mediaType = type,
             cast = castMembers,
             ratings = listOf(
                 RatingSource("TMDb", String.format("%.1f", voteAverage ?: 0.0))

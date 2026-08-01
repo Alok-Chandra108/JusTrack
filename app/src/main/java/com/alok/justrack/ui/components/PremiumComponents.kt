@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ExpandLess
@@ -30,10 +30,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -54,26 +52,20 @@ fun BackdropHeader(
     backdropUrl: String?,
     onBackClick: () -> Unit,
     onShareClick: () -> Unit,
-    onMoreClick: () -> Unit,
-    parallaxOffset: Float
+    onMoreClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(260.dp)
+            .height(240.dp)
     ) {
         AsyncImage(
             model = backdropUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    translationY = parallaxOffset
-                }
+            modifier = Modifier.fillMaxSize()
         )
 
-        // Bottom Gradient - Cinematic
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,33 +73,31 @@ fun BackdropHeader(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Background.copy(alpha = 0.2f),
-                            Background.copy(alpha = 0.8f),
+                            Background.copy(alpha = 0.3f),
                             Background
                         ),
-                        startY = 300f
+                        startY = 150f
                     )
                 )
         )
 
-        // Top Controls
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = Color.White)
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = TextPrimary)
             }
             Row {
                 IconButton(onClick = onShareClick) {
-                    Icon(Icons.Outlined.Share, contentDescription = "Share", tint = Color.White)
+                    Icon(Icons.Outlined.Share, contentDescription = "Share", tint = TextPrimary)
                 }
                 IconButton(onClick = onMoreClick) {
-                    Icon(Icons.Outlined.MoreVert, contentDescription = "More", tint = Color.White)
+                    Icon(Icons.Outlined.MoreVert, contentDescription = "More", tint = TextPrimary)
                 }
             }
         }
@@ -125,65 +115,79 @@ fun PosterInfoRow(movie: MovieDetails) {
             contentDescription = movie.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(width = 110.dp, height = 165.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(width = 120.dp, height = 175.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(SurfaceColor)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = movie.title,
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = 36.sp,
+                style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    lineHeight = 42.sp
+                    fontSize = 22.sp,
+                    lineHeight = 28.sp
                 ),
                 color = TextPrimary,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = Color.Transparent,
-                    border = BorderStroke(1.dp, TextSecondary.copy(alpha = 0.5f))
-                ) {
-                    Text(
-                        text = movie.certification,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        color = TextSecondary
-                    )
+                if (movie.certification.isNotBlank() && movie.certification != "-") {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = Color.Transparent,
+                        border = BorderStroke(1.dp, TextSecondary)
+                    ) {
+                        Text(
+                            text = movie.certification,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            color = TextPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${movie.releaseDate} • ${movie.runtime}",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    ),
+                    text = "${movie.releaseDate}  •  ${movie.runtime}",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Directed by ${movie.director}",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 16.sp
-                ),
-                color = TextSecondary
-            )
+            val directedLabel = if (movie.mediaType == com.alok.justrack.data.model.MediaType.TV) "Created by" else "Directed by"
+            RichDirectorText(label = directedLabel, names = movie.director)
         }
+    }
+}
+
+@Composable
+private fun RichDirectorText(label: String, names: List<String>) {
+    val joinedNames = names.joinToString(" & ")
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "$label ",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary
+        )
+        Text(
+            text = joinedNames,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.SemiBold
+            ),
+            color = TextPrimary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -196,22 +200,22 @@ fun ActionButtons(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         val watchlistBg by animateColorAsState(
-            if (isWatchlisted) WatchlistBlue else Color.Transparent,
+            if (isWatchlisted) AccentPrimary else Color.Transparent,
             label = "watchlistBg"
         )
         val watchlistContent by animateColorAsState(
-            if (isWatchlisted) Color.Black else TextPrimary,
+            if (isWatchlisted) Color.White else TextSecondary,
             label = "watchlistContent"
         )
         val watchedBg by animateColorAsState(
-            if (isWatched) WatchedGreen else Color.Transparent,
+            if (isWatched) AccentSecondary else Color.Transparent,
             label = "watchedBg"
         )
         val watchedContent by animateColorAsState(
-            if (isWatched) Color.Black else TextPrimary,
+            if (isWatched) Color.White else TextSecondary,
             label = "watchedContent"
         )
 
@@ -219,44 +223,52 @@ fun ActionButtons(
             onClick = onWatchlistToggle,
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp),
-            shape = RoundedCornerShape(24.dp),
+                .height(42.dp),
+            shape = RoundedCornerShape(21.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = watchlistBg,
                 contentColor = watchlistContent
             ),
-            border = if (isWatchlisted) null else BorderStroke(1.2.dp, TextSecondary.copy(alpha = 0.4f)),
+            border = if (isWatchlisted) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
                 if (isWatchlisted) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Watchlist", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                if (isWatchlisted) "In Watchlist" else "Watchlist",
+                fontWeight = FontWeight.Medium,
+                fontSize = 13.sp
+            )
         }
 
         Button(
             onClick = onWatchedToggle,
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp),
-            shape = RoundedCornerShape(24.dp),
+                .height(42.dp),
+            shape = RoundedCornerShape(21.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = watchedBg,
                 contentColor = watchedContent
             ),
-            border = if (isWatched) null else BorderStroke(1.2.dp, TextSecondary.copy(alpha = 0.4f)),
+            border = if (isWatched) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
-                if (isWatched) Icons.Filled.Visibility else Icons.Outlined.Visibility,
+                if (isWatched) Icons.Filled.CheckCircle else Icons.Outlined.Visibility,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Watched", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                if (isWatched) "Watched" else "Mark Watched",
+                fontWeight = FontWeight.Medium,
+                fontSize = 13.sp
+            )
         }
     }
 }
@@ -265,60 +277,38 @@ fun ActionButtons(
 fun CollapsibleDescription(description: String) {
     var isExpanded by remember { mutableStateOf(false) }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(SurfaceVariant)
-            .clickable { isExpanded = !isExpanded }
-            .padding(20.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(SurfaceColor)
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null
+            ) { isExpanded = !isExpanded }
+            .padding(12.dp)
             .animateContentSize(animationSpec = tween(300))
     ) {
-        Column {
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                lineHeight = 20.sp,
+                color = TextSecondary
+            ),
+            maxLines = if (isExpanded) Int.MAX_VALUE else 3,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        if (description.length > 100) {
+            Spacer(modifier = Modifier.height(6.dp))
+
             Text(
-                text = description,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 16.sp,
-                    lineHeight = 26.sp,
-                    color = TextPrimary.copy(alpha = 0.85f)
-                ),
-                maxLines = if (isExpanded) Int.MAX_VALUE else 3,
-                overflow = TextOverflow.Ellipsis,
-                modifier = if (!isExpanded) {
-                    Modifier.drawWithContent {
-                        drawContent()
-                        drawRect(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, SurfaceVariant.copy(alpha = 0.8f)),
-                                startY = size.height * 0.5f,
-                                endY = size.height
-                            )
-                        )
-                    }
-                } else Modifier
+                text = if (isExpanded) "Show less" else "Read more",
+                color = AccentPrimary,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.align(Alignment.End)
             )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = if (isExpanded) "Show less" else "Read more",
-                    color = TextSecondary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = TextSecondary
-                )
-            }
         }
     }
 }
@@ -335,19 +325,16 @@ fun MinimalRatingsRow(ratings: List<RatingSource>) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = rating.label,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = rating.value,
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = TextPrimary
                 )
             }
         }
@@ -365,26 +352,24 @@ fun CastSection(cast: List<CastMember>) {
             Text(
                 text = "Cast",
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold
                 ),
                 color = TextPrimary
             )
             Text(
-                text = "See all →",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = TextSecondary,
-                    fontWeight = FontWeight.Medium
-                ),
+                text = "See all",
+                style = MaterialTheme.typography.bodySmall,
+                color = AccentPrimary,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.clickable { }
             )
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(end = 16.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(end = 14.dp)
         ) {
             items(cast) { member ->
                 CastItem(member)
@@ -397,35 +382,32 @@ fun CastSection(cast: List<CastMember>) {
 fun CastItem(member: CastMember) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(80.dp)
+        modifier = Modifier.width(72.dp)
     ) {
         AsyncImage(
             model = member.profilePath,
             contentDescription = member.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(64.dp)
+                .size(56.dp)
                 .clip(CircleShape)
                 .background(SurfaceColor)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = member.name,
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontSize = 14.sp,
+            style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Medium
             ),
             color = TextPrimary,
             maxLines = 2,
             textAlign = TextAlign.Center,
-            lineHeight = 18.sp
+            lineHeight = 16.sp
         )
         Text(
             text = member.character,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 12.sp,
-                color = TextSecondary
-            ),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
@@ -439,17 +421,16 @@ fun RecommendationsSection(recommendations: List<MediaItem>) {
         Text(
             text = "Recommendations",
             style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold
             ),
             color = TextPrimary
         )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(end = 16.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(end = 10.dp)
         ) {
             items(recommendations) { item ->
                 RecommendationItem(item)
@@ -460,24 +441,22 @@ fun RecommendationsSection(recommendations: List<MediaItem>) {
 
 @Composable
 fun RecommendationItem(item: MediaItem) {
-    Column(modifier = Modifier.width(110.dp)) {
+    Column(modifier = Modifier.width(100.dp)) {
         AsyncImage(
             model = item.posterPath,
             contentDescription = item.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(165.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .height(150.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(SurfaceColor)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = item.title,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 14.sp,
-                color = TextPrimary
-            ),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -764,55 +743,49 @@ fun PremiumEmptyState(
 ) {
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Popcorn-style icon box placeholder
-        Box(
-            modifier = Modifier
-                .size(140.dp)
-                .padding(bottom = 24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(0.7f),
-                tint = GoldAccent.copy(alpha = 0.9f)
-            )
-        }
-        
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(56.dp),
+            tint = AccentPrimary.copy(alpha = 0.7f)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = TextPrimary
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = subtitle,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            color = TextPrimary.copy(alpha = 0.8f)
+            color = TextSecondary
         )
-        Spacer(modifier = Modifier.height(32.dp))
-        
+        Spacer(modifier = Modifier.height(20.dp))
+
         Button(
             onClick = onClick,
             modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = GoldAccent)
+                .fillMaxWidth(0.55f)
+                .height(42.dp),
+            shape = RoundedCornerShape(21.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AccentPrimary)
         ) {
             Text(
-                text = buttonLabel.uppercase(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = Color.Black
+                text = buttonLabel,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
             )
         }
     }

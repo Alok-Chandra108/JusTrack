@@ -22,7 +22,37 @@ data class TmdbMediaDto(
     @SerializedName("media_type") val mediaType: String?,
     @SerializedName("runtime") val runtime: Int?,
     @SerializedName("episode_run_time") val episodeRunTime: List<Int>?,
-    @SerializedName("credits") val credits: TmdbCreditsDto?
+    @SerializedName("credits") val credits: TmdbCreditsDto?,
+    @SerializedName("release_dates") val releaseDates: TmdbReleaseDatesResponse?,
+    @SerializedName("content_ratings") val contentRatings: TmdbContentRatingsResponse?,
+    @SerializedName("created_by") val createdBy: List<TmdbCreatedByDto>?
+)
+
+data class TmdbReleaseDatesResponse(
+    @SerializedName("results") val results: List<TmdbReleaseDateResult>?
+)
+
+data class TmdbReleaseDateResult(
+    @SerializedName("iso_3166_1") val iso31661: String,
+    @SerializedName("release_dates") val releaseDates: List<TmdbReleaseDateItem>
+)
+
+data class TmdbReleaseDateItem(
+    @SerializedName("certification") val certification: String
+)
+
+data class TmdbContentRatingsResponse(
+    @SerializedName("results") val results: List<TmdbContentRatingResult>?
+)
+
+data class TmdbContentRatingResult(
+    @SerializedName("iso_3166_1") val iso31661: String,
+    @SerializedName("rating") val rating: String
+)
+
+data class TmdbCreatedByDto(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String
 )
 
 data class TmdbCreditsDto(

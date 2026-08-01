@@ -184,7 +184,14 @@ class SupabaseMediaRepository @Inject constructor(
             )
         } ?: emptyList()
 
-        val director = credits?.crew?.find { it.job == "Director" || it.job == "Executive Producer" }?.name ?: "-"
+        val directorNames = when (type) {
+            MediaType.MOVIE -> credits?.crew?.filter { it.job == "Director" }?.map { it.name }?.distinct() ?: emptyList()
+            MediaType.TV -> {
+                val creators = createdBy?.map { it.name }?.distinct()
+                if (!creators.isNullOrEmpty()) creators
+                else credits?.crew?.filter { it.job == "Executive Producer" }?.map { it.name }?.distinct() ?: emptyList()
+            }
+        }.ifEmpty { listOf("-") }
 
         return MovieDetails(
             id = id.toString(),
@@ -196,7 +203,7 @@ class SupabaseMediaRepository @Inject constructor(
             releaseDate = rawDate,
             runtime = runtimeStr,
             certification = "-",
-            director = director,
+            director = directorNames,
             cast = castMembers,
             ratings = listOf(
                 RatingSource("TMDb", String.format("%.1f", voteAverage ?: 0.0))

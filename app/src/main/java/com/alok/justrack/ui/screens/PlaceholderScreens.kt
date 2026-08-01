@@ -55,14 +55,14 @@ fun MoviesScreen(
     ) {
         TabRow(
             selectedTabIndex = selectedTab,
-            containerColor = Color.Black,
-            contentColor = Color.White,
+            containerColor = Background,
+            contentColor = TextPrimary,
             indicator = { tabPositions ->
                 if (selectedTab < tabPositions.size) {
                     TabRowDefaults.SecondaryIndicator(
                         modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
                         height = 3.dp,
-                        color = Color.White
+                        color = AccentPrimary
                     )
                 }
             },
@@ -78,7 +78,7 @@ fun MoviesScreen(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp,
-                            color = if (selectedTab == index) Color.White else TextSecondary
+                            color = if (selectedTab == index) AccentPrimary else TextSecondary
                         )
                     }
                 )
@@ -106,13 +106,15 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
         is WatchlistUiState.Success -> {
             val movies = uiState.items.filter { it.mediaType == MediaType.MOVIE }
             if (movies.isEmpty()) {
-                PremiumEmptyState(
-                    title = "Your watchlist is empty!",
-                    subtitle = "Add movies you want to watch.",
-                    buttonLabel = "BROWSE ALL MOVIES",
-                    onClick = { navController.navigate(Screen.Explore.route) },
-                    icon = Icons.Rounded.Movie
-                )
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    PremiumEmptyState(
+                        title = "Your watchlist is empty!",
+                        subtitle = "Add movies you want to watch.",
+                        buttonLabel = "BROWSE",
+                        onClick = { navController.navigate(Screen.Explore.route) },
+                        icon = Icons.Rounded.Movie
+                    )
+                }
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
@@ -126,19 +128,21 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
                 }
             }
         }
-        else -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = Color.White) }
+        else -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = AccentPrimary) }
     }
 }
 
 @Composable
 private fun MovieUpcomingContent(navController: NavController) {
-    PremiumEmptyState(
-        title = "No upcoming movies!",
-        subtitle = "We'll let you know when they're out.",
-        buttonLabel = "BROWSE ALL MOVIES",
-        onClick = { navController.navigate(Screen.Explore.route) },
-        icon = Icons.Rounded.CalendarMonth
-    )
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        PremiumEmptyState(
+            title = "No upcoming movies!",
+            subtitle = "We'll let you know when they're out.",
+            buttonLabel = "BROWSE",
+            onClick = { navController.navigate(Screen.Explore.route) },
+            icon = Icons.Rounded.CalendarMonth
+        )
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -157,7 +161,6 @@ fun ExploreScreen(
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-        // Search bar
         TextField(
             value = query,
             onValueChange = { viewModel.onQueryChange(it) },
@@ -165,7 +168,7 @@ fun ExploreScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .height(56.dp),
+                .height(52.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = SurfaceColor,
                 unfocusedContainerColor = SurfaceColor,
@@ -176,7 +179,8 @@ fun ExploreScreen(
                 focusedTextColor = TextPrimary,
                 unfocusedTextColor = TextPrimary
             ),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(26.dp),
+            singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = TextSecondary) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
@@ -189,13 +193,18 @@ fun ExploreScreen(
 
         when (val state = uiState) {
             is SearchUiState.Idle -> {
-                PremiumEmptyState(
-                    title = "Discover Something New",
-                    subtitle = "Search for millions of movies and TV shows from around the world.",
-                    buttonLabel = "Popular",
-                    onClick = { /* Could trigger popular search */ },
-                    icon = Icons.Rounded.Explore
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PremiumEmptyState(
+                        title = "Discover Something New",
+                        subtitle = "Search for millions of movies and TV shows from around the world.",
+                        buttonLabel = "Popular",
+                        onClick = { viewModel.onQueryChange("popular") },
+                        icon = Icons.Rounded.Explore
+                    )
+                }
             }
             is SearchUiState.Loading -> {
                 LazyColumn(
@@ -249,7 +258,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Background)
             .statusBarsPadding()
     ) {
         // --- Top Bar ---
@@ -263,7 +272,7 @@ fun ProfileScreen(
             Icon(
                 imageVector = Icons.Rounded.Notifications,
                 contentDescription = null,
-                tint = GoldAccent,
+                tint = AccentPrimary,
                 modifier = Modifier.size(28.dp)
             )
             Icon(

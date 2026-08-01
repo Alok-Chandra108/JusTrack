@@ -55,14 +55,14 @@ fun WatchlistShowsScreen(
         // --- Premium Tab Row ---
         TabRow(
             selectedTabIndex = selectedTab,
-            containerColor = Color.Black,
-            contentColor = Color.White,
+            containerColor = Background,
+            contentColor = TextPrimary,
             indicator = { tabPositions ->
                 if (selectedTab < tabPositions.size) {
                     SecondaryIndicator(
                         modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
                         height = 3.dp,
-                        color = Color.White
+                        color = AccentPrimary
                     )
                 }
             },
@@ -78,7 +78,7 @@ fun WatchlistShowsScreen(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp,
-                            color = if (selectedTab == index) Color.White else TextSecondary
+                            color = if (selectedTab == index) AccentPrimary else TextSecondary
                         )
                     }
                 )
@@ -128,13 +128,15 @@ private fun WatchlistTabContent(
         is WatchlistUiState.Success -> {
             val tvShows = uiState.items.filter { it.mediaType == com.alok.justrack.data.model.MediaType.TV }
             if (tvShows.isEmpty()) {
-                PremiumEmptyState(
-                    title = "Your watchlist is empty!",
-                    subtitle = "Add shows you want to watch.",
-                    buttonLabel = "BROWSE ALL SHOWS",
-                    onClick = { navController.navigate(Screen.Explore.route) },
-                    icon = Icons.Rounded.Tv
-                )
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    PremiumEmptyState(
+                        title = "Your watchlist is empty!",
+                        subtitle = "Add shows you want to watch.",
+                        buttonLabel = "BROWSE",
+                        onClick = { navController.navigate(Screen.Explore.route) },
+                        icon = Icons.Rounded.Tv
+                    )
+                }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -175,13 +177,15 @@ private fun UpcomingTabContent(
         is WatchlistUiState.Success -> {
             val upcomingItems = uiState.items.filter { it.releaseDate.isNotBlank() }
             if (upcomingItems.isEmpty()) {
-                PremiumEmptyState(
-                    title = "No Upcoming Titles",
-                    subtitle = "We'll notify you when shows in your watchlist have new episodes.",
-                    buttonLabel = "Explore Now",
-                    onClick = { navController.navigate(Screen.Explore.route) },
-                    icon = Icons.Rounded.CalendarMonth
-                )
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    PremiumEmptyState(
+                        title = "No Upcoming Titles",
+                        subtitle = "We'll notify you when shows in your watchlist have new episodes.",
+                        buttonLabel = "BROWSE",
+                        onClick = { navController.navigate(Screen.Explore.route) },
+                        icon = Icons.Rounded.CalendarMonth
+                    )
+                }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),

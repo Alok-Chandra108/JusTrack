@@ -25,7 +25,7 @@ import com.alok.justrack.ui.viewmodel.DetailViewModel
 fun DetailScreen(
     navController: NavController,
     id: String,
-    viewModel: DetailViewModel = hiltViewModel()
+    viewModel: DetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isWatchlisted by viewModel.isWatchlisted.collectAsState()
@@ -53,7 +53,7 @@ fun DetailScreen(
         }
         is DetailUiState.Error -> {
             Box(modifier = Modifier.fillMaxSize().background(Background), contentAlignment = Alignment.Center) {
-                Text("Error: ${state.message}", color = Color.Red)
+                Text("Error: ${state.message}", color = HeartRed)
             }
         }
     }
@@ -71,12 +71,11 @@ fun MovieDetailsScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    Scaffold(
-        containerColor = Background,
-        modifier = modifier.fillMaxSize()
-    ) { paddingValues ->
-        val parallaxOffset = scrollState.value * 0.5f
-
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Background)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -86,32 +85,29 @@ fun MovieDetailsScreen(
                 backdropUrl = movie.backdropPath,
                 onBackClick = onBackClick,
                 onShareClick = {},
-                onMoreClick = {},
-                parallaxOffset = parallaxOffset
+                onMoreClick = {}
             )
 
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 PosterInfoRow(movie = movie)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 ActionButtons(
                     isWatchlisted = isWatchlisted,
                     isWatched = isWatched,
                     onWatchlistToggle = onWatchlistToggle,
                     onWatchedToggle = onWatchedToggle
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 CollapsibleDescription(description = movie.overview)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 CastSection(cast = movie.cast)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 RecommendationsSection(recommendations = movie.recommendations)
                 Spacer(modifier = Modifier.height(32.dp))
-                // Extra space for bottom nav
-                Spacer(modifier = Modifier.height(paddingValues.calculateBottomPadding()))
             }
         }
     }
@@ -130,7 +126,7 @@ fun MovieDetailsPreview() {
         releaseDate = "25 Jul 2026",
         runtime = "1h 39m",
         certification = "PG",
-        director = "Lauren Montgomery",
+        director = listOf("Lauren Montgomery"),
         cast = listOf(
             CastMember("1", "Aang", "Avatar", null),
             CastMember("2", "Katara", "Waterbender", null),
