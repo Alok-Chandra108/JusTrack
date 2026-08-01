@@ -134,7 +134,7 @@ private fun WatchlistTabContent(
                         subtitle = "Add shows you want to watch.",
                         buttonLabel = "BROWSE",
                         onClick = { navController.navigate(Screen.Explore.route) },
-                        icon = Icons.Rounded.Tv
+                        illustration = { TvShowIllustration() }
                     )
                 }
             } else {
@@ -183,7 +183,7 @@ private fun UpcomingTabContent(
                         subtitle = "We'll notify you when shows in your watchlist have new episodes.",
                         buttonLabel = "BROWSE",
                         onClick = { navController.navigate(Screen.Explore.route) },
-                        icon = Icons.Rounded.CalendarMonth
+                        illustration = { TvShowIllustration() }
                     )
                 }
             } else {

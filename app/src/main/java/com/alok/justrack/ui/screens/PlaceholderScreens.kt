@@ -112,7 +112,7 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
                         subtitle = "Add movies you want to watch.",
                         buttonLabel = "BROWSE",
                         onClick = { navController.navigate(Screen.Explore.route) },
-                        icon = Icons.Rounded.Movie
+                        illustration = { MovieIllustration() }
                     )
                 }
             } else {
@@ -140,7 +140,7 @@ private fun MovieUpcomingContent(navController: NavController) {
             subtitle = "We'll let you know when they're out.",
             buttonLabel = "BROWSE",
             onClick = { navController.navigate(Screen.Explore.route) },
-            icon = Icons.Rounded.CalendarMonth
+            illustration = { MovieIllustration() }
         )
     }
 }

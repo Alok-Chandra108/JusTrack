@@ -738,7 +738,8 @@ fun PremiumEmptyState(
     subtitle: String,
     buttonLabel: String,
     onClick: () -> Unit,
-    icon: ImageVector,
+    icon: ImageVector? = null,
+    illustration: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -748,12 +749,16 @@ fun PremiumEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(56.dp),
-            tint = AccentPrimary.copy(alpha = 0.7f)
-        )
+        if (illustration != null) {
+            illustration()
+        } else if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+                tint = AccentPrimary.copy(alpha = 0.7f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
