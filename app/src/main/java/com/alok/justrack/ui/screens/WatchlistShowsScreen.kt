@@ -146,7 +146,7 @@ private fun WatchlistTabContent(
                     items(tvShows, key = { it.id }) { item ->
                         ListMediaCard(
                             item = item,
-                            onClick = { navController.navigate(Screen.Detail.createRoute(item.id)) }
+                            onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
                         )
                     }
                 }
@@ -195,7 +195,7 @@ private fun UpcomingTabContent(
                     items(upcomingItems, key = { it.id }) { item ->
                         ListMediaCard(
                             item = item,
-                            onClick = { navController.navigate(Screen.Detail.createRoute(item.id)) }
+                            onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
                         )
                     }
                 }

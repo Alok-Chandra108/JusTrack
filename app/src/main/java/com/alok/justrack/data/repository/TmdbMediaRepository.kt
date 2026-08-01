@@ -58,18 +58,18 @@ class TmdbMediaRepository @Inject constructor(
         return watchlistDao.exists(id)
     }
 
-    override suspend fun getMediaDetail(id: String): MovieDetails? {
+    override suspend fun getMediaDetail(id: String, mediaType: MediaType): MovieDetails? {
         return try {
-            val movieDto = try {
-                apiService.getMovieDetails(id)
-            } catch (e: Exception) {
-                null
+            when (mediaType) {
+                MediaType.MOVIE -> {
+                    val movieDto = apiService.getMovieDetails(id)
+                    movieDto.toMovieDetails(MediaType.MOVIE)
+                }
+                MediaType.TV -> {
+                    val tvDto = apiService.getTvDetails(id)
+                    tvDto.toMovieDetails(MediaType.TV)
+                }
             }
-            if (movieDto != null && movieDto.title != null) {
-                return movieDto.toMovieDetails(MediaType.MOVIE)
-            }
-            val tvDto = apiService.getTvDetails(id)
-            tvDto.toMovieDetails(MediaType.TV)
         } catch (e: Exception) {
             e.printStackTrace()
             null

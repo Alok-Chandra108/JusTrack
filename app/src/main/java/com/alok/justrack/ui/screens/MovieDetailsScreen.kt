@@ -25,14 +25,15 @@ import com.alok.justrack.ui.viewmodel.DetailViewModel
 fun DetailScreen(
     navController: NavController,
     id: String,
+    mediaType: String = "MOVIE",
     viewModel: DetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isWatchlisted by viewModel.isWatchlisted.collectAsState()
     val isWatched by viewModel.isWatched.collectAsState()
 
-    LaunchedEffect(id) {
-        viewModel.loadDetail(id)
+    LaunchedEffect(id, mediaType) {
+        viewModel.loadDetail(id, mediaType)
     }
 
     when (val state = uiState) {

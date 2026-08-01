@@ -123,7 +123,7 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     lazyGridItems(movies, key = { it.id }) { item ->
-                        PosterCard(item, { navController.navigate(Screen.Detail.createRoute(item.id)) })
+                        PosterCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
                     }
                 }
             }
@@ -230,7 +230,7 @@ fun ExploreScreen(
                         lazyItems(items, key = { it.id }) { item ->
                             ListMediaCard(
                                 item = item,
-                                onClick = { navController.navigate(Screen.Detail.createRoute(item.id)) }
+                                onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
                             )
                         }
                     }
@@ -325,7 +325,7 @@ fun ProfileScreen(
                     HorizontalSection(
                         title = "Shows",
                         items = items.filter { it.mediaType == MediaType.TV },
-                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id)) },
+                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                         onViewAllClick = { navController.navigate(Screen.ViewAll.createRoute("Shows", "series")) }
                     )
 
@@ -347,7 +347,7 @@ fun ProfileScreen(
                     HorizontalSection(
                         title = "Movies",
                         items = items.filter { it.mediaType == MediaType.MOVIE },
-                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id)) },
+                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                         onViewAllClick = { navController.navigate(Screen.ViewAll.createRoute("Movies", "movies")) }
                     )
                     

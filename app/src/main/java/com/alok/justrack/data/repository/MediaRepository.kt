@@ -1,13 +1,14 @@
 package com.alok.justrack.data.repository
 
 import com.alok.justrack.data.model.MediaItem
+import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
 import kotlinx.coroutines.flow.Flow
 
 interface MediaRepository {
     suspend fun getTrending(): List<MediaItem>
     suspend fun getWatchlist(): List<MediaItem>
-    suspend fun getMediaDetail(id: String): MovieDetails?
+    suspend fun getMediaDetail(id: String, mediaType: MediaType = MediaType.MOVIE): MovieDetails?
     suspend fun searchMedia(query: String): List<MediaItem>
 
     // Room-backed watchlist operations

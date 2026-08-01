@@ -89,7 +89,7 @@ fun ViewAllScreen(
                         items(filteredItems, key = { it.id }) { item ->
                             PosterCard(
                                 item = item,
-                                onClick = { navController.navigate(Screen.Detail.createRoute(item.id)) }
+                                onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
                             )
                         }
                     }

@@ -19,7 +19,8 @@ fun NavGraph(navController: NavHostController) {
         composable(Screen.Profile.route) { ProfileScreen(navController) }
         composable(Screen.Detail.route) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
-            DetailScreen(navController, id)
+            val mediaType = backStackEntry.arguments?.getString("mediaType") ?: "MOVIE"
+            DetailScreen(navController, id, mediaType)
         }
         composable(Screen.ViewAll.route) { backStackEntry ->
             val title = backStackEntry.arguments?.getString("title") ?: ""

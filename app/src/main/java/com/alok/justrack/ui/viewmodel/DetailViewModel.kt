@@ -3,6 +3,7 @@ package com.alok.justrack.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alok.justrack.data.model.MediaItem
+import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +25,12 @@ class DetailViewModel @Inject constructor(
     private val _isWatched = MutableStateFlow(false)
     val isWatched: StateFlow<Boolean> = _isWatched
 
-    fun loadDetail(id: String) {
+    fun loadDetail(id: String, mediaType: String = "MOVIE") {
         viewModelScope.launch {
             _uiState.value = DetailUiState.Loading
             try {
-                val item = repository.getMediaDetail(id)
+                val type = try { MediaType.valueOf(mediaType) } catch (_: Exception) { MediaType.MOVIE }
+                val item = repository.getMediaDetail(id, type)
                 if (item != null) {
                     _uiState.value = DetailUiState.Success(item)
                     _isWatchlisted.value = repository.isInWatchlist(id)
@@ -55,7 +57,8 @@ class DetailViewModel @Inject constructor(
                     posterPath = movie.posterPath,
                     backdropPath = movie.backdropPath,
                     rating = movie.rating,
-                    releaseDate = movie.releaseDate
+                    releaseDate = movie.releaseDate,
+                    mediaType = movie.mediaType
                 )
                 repository.addToWatchlist(item)
                 _isWatchlisted.value = true
