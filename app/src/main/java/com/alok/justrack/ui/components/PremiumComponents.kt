@@ -612,7 +612,8 @@ fun HorizontalSection(
     onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    iconTint: Color = TextPrimary
+    iconTint: Color = TextPrimary,
+    emptyMessage: String = "No data yet"
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(
@@ -628,20 +629,16 @@ fun HorizontalSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .height(140.dp)
+                    .height(100.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(SurfaceColor),
                 contentAlignment = Alignment.Center
             ) {
-                Button(
-                    onClick = { /* RELOAD */ },
-                    modifier = Modifier.height(40.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    border = BorderStroke(1.dp, TextPrimary.copy(alpha = 0.5f)),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text("RELOAD", style = MaterialTheme.typography.labelMedium, color = TextPrimary)
-                }
+                Text(
+                    text = emptyMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary.copy(alpha = 0.7f)
+                )
             }
         } else {
             LazyRow(
@@ -649,10 +646,107 @@ fun HorizontalSection(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 state = rememberLazyListState()
             ) {
-                items(items.take(10), key = { it.id }) { item ->
+                items(items.take(15), key = { it.id }) { item ->
                     PosterCard(item = item, onClick = { onItemClick(item) })
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ProfileHeader(
+    userName: String,
+    avatarUrl: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = avatarUrl ?: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+            contentDescription = "Avatar",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
+                .border(2.dp, AccentPrimary, CircleShape)
+                .background(SurfaceColor)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = userName,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
+        )
+    }
+}
+
+@Composable
+fun DualStatsRow(
+    movieCount: Int,
+    showCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        StatCard(
+            label = "Movies Watched",
+            value = movieCount.toString(),
+            icon = Icons.Outlined.Movie,
+            modifier = Modifier.weight(1f)
+        )
+        StatCard(
+            label = "Shows Watched",
+            value = showCount.toString(),
+            icon = Icons.Outlined.Tv,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun StatCard(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = SurfaceColor,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = AccentPrimary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary
+            )
         }
     }
 }

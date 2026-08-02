@@ -4,31 +4,23 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items as lazyItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as lazyGridItems
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.ui.components.*
 import com.alok.justrack.ui.navigation.Screen
@@ -41,7 +33,7 @@ import com.alok.justrack.ui.viewmodel.*
 @Composable
 fun MoviesScreen(
     navController: NavController,
-    viewModel: WatchlistViewModel = hiltViewModel(),
+    viewModel: WatchlistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val tabTitles = listOf("WATCHLIST", "UPCOMING")
@@ -121,7 +113,7 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    lazyGridItems(movies, key = { it.id }) { item ->
+                    lazyGridItems(movies) { item ->
                         PosterOnlyCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
                     }
                 }
@@ -158,7 +150,7 @@ private fun MovieUpcomingContent(uiState: WatchlistUiState, navController: NavCo
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    lazyGridItems(upcomingMovies, key = { it.id }) { item ->
+                    lazyGridItems(upcomingMovies) { item ->
                         PosterCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
                     }
                 }
@@ -168,16 +160,21 @@ private fun MovieUpcomingContent(uiState: WatchlistUiState, navController: NavCo
     }
 }
 
-
 // ─────────────────────────────────────────────
 // PROFILE SCREEN
 // ─────────────────────────────────────────────
 @Composable
 fun ProfileScreen(
     navController: NavController,
-    watchlistViewModel: WatchlistViewModel = hiltViewModel()
+    viewModel: WatchlistViewModel = hiltViewModel()
 ) {
-    val watchlistState by watchlistViewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val stats by viewModel.stats.collectAsState()
+    val listsWithPreviews by viewModel.listsWithPreviews.collectAsState()
+    val watchedMovies by viewModel.watchedMovies.collectAsState()
+    val watchedShows by viewModel.watchedShows.collectAsState()
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
+    val favoriteShows by viewModel.favoriteShows.collectAsState()
 
     Column(
         modifier = Modifier
@@ -207,94 +204,127 @@ fun ProfileScreen(
             )
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp)
-        ) {
-            // --- Social Stats Row ---
-            SocialStatsRow(following = 0, followers = 0, comments = 0)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            when (val state = watchlistState) {
-                is WatchlistUiState.Loading -> {
-                    repeat(3) { SkeletonSection() }
+        // Main content
+        when (uiState) {
+            is WatchlistUiState.Loading -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = 16.dp)
+                ) {
+                    repeat(6) { SkeletonSection() }
                 }
-                is WatchlistUiState.Success -> {
-                    val items = state.items
+            }
+            is WatchlistUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Error loading profile", color = MaterialTheme.colorScheme.error)
+                }
+            }
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = 16.dp)
+                ) {
+                    // 1. Avatar and User Name
+                    ProfileHeader(
+                        userName = "Alok Chandra",
+                        avatarUrl = null
+                    )
                     
-                    // --- Stats Section ---
-                    HorizontalSection(
-                        title = "Stats",
-                        items = emptyList(),
-                        onItemClick = {},
-                        onViewAllClick = {}
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 2. Stats Section (Dual Stats)
+                    DualStatsRow(
+                        movieCount = stats?.movieCount ?: 0,
+                        showCount = stats?.tvCount ?: 0
                     )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    // 3. Lists Section (Horizontal Previews)
+                    listsWithPreviews.forEach { (listName, items) ->
+                        HorizontalSection(
+                            title = listName,
+                            items = items,
+                            onItemClick = { item ->
+                                navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                            },
+                            onViewAllClick = {
+                                navController.navigate(Screen.ViewAll.createRoute(listName, "list"))
+                            },
+                            emptyMessage = "This list is empty"
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
 
-                    // --- Lists Section ---
-                    HorizontalSection(
-                        title = "Lists",
-                        items = emptyList(),
-                        onItemClick = {},
-                        onViewAllClick = {}
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // --- Shows Section ---
+                    // 4. Shows (Watched only)
                     HorizontalSection(
                         title = "Shows",
-                        items = items.filter { it.mediaType == MediaType.TV && it.isWatched },
-                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
-                        onViewAllClick = { navController.navigate(Screen.ViewAll.createRoute("Shows", "series")) }
+                        items = watchedShows,
+                        onItemClick = { item ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        },
+                        onViewAllClick = {
+                            navController.navigate(Screen.ViewAll.createRoute("Watched Shows", "tv"))
+                        },
+                        emptyMessage = "No watched shows yet"
                     )
-
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // --- Favorite Shows Section ---
+                    // 5. Favorite shows (Hearted only)
                     HorizontalSection(
                         title = "Favorite shows",
-                        items = emptyList(),
-                        onItemClick = {},
-                        onViewAllClick = {},
+                        items = favoriteShows,
+                        onItemClick = { item ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        },
+                        onViewAllClick = {
+                            navController.navigate(Screen.ViewAll.createRoute("Favorite Shows", "favorite_tv"))
+                        },
                         icon = Icons.Rounded.Favorite,
-                        iconTint = HeartRed
+                        iconTint = HeartRed,
+                        emptyMessage = "No favorite shows yet"
                     )
-                    
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // --- Movies Section ---
+                    // 6. Movies (Watched only)
                     HorizontalSection(
                         title = "Movies",
-                        items = items.filter { it.mediaType == MediaType.MOVIE && it.isWatched },
-                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
-                        onViewAllClick = { navController.navigate(Screen.ViewAll.createRoute("Movies", "movies")) }
+                        items = watchedMovies,
+                        onItemClick = { item ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        },
+                        onViewAllClick = {
+                            navController.navigate(Screen.ViewAll.createRoute("Watched Movies", "movie"))
+                        },
+                        emptyMessage = "No watched movies yet"
                     )
-                    
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // --- Favorite Movies Section ---
+                    // 7. Favorite movies (Hearted only)
                     HorizontalSection(
                         title = "Favorite movies",
-                        items = emptyList(),
-                        onItemClick = {},
-                        onViewAllClick = {},
+                        items = favoriteMovies,
+                        onItemClick = { item ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        },
+                        onViewAllClick = {
+                            navController.navigate(Screen.ViewAll.createRoute("Favorite Movies", "favorite_movie"))
+                        },
                         icon = Icons.Rounded.Favorite,
-                        iconTint = HeartRed
+                        iconTint = HeartRed,
+                        emptyMessage = "No favorite movies yet"
                     )
-                }
-                is WatchlistUiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Error loading profile", color = MaterialTheme.colorScheme.error)
-                    }
                 }
             }
         }
     }
 }
-
-// DETAIL SCREEN REMOVED - MOVED TO MovieDetailsScreen.kt
