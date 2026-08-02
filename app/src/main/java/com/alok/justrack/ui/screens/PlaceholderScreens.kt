@@ -93,7 +93,7 @@ fun MoviesScreen(
         ) { tab ->
             when (tab) {
                 0 -> MovieWatchlistContent(uiState, navController)
-                1 -> MovieUpcomingContent(navController)
+                1 -> MovieUpcomingContent(uiState, navController)
             }
         }
     }
@@ -132,15 +132,39 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
 }
 
 @Composable
-private fun MovieUpcomingContent(navController: NavController) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        PremiumEmptyState(
-            title = "No upcoming movies!",
-            subtitle = "We'll let you know when they're out.",
-            buttonLabel = "BROWSE",
-            onClick = { navController.navigate(Screen.Explore.route) },
-            illustration = { MovieIllustration() }
-        )
+private fun MovieUpcomingContent(uiState: WatchlistUiState, navController: NavController) {
+    when (uiState) {
+        is WatchlistUiState.Success -> {
+            val today = java.time.LocalDate.now()
+            val upcomingMovies = uiState.items.filter {
+                it.mediaType == MediaType.MOVIE && it.releaseDate.isNotBlank() && try {
+                    java.time.LocalDate.parse(it.releaseDate).isAfter(today)
+                } catch (_: Exception) { false }
+            }
+            if (upcomingMovies.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    PremiumEmptyState(
+                        title = "No upcoming movies!",
+                        subtitle = "We'll let you know when they're out.",
+                        buttonLabel = "BROWSE",
+                        onClick = { navController.navigate(Screen.Explore.route) },
+                        illustration = { MovieIllustration() }
+                    )
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    lazyGridItems(upcomingMovies, key = { it.id }) { item ->
+                        PosterCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
+                    }
+                }
+            }
+        }
+        else -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = AccentPrimary) }
     }
 }
 
@@ -323,7 +347,7 @@ fun ProfileScreen(
                     // --- Shows Section ---
                     HorizontalSection(
                         title = "Shows",
-                        items = items.filter { it.mediaType == MediaType.TV },
+                        items = items.filter { it.mediaType == MediaType.TV && it.isWatched },
                         onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                         onViewAllClick = { navController.navigate(Screen.ViewAll.createRoute("Shows", "series")) }
                     )
@@ -345,7 +369,7 @@ fun ProfileScreen(
                     // --- Movies Section ---
                     HorizontalSection(
                         title = "Movies",
-                        items = items.filter { it.mediaType == MediaType.MOVIE },
+                        items = items.filter { it.mediaType == MediaType.MOVIE && it.isWatched },
                         onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                         onViewAllClick = { navController.navigate(Screen.ViewAll.createRoute("Movies", "movies")) }
                     )

@@ -29,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.alok.justrack.data.model.MediaItem
+import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.ui.components.*
 import com.alok.justrack.ui.navigation.Screen
 import com.alok.justrack.ui.theme.*
@@ -175,7 +176,12 @@ private fun UpcomingTabContent(
             }
         }
         is WatchlistUiState.Success -> {
-            val upcomingItems = uiState.items.filter { it.releaseDate.isNotBlank() }
+            val today = java.time.LocalDate.now()
+            val upcomingItems = uiState.items.filter {
+                it.mediaType == MediaType.TV && it.releaseDate.isNotBlank() && try {
+                    java.time.LocalDate.parse(it.releaseDate).isAfter(today)
+                } catch (_: Exception) { false }
+            }
             if (upcomingItems.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     PremiumEmptyState(

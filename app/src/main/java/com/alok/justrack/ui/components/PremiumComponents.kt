@@ -201,9 +201,15 @@ private fun RichDirectorText(label: String, names: List<String>) {
 fun ActionButtons(
     isWatchlisted: Boolean,
     isWatched: Boolean,
+    releaseDate: String = "",
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit
 ) {
+    val isReleased = try {
+        val today = java.time.LocalDate.now()
+        java.time.LocalDate.parse(releaseDate).isBefore(today) || java.time.LocalDate.parse(releaseDate).isEqual(today)
+    } catch (_: Exception) { true }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -252,14 +258,17 @@ fun ActionButtons(
         }
 
         Button(
-            onClick = onWatchedToggle,
+            onClick = { if (isReleased) onWatchedToggle() },
+            enabled = isReleased,
             modifier = Modifier
                 .weight(1f)
                 .height(42.dp),
             shape = RoundedCornerShape(21.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = watchedColor,
-                contentColor = watchedContent
+                containerColor = if (isReleased) watchedColor else SurfaceColor,
+                contentColor = if (isReleased) watchedContent else TextSecondary.copy(alpha = 0.5f),
+                disabledContainerColor = SurfaceColor,
+                disabledContentColor = TextSecondary.copy(alpha = 0.5f)
             ),
             border = if (isWatched) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
             contentPadding = PaddingValues(0.dp)
@@ -271,7 +280,7 @@ fun ActionButtons(
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                if (isWatched) "Watched" else "Mark Watched",
+                if (!isReleased) "Upcoming" else if (isWatched) "Watched" else "Mark Watched",
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp
             )

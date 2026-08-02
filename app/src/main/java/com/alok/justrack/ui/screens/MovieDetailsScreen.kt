@@ -175,6 +175,7 @@ fun MovieDetailsScreen(
                 ActionButtons(
                     isWatchlisted = isWatchlisted,
                     isWatched = isWatched,
+                    releaseDate = movie.releaseDate,
                     onWatchlistToggle = onWatchlistToggle,
                     onWatchedToggle = onWatchedToggle
                 )
