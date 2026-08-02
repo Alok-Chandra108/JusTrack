@@ -122,7 +122,7 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     lazyGridItems(movies, key = { it.id }) { item ->
-                        PosterCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
+                        PosterOnlyCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
                     }
                 }
             }
@@ -168,105 +168,6 @@ private fun MovieUpcomingContent(uiState: WatchlistUiState, navController: NavCo
     }
 }
 
-// ─────────────────────────────────────────────
-// EXPLORE SCREEN
-// ─────────────────────────────────────────────
-@Composable
-fun ExploreScreen(
-    navController: NavController,
-    viewModel: SearchViewModel = hiltViewModel()
-) {
-    val query by viewModel.query.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
-        TextField(
-            value = query,
-            onValueChange = { viewModel.onQueryChange(it) },
-            placeholder = { Text("Search movies, shows...", color = TextSecondary) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .height(52.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = SurfaceColor,
-                unfocusedContainerColor = SurfaceColor,
-                disabledContainerColor = SurfaceColor,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = AccentPrimary,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
-            ),
-            shape = RoundedCornerShape(26.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = TextSecondary) },
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.onQueryChange("") }) {
-                        Icon(Icons.Rounded.Close, contentDescription = null, tint = TextSecondary)
-                    }
-                }
-            }
-        )
-
-        when (val state = uiState) {
-            is SearchUiState.Idle -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    PremiumEmptyState(
-                        title = "Discover Something New",
-                        subtitle = "Search for millions of movies and TV shows from around the world.",
-                        buttonLabel = "Popular",
-                        onClick = { viewModel.onQueryChange("popular") },
-                        icon = Icons.Rounded.Explore
-                    )
-                }
-            }
-            is SearchUiState.Loading -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(5) { SkeletonBox(modifier = Modifier.fillMaxWidth().height(100.dp), cornerRadius = 12) }
-                }
-            }
-            is SearchUiState.Success -> {
-                val items = state.items
-                if (items.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No results found", color = TextSecondary, fontSize = 15.sp)
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        lazyItems(items, key = { it.id }) { item ->
-                            ListMediaCard(
-                                item = item,
-                                onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
-                            )
-                        }
-                    }
-                }
-            }
-            is SearchUiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
-    }
-}
 
 // ─────────────────────────────────────────────
 // PROFILE SCREEN

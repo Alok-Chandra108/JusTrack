@@ -9,6 +9,9 @@ interface WatchlistDao {
     @Query("SELECT * FROM watchlist ORDER BY addedAt DESC")
     fun getAllFlow(): Flow<List<WatchlistEntity>>
 
+    @Query("SELECT * FROM watchlist ORDER BY addedAt DESC")
+    suspend fun getAllOnce(): List<WatchlistEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: WatchlistEntity)
 
@@ -17,6 +20,9 @@ interface WatchlistDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM watchlist WHERE id = :id LIMIT 1)")
     suspend fun exists(id: String): Boolean
+
+    @Query("SELECT * FROM watchlist WHERE id = :id LIMIT 1")
+    suspend fun getEntityById(id: String): WatchlistEntity?
 
     @Query("SELECT isWatched FROM watchlist WHERE id = :id")
     suspend fun getWatchedStatus(id: String): Boolean?

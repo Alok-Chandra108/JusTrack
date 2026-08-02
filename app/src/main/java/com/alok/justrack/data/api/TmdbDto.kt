@@ -85,3 +85,12 @@ data class TmdbImageDto(
     @SerializedName("width") val width: Int?,
     @SerializedName("height") val height: Int?
 )
+
+data class TmdbGenreResponse(
+    @SerializedName("genres") val genres: List<TmdbGenreDto>
+)
+
+data class TmdbGenreDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String
+)

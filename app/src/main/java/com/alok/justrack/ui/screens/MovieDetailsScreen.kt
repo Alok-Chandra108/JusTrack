@@ -27,7 +27,7 @@ fun DetailScreen(
     viewModel: DetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val isWatchlisted by viewModel.isWatchlisted.collectAsState()
+    val isInWatchlist by viewModel.isInWatchlist.collectAsState()
     val isWatched by viewModel.isWatched.collectAsState()
     val isFavourite by viewModel.isFavourite.collectAsState()
     val lists by viewModel.lists.collectAsState()
@@ -55,7 +55,7 @@ fun DetailScreen(
         is DetailUiState.Success -> {
             MovieDetailsScreen(
                 movie = state.item,
-                isWatchlisted = isWatchlisted,
+                isInWatchlist = isInWatchlist,
                 isWatched = isWatched,
                 onBackClick = { navController.popBackStack() },
                 onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
@@ -137,7 +137,7 @@ fun DetailScreen(
 @Composable
 fun MovieDetailsScreen(
     movie: MovieDetails,
-    isWatchlisted: Boolean,
+    isInWatchlist: Boolean,
     isWatched: Boolean,
     onBackClick: () -> Unit,
     onWatchlistToggle: () -> Unit,
@@ -173,7 +173,7 @@ fun MovieDetailsScreen(
                 PosterInfoRow(movie = movie)
                 Spacer(modifier = Modifier.height(16.dp))
                 ActionButtons(
-                    isWatchlisted = isWatchlisted,
+                    isInWatchlist = isInWatchlist,
                     isWatched = isWatched,
                     releaseDate = movie.releaseDate,
                     onWatchlistToggle = onWatchlistToggle,

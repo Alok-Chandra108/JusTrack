@@ -1,0 +1,11 @@
+- [x] Setup API Desugaring
+    - [x] Add `desugar_jdk_libs` to `libs.versions.toml`
+    - [x] Update `app/build.gradle.kts` to enable desugaring
+- [x] Fix `PremiumComponents.kt`
+    - [x] Remove unused imports
+    - [x] Fix `PremiumEmptyState` modifier parameter order
+    - [x] Rename `isWatchlisted` to `isInWatchlist` in `ActionButtons`
+- [x] Update usages for rename
+    - [x] Update `MovieDetailsScreen.kt`
+    - [x] Update `DetailViewModel.kt`
+- [ ] Verify build and functionality

@@ -27,8 +27,6 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.ExpandLess
-import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.*
@@ -49,7 +47,6 @@ import coil.compose.AsyncImage
 import com.alok.justrack.data.model.CastMember
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MovieDetails
-import com.alok.justrack.data.model.RatingSource
 import com.alok.justrack.ui.theme.*
 import java.util.Locale
 
@@ -199,7 +196,7 @@ private fun RichDirectorText(label: String, names: List<String>) {
 
 @Composable
 fun ActionButtons(
-    isWatchlisted: Boolean,
+    isInWatchlist: Boolean,
     isWatched: Boolean,
     releaseDate: String = "",
     onWatchlistToggle: () -> Unit,
@@ -215,11 +212,11 @@ fun ActionButtons(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         val watchlistColor by animateColorAsState(
-            if (isWatchlisted) AccentPrimary else Color.Transparent,
+            if (isInWatchlist) AccentPrimary else Color.Transparent,
             label = "watchlistColor"
         )
         val watchlistContent by animateColorAsState(
-            if (isWatchlisted) Color.White else TextSecondary,
+            if (isInWatchlist) Color.White else TextSecondary,
             label = "watchlistContent"
         )
         val watchedColor by animateColorAsState(
@@ -241,17 +238,17 @@ fun ActionButtons(
                 containerColor = watchlistColor,
                 contentColor = watchlistContent
             ),
-            border = if (isWatchlisted) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
+            border = if (isInWatchlist) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
-                if (isWatchlisted) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                if (isInWatchlist) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                if (isWatchlisted) "In Watchlist" else "Watchlist",
+                if (isInWatchlist) "In Watchlist" else "Watchlist",
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp
             )
@@ -538,6 +535,34 @@ fun PosterCard(
 }
 
 @Composable
+fun PosterOnlyCard(
+    item: MediaItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { isVisible = true }
+
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(tween(600)) + scaleIn(tween(600, easing = EaseOutBack), initialScale = 0.9f),
+        modifier = modifier
+    ) {
+        AsyncImage(
+            model = item.posterPath,
+            contentDescription = item.title,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .aspectRatio(2f / 3f)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onClick() }
+                .background(SurfaceColor)
+        )
+    }
+}
+
+@Composable
 fun SectionHeader(
     title: String,
     onViewAllClick: () -> Unit,
@@ -678,9 +703,9 @@ fun PremiumEmptyState(
     subtitle: String,
     buttonLabel: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    illustration: @Composable (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    illustration: @Composable (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier

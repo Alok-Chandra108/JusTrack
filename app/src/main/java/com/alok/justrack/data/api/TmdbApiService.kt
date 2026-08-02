@@ -31,4 +31,38 @@ interface TmdbApiService {
 
     @GET("3/tv/{tv_id}/images")
     suspend fun getTvImages(@Path("tv_id") id: String): TmdbImagesResponse
+
+    @GET("3/genre/movie/list")
+    suspend fun getMovieGenres(): TmdbGenreResponse
+
+    @GET("3/genre/tv/list")
+    suspend fun getTvGenres(): TmdbGenreResponse
+
+    @GET("3/movie/popular")
+    suspend fun getPopularMovies(): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/tv/popular")
+    suspend fun getPopularTv(): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/movie/top_rated")
+    suspend fun getTopRatedMovies(): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/tv/top_rated")
+    suspend fun getTopRatedTv(): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/movie/upcoming")
+    suspend fun getUpcomingMovies(): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/tv/on_the_air")
+    suspend fun getOnTheAirTv(): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/discover/movie")
+    suspend fun discoverMoviesByGenre(
+        @Query("with_genres") genreId: Int
+    ): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/discover/tv")
+    suspend fun discoverTvByGenre(
+        @Query("with_genres") genreId: Int
+    ): TmdbPaginatedResponse<TmdbMediaDto>
 }

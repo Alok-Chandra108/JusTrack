@@ -22,8 +22,8 @@ class DetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
     val uiState: StateFlow<DetailUiState> = _uiState
 
-    private val _isWatchlisted = MutableStateFlow(false)
-    val isWatchlisted: StateFlow<Boolean> = _isWatchlisted
+    private val _isInWatchlist = MutableStateFlow(false)
+    val isInWatchlist: StateFlow<Boolean> = _isInWatchlist
 
     private val _isWatched = MutableStateFlow(false)
     val isWatched: StateFlow<Boolean> = _isWatched
@@ -68,7 +68,7 @@ class DetailViewModel @Inject constructor(
                     )
 
                     _uiState.value = DetailUiState.Success(finalItem)
-                    _isWatchlisted.value = repository.isInWatchlist(id)
+                    _isInWatchlist.value = repository.isInWatchlist(id)
                     _isWatched.value = repository.isWatched(id)
                     _isFavourite.value = repository.isFavourite(id, currentMediaType)
                     _mediaLists.value = repository.getListsForMedia(id, currentMediaType)
@@ -93,9 +93,9 @@ class DetailViewModel @Inject constructor(
 
     fun toggleWatchlist(movie: MovieDetails) {
         viewModelScope.launch {
-            if (_isWatchlisted.value) {
+            if (_isInWatchlist.value) {
                 repository.removeFromWatchlist(movie.id)
-                _isWatchlisted.value = false
+                _isInWatchlist.value = false
             } else {
                 val item = MediaItem(
                     id = movie.id,
@@ -108,7 +108,7 @@ class DetailViewModel @Inject constructor(
                     mediaType = movie.mediaType
                 )
                 repository.addToWatchlist(item)
-                _isWatchlisted.value = true
+                _isInWatchlist.value = true
             }
         }
     }
