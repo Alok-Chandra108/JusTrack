@@ -16,7 +16,7 @@ interface MediaRepository {
     suspend fun addToWatchlist(item: MediaItem)
     suspend fun removeFromWatchlist(id: String)
     suspend fun isInWatchlist(id: String): Boolean
-    suspend fun setWatched(id: String, watched: Boolean)
+    suspend fun setWatched(item: MediaItem, watched: Boolean)
     suspend fun isWatched(id: String): Boolean
 
     // Favourites

@@ -129,17 +129,17 @@ class DetailViewModel @Inject constructor(
             val currentWatched = _isWatched.value
             val markingAsWatched = !currentWatched
 
-            if (markingAsWatched) {
-                // Moving to watched history removes from wishlist
-                _currentMediaItem.value?.let { item ->
-                    repository.setWatched(id, true)
+            _currentMediaItem.value?.let { item ->
+                if (markingAsWatched) {
+                    // Moving to watched history removes from wishlist
+                    repository.setWatched(item, true)
                     _isWatched.value = true
                     _isInWatchlist.value = false
+                } else {
+                    // Unmarking from watched
+                    repository.setWatched(item, false)
+                    _isWatched.value = false
                 }
-            } else {
-                // Unmarking from watched
-                repository.setWatched(id, false)
-                _isWatched.value = false
             }
         }
     }

@@ -79,13 +79,13 @@ class SupabaseMediaRepository @Inject constructor(
         }
     }
 
-    override suspend fun setWatched(id: String, watched: Boolean) {
+    override suspend fun setWatched(item: MediaItem, watched: Boolean) {
         try {
             postgrest.update({
                 set("is_watched", watched)
             }) {
                 filter {
-                    eq("id", id)
+                    eq("id", item.id)
                 }
             }
         } catch (e: Exception) {

@@ -65,19 +65,22 @@ class TmdbMediaRepository @Inject constructor(
         return watchlistDao.getWatchlistStatus(id) ?: false
     }
 
-    override suspend fun setWatched(id: String, watched: Boolean) {
-        val existing = watchlistDao.getEntityById(id)
+    override suspend fun setWatched(item: MediaItem, watched: Boolean) {
+        val existing = watchlistDao.getEntityById(item.id)
         if (existing != null) {
-            watchlistDao.updateWatched(id, watched)
+            watchlistDao.updateWatched(item.id, watched)
             if (watched) {
                 // Moving to watched history removes from wishlist
-                watchlistDao.updateInWatchlist(id, false)
+                watchlistDao.updateInWatchlist(item.id, false)
             } else {
                 // If unmarking from watched and not in watchlist, delete
                 if (!existing.inWatchlist) {
-                    watchlistDao.deleteById(id)
+                    watchlistDao.deleteById(item.id)
                 }
             }
+        } else if (watched) {
+            // New item being marked as watched - insert directly
+            watchlistDao.insert(item.toEntity().copy(isWatched = true, inWatchlist = false))
         }
     }
 
