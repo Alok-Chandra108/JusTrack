@@ -7,10 +7,7 @@ import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,8 +16,22 @@ class DetailViewModel @Inject constructor(
     private val repository: MediaRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
-    val uiState: StateFlow<DetailUiState> = _uiState
+    private val _rawDetails = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
+    
+    // Watchlist flow to track watched IDs for filtering recommendations
+    private val _watchedIds = repository.getWatchlistFlow()
+        .map { list -> list.filter { it.isWatched }.map { it.id }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    // Reactive UI state that filters recommendations based on watched status
+    val uiState: StateFlow<DetailUiState> = combine(_rawDetails, _watchedIds) { state, watched ->
+        if (state is DetailUiState.Success) {
+            val filteredRecs = state.item.recommendations.filter { it.id !in watched }
+            state.copy(item = state.item.copy(recommendations = filteredRecs))
+        } else {
+            state
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailUiState.Loading)
 
     private val _isInWatchlist = MutableStateFlow(false)
     val isInWatchlist: StateFlow<Boolean> = _isInWatchlist
@@ -54,11 +65,10 @@ class DetailViewModel @Inject constructor(
         currentMediaType = try { MediaType.valueOf(mediaType) } catch (_: Exception) { MediaType.MOVIE }
 
         viewModelScope.launch {
-            _uiState.value = DetailUiState.Loading
+            _rawDetails.value = DetailUiState.Loading
             try {
                 val item = repository.getMediaDetail(id, currentMediaType)
                 if (item != null) {
-                    // Check for custom poster/backdrop saved in DB
                     val customPoster = repository.getCustomPoster(id)
                     val customBackdrop = repository.getCustomBackdrop(id)
 
@@ -67,7 +77,7 @@ class DetailViewModel @Inject constructor(
                         backdropPath = customBackdrop ?: item.backdropPath
                     )
 
-                    _uiState.value = DetailUiState.Success(finalItem)
+                    _rawDetails.value = DetailUiState.Success(finalItem)
                     _isInWatchlist.value = repository.isInWatchlist(id)
                     _isWatched.value = repository.isWatched(id)
                     _isFavourite.value = repository.isFavourite(id, currentMediaType)
@@ -83,10 +93,10 @@ class DetailViewModel @Inject constructor(
                         mediaType = finalItem.mediaType
                     )
                 } else {
-                    _uiState.value = DetailUiState.Error("Media not found")
+                    _rawDetails.value = DetailUiState.Error("Media not found")
                 }
             } catch (e: Exception) {
-                _uiState.value = DetailUiState.Error(e.message ?: "Unknown error")
+                _rawDetails.value = DetailUiState.Error(e.message ?: "Unknown error")
             }
         }
     }
@@ -119,7 +129,6 @@ class DetailViewModel @Inject constructor(
             val isCurrentlyInWatchlist = _isInWatchlist.value
 
             if (!currentWatched && !isCurrentlyInWatchlist) {
-                // If marking as watched and not in watchlist, add it to watchlist first
                 _currentMediaItem.value?.let { item ->
                     repository.addToWatchlist(item.copy(isWatched = true))
                     _isInWatchlist.value = true
@@ -173,9 +182,9 @@ class DetailViewModel @Inject constructor(
     fun changePoster(url: String) {
         viewModelScope.launch {
             repository.saveCustomPoster(currentId, url)
-            val current = (_uiState.value as? DetailUiState.Success)?.item ?: return@launch
+            val current = (_rawDetails.value as? DetailUiState.Success)?.item ?: return@launch
             val updated = current.copy(posterPath = url)
-            _uiState.value = DetailUiState.Success(updated)
+            _rawDetails.value = DetailUiState.Success(updated)
             _currentMediaItem.value = _currentMediaItem.value?.copy(posterPath = url)
         }
     }
@@ -183,9 +192,9 @@ class DetailViewModel @Inject constructor(
     fun changeBackdrop(url: String) {
         viewModelScope.launch {
             repository.saveCustomBackdrop(currentId, url)
-            val current = (_uiState.value as? DetailUiState.Success)?.item ?: return@launch
+            val current = (_rawDetails.value as? DetailUiState.Success)?.item ?: return@launch
             val updated = current.copy(backdropPath = url)
-            _uiState.value = DetailUiState.Success(updated)
+            _rawDetails.value = DetailUiState.Success(updated)
             _currentMediaItem.value = _currentMediaItem.value?.copy(backdropPath = url)
         }
     }
