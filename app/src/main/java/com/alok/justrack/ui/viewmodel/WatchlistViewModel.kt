@@ -62,20 +62,20 @@ class WatchlistViewModel @Inject constructor(
 
     // Watched Content
     val watchedMovies: StateFlow<List<MediaItem>> = watchlistItems.map { items ->
-        items.filter { it.mediaType == MediaType.MOVIE && it.isWatched }.reversed()
+        items.filter { it.mediaType == MediaType.MOVIE && it.isWatched }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val watchedShows: StateFlow<List<MediaItem>> = watchlistItems.map { items ->
-        items.filter { it.mediaType == MediaType.TV && it.isWatched }.reversed()
+        items.filter { it.mediaType == MediaType.TV && it.isWatched }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Favorites by type
     val favoriteMovies: StateFlow<List<MediaItem>> = favorites.map { items ->
-        items.filter { it.mediaType == MediaType.MOVIE }.reversed()
+        items.filter { it.mediaType == MediaType.MOVIE }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val favoriteShows: StateFlow<List<MediaItem>> = favorites.map { items ->
-        items.filter { it.mediaType == MediaType.TV }.reversed()
+        items.filter { it.mediaType == MediaType.TV }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // User‑created lists

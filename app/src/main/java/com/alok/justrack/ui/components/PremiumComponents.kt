@@ -646,7 +646,7 @@ fun HorizontalSection(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 state = rememberLazyListState()
             ) {
-                items(items.take(15), key = { it.id }) { item ->
+                items(items.take(7), key = { it.id }) { item ->
                     PosterCard(item = item, onClick = { onItemClick(item) })
                 }
             }
