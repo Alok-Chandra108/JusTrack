@@ -40,19 +40,45 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     override suspend fun addToWatchlist(item: MediaItem) {
-        watchlistDao.insert(item.toEntity())
+        val existing = watchlistDao.getEntityById(item.id)
+        if (existing == null) {
+            watchlistDao.insert(item.toEntity().copy(inWatchlist = true))
+        } else {
+            watchlistDao.updateInWatchlist(item.id, true)
+        }
     }
 
     override suspend fun removeFromWatchlist(id: String) {
-        watchlistDao.deleteById(id)
+        val existing = watchlistDao.getEntityById(id)
+        if (existing != null) {
+            if (existing.isWatched) {
+                // If it's watched, just unmark from watchlist
+                watchlistDao.updateInWatchlist(id, false)
+            } else {
+                // If not watched, delete completely
+                watchlistDao.deleteById(id)
+            }
+        }
     }
 
     override suspend fun isInWatchlist(id: String): Boolean {
-        return watchlistDao.exists(id)
+        return watchlistDao.getWatchlistStatus(id) ?: false
     }
 
     override suspend fun setWatched(id: String, watched: Boolean) {
-        watchlistDao.updateWatched(id, watched)
+        val existing = watchlistDao.getEntityById(id)
+        if (existing != null) {
+            watchlistDao.updateWatched(id, watched)
+            if (watched) {
+                // Moving to watched history removes from wishlist
+                watchlistDao.updateInWatchlist(id, false)
+            } else {
+                // If unmarking from watched and not in watchlist, delete
+                if (!existing.inWatchlist) {
+                    watchlistDao.deleteById(id)
+                }
+            }
+        }
     }
 
     override suspend fun isWatched(id: String): Boolean {
@@ -280,7 +306,8 @@ class TmdbMediaRepository @Inject constructor(
         rating = rating,
         releaseDate = releaseDate,
         mediaType = MediaType.valueOf(mediaType),
-        isWatched = isWatched
+        isWatched = isWatched,
+        inWatchlist = inWatchlist
     )
 
     private fun MediaItem.toEntity(): WatchlistEntity = WatchlistEntity(
@@ -292,7 +319,8 @@ class TmdbMediaRepository @Inject constructor(
         rating = rating,
         releaseDate = releaseDate,
         mediaType = mediaType.name,
-        isWatched = isWatched
+        isWatched = isWatched,
+        inWatchlist = inWatchlist
     )
 
     private fun FavouriteEntity.toMediaItem(): MediaItem = MediaItem(

@@ -9,7 +9,8 @@ data class MediaItem(
     val rating: Double,
     val releaseDate: String,
     val mediaType: MediaType = MediaType.MOVIE,
-    val isWatched: Boolean = false
+    val isWatched: Boolean = false,
+    val inWatchlist: Boolean = false
 )
 
 enum class MediaType {

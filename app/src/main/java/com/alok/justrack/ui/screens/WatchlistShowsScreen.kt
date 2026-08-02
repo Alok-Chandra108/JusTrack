@@ -127,7 +127,7 @@ private fun WatchlistTabContent(
             }
         }
         is WatchlistUiState.Success -> {
-            val tvShows = uiState.items.filter { it.mediaType == com.alok.justrack.data.model.MediaType.TV }
+            val tvShows = uiState.items.filter { it.mediaType == com.alok.justrack.data.model.MediaType.TV && it.inWatchlist }
             if (tvShows.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     PremiumEmptyState(
@@ -178,7 +178,7 @@ private fun UpcomingTabContent(
         is WatchlistUiState.Success -> {
             val today = java.time.LocalDate.now()
             val upcomingItems = uiState.items.filter {
-                it.mediaType == MediaType.TV && it.releaseDate.isNotBlank() && try {
+                it.mediaType == MediaType.TV && it.inWatchlist && it.releaseDate.isNotBlank() && try {
                     java.time.LocalDate.parse(it.releaseDate).isAfter(today)
                 } catch (_: Exception) { false }
             }

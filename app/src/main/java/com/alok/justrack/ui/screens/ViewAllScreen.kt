@@ -38,6 +38,8 @@ fun ViewAllScreen(
         when (type) {
             "movie" -> watchlistItems.filter { it.mediaType == MediaType.MOVIE && it.isWatched }
             "tv" -> watchlistItems.filter { it.mediaType == MediaType.TV && it.isWatched }
+            "watchlist_movie" -> watchlistItems.filter { it.mediaType == MediaType.MOVIE && it.inWatchlist }
+            "watchlist_tv" -> watchlistItems.filter { it.mediaType == MediaType.TV && it.inWatchlist }
             "favorite_movie" -> favorites.filter { it.mediaType == MediaType.MOVIE }
             "favorite_tv" -> favorites.filter { it.mediaType == MediaType.TV }
             "list" -> listsWithPreviews.find { it.first == title }?.second ?: emptyList()

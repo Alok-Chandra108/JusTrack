@@ -110,6 +110,11 @@ class WatchlistViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
+    // Watchlist items (explicitly filtered by inWatchlist flag)
+    val explicitWatchlistItems: StateFlow<List<MediaItem>> = watchlistItems.map { items ->
+        items.filter { it.inWatchlist }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
 }
 
 sealed class WatchlistUiState {

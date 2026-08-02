@@ -95,7 +95,7 @@ fun MoviesScreen(
 private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavController) {
     when (uiState) {
         is WatchlistUiState.Success -> {
-            val movies = uiState.items.filter { it.mediaType == MediaType.MOVIE }
+            val movies = uiState.items.filter { it.mediaType == MediaType.MOVIE && it.inWatchlist }
             if (movies.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     PremiumEmptyState(
@@ -129,7 +129,7 @@ private fun MovieUpcomingContent(uiState: WatchlistUiState, navController: NavCo
         is WatchlistUiState.Success -> {
             val today = java.time.LocalDate.now()
             val upcomingMovies = uiState.items.filter {
-                it.mediaType == MediaType.MOVIE && it.releaseDate.isNotBlank() && try {
+                it.mediaType == MediaType.MOVIE && it.inWatchlist && it.releaseDate.isNotBlank() && try {
                     java.time.LocalDate.parse(it.releaseDate).isAfter(today)
                 } catch (_: Exception) { false }
             }

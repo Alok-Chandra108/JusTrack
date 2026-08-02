@@ -115,7 +115,8 @@ class DetailViewModel @Inject constructor(
                     backdropPath = movie.backdropPath,
                     rating = movie.rating,
                     releaseDate = movie.releaseDate,
-                    mediaType = movie.mediaType
+                    mediaType = movie.mediaType,
+                    inWatchlist = true
                 )
                 repository.addToWatchlist(item)
                 _isInWatchlist.value = true
@@ -126,17 +127,20 @@ class DetailViewModel @Inject constructor(
     fun toggleWatched(id: String) {
         viewModelScope.launch {
             val currentWatched = _isWatched.value
-            val isCurrentlyInWatchlist = _isInWatchlist.value
+            val markingAsWatched = !currentWatched
 
-            if (!currentWatched && !isCurrentlyInWatchlist) {
+            if (markingAsWatched) {
+                // Moving to watched history removes from wishlist
                 _currentMediaItem.value?.let { item ->
-                    repository.addToWatchlist(item.copy(isWatched = true))
-                    _isInWatchlist.value = true
+                    repository.setWatched(id, true)
+                    _isWatched.value = true
+                    _isInWatchlist.value = false
                 }
             } else {
-                repository.setWatched(id, !currentWatched)
+                // Unmarking from watched
+                repository.setWatched(id, false)
+                _isWatched.value = false
             }
-            _isWatched.value = !currentWatched
         }
     }
 
