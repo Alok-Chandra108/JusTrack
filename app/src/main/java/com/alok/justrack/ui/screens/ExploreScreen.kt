@@ -3,7 +3,8 @@ package com.alok.justrack.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -22,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -509,6 +509,7 @@ private fun ExploreSectionLazy(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ExplorePosterCard(
     item: MediaItem,
@@ -519,14 +520,10 @@ private fun ExplorePosterCard(
         modifier = Modifier
             .width(120.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragStart = { _ -> onLongPress() },
-                    onDragEnd = { },
-                    onHorizontalDrag = { _, _ -> }
-                )
-            }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { onLongPress() }
+            )
     ) {
         AsyncImage(
             model = item.posterPath,
@@ -570,6 +567,7 @@ private fun ExplorePosterCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ExploreMediaCard(
     item: MediaItem,
@@ -581,14 +579,10 @@ private fun ExploreMediaCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(SurfaceColor)
-            .clickable { onClick() }
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragStart = { _ -> onLongPress(item) },
-                    onDragEnd = { },
-                    onHorizontalDrag = { _, _ -> }
-                )
-            }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { onLongPress(item) }
+            )
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
