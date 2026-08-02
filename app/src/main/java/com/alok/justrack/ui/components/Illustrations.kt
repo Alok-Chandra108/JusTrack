@@ -31,6 +31,7 @@ fun TvShowIllustration(modifier: Modifier = Modifier) {
     }
 }
 
+
 private fun DrawScope.drawClapperboard() {
     val w = size.width
     val h = size.height

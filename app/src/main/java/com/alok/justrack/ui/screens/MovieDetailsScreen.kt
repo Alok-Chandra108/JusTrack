@@ -49,7 +49,10 @@ fun DetailScreen(
                 isWatched = isWatched,
                 onBackClick = { navController.popBackStack() },
                 onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
-                onWatchedToggle = { viewModel.toggleWatched(state.item.id) }
+                onWatchedToggle = { viewModel.toggleWatched(state.item.id) },
+                onRecommendationClick = { item ->
+                    navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
+                }
             )
         }
         is DetailUiState.Error -> {
@@ -68,6 +71,7 @@ fun MovieDetailsScreen(
     onBackClick: () -> Unit,
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit,
+    onRecommendationClick: (MediaItem) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -107,7 +111,7 @@ fun MovieDetailsScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 CastSection(cast = movie.cast)
                 Spacer(modifier = Modifier.height(20.dp))
-                RecommendationsSection(recommendations = movie.recommendations)
+                RecommendationsSection(recommendations = movie.recommendations, onRecommendationClick = onRecommendationClick)
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -154,7 +158,8 @@ fun MovieDetailsPreview() {
             isWatched = false,
             onBackClick = {},
             onWatchlistToggle = {},
-            onWatchedToggle = {}
+            onWatchedToggle = {},
+            onRecommendationClick = {}
         )
     }
 }

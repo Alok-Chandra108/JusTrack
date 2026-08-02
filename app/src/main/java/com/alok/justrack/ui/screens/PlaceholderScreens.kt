@@ -219,7 +219,7 @@ fun ExploreScreen(
                 val items = state.items
                 if (items.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No results found", color = TextSecondary)
+                        Text("No results found", color = TextSecondary, fontSize = 15.sp)
                     }
                 } else {
                     LazyColumn(

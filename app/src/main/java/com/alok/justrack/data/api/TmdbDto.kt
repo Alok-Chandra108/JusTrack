@@ -25,7 +25,8 @@ data class TmdbMediaDto(
     @SerializedName("credits") val credits: TmdbCreditsDto?,
     @SerializedName("release_dates") val releaseDates: TmdbReleaseDatesResponse?,
     @SerializedName("content_ratings") val contentRatings: TmdbContentRatingsResponse?,
-    @SerializedName("created_by") val createdBy: List<TmdbCreatedByDto>?
+    @SerializedName("created_by") val createdBy: List<TmdbCreatedByDto>?,
+    @SerializedName("recommendations") val recommendations: TmdbPaginatedResponse<TmdbMediaDto>?
 )
 
 data class TmdbReleaseDatesResponse(

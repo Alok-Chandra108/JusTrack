@@ -172,7 +172,7 @@ class TmdbMediaRepository @Inject constructor(
             ratings = listOf(
                 RatingSource("TMDb", String.format("%.1f", voteAverage ?: 0.0))
             ),
-            recommendations = emptyList()
+            recommendations = recommendations?.results?.take(15)?.map { it.toMediaItem(type) } ?: emptyList()
         )
     }
 

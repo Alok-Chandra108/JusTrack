@@ -416,7 +416,7 @@ fun CastItem(member: CastMember) {
 }
 
 @Composable
-fun RecommendationsSection(recommendations: List<MediaItem>) {
+fun RecommendationsSection(recommendations: List<MediaItem>, onRecommendationClick: (MediaItem) -> Unit = {}) {
     Column {
         Text(
             text = "Recommendations",
@@ -433,15 +433,19 @@ fun RecommendationsSection(recommendations: List<MediaItem>) {
             contentPadding = PaddingValues(end = 10.dp)
         ) {
             items(recommendations) { item ->
-                RecommendationItem(item)
+                RecommendationItem(item, onClick = { onRecommendationClick(item) })
             }
         }
     }
 }
 
 @Composable
-fun RecommendationItem(item: MediaItem) {
-    Column(modifier = Modifier.width(100.dp)) {
+fun RecommendationItem(item: MediaItem, onClick: () -> Unit = {}) {
+    Column(
+        modifier = Modifier
+            .width(100.dp)
+            .clickable { onClick() }
+    ) {
         AsyncImage(
             model = item.posterPath,
             contentDescription = item.title,
