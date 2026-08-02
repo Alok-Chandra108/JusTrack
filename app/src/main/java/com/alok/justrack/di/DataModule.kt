@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.alok.justrack.BuildConfig
 import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.db.AppDatabase
+import com.alok.justrack.data.db.FavouriteDao
+import com.alok.justrack.data.db.ListDao
 import com.alok.justrack.data.db.WatchlistDao
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.data.repository.TmdbMediaRepository
@@ -40,12 +42,20 @@ abstract class DataModule {
                 context,
                 AppDatabase::class.java,
                 "justrack.db"
-            ).build()
+            ).fallbackToDestructiveMigration().build()
         }
 
         @Provides
         @Singleton
         fun provideWatchlistDao(db: AppDatabase): WatchlistDao = db.watchlistDao()
+
+        @Provides
+        @Singleton
+        fun provideFavouriteDao(db: AppDatabase): FavouriteDao = db.favouriteDao()
+
+        @Provides
+        @Singleton
+        fun provideListDao(db: AppDatabase): ListDao = db.listDao()
 
         @Provides
         @Singleton

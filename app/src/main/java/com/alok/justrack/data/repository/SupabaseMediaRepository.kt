@@ -9,6 +9,7 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -235,4 +236,48 @@ class SupabaseMediaRepository @Inject constructor(
         mediaType = mediaType.name,
         isWatched = isWatched
     )
+
+    // ---- Favourites (stub - not implemented for Supabase yet) ----
+
+    override fun getFavouritesFlow(): Flow<List<MediaItem>> = flow { emit(emptyList()) }
+    override fun getFavouritesByTypeFlow(mediaType: MediaType): Flow<List<MediaItem>> = flow { emit(emptyList()) }
+    override suspend fun toggleFavourite(item: MediaItem): Boolean = false
+    override suspend fun isFavourite(mediaId: String, mediaType: MediaType): Boolean = false
+
+    // ---- Custom Lists (stub - not implemented for Supabase yet) ----
+
+    override fun getListsFlow(): Flow<List<Pair<String, String>>> = flow { emit(emptyList()) }
+    override suspend fun createList(name: String) {}
+    override suspend fun deleteList(listId: String) {}
+    override suspend fun addToList(listId: String, item: MediaItem) {}
+    override suspend fun removeFromList(listId: String, mediaId: String, mediaType: MediaType) {}
+    override suspend fun isInList(listId: String, mediaId: String, mediaType: MediaType): Boolean = false
+    override suspend fun getListsForMedia(mediaId: String, mediaType: MediaType): List<String> = emptyList()
+    override fun getListItemsFlow(listId: String): Flow<List<MediaItem>> = flow { emit(emptyList()) }
+
+    // ---- TMDb Images ----
+
+    override suspend fun getMovieImages(id: String): Pair<List<String>, List<String>> {
+        return try {
+            val response = apiService.getMovieImages(id)
+            val posters = response.posters.map { "https://image.tmdb.org/t/p/w500${it.filePath}" }
+            val backdrops = response.backdrops.map { "https://image.tmdb.org/t/p/w780${it.filePath}" }
+            posters to backdrops
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList<String>() to emptyList()
+        }
+    }
+
+    override suspend fun getTvImages(id: String): Pair<List<String>, List<String>> {
+        return try {
+            val response = apiService.getTvImages(id)
+            val posters = response.posters.map { "https://image.tmdb.org/t/p/w500${it.filePath}" }
+            val backdrops = response.backdrops.map { "https://image.tmdb.org/t/p/w780${it.filePath}" }
+            posters to backdrops
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList<String>() to emptyList()
+        }
+    }
 }

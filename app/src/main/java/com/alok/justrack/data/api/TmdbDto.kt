@@ -73,3 +73,15 @@ data class TmdbCrewDto(
     @SerializedName("name") val name: String,
     @SerializedName("job") val job: String
 )
+
+data class TmdbImagesResponse(
+    @SerializedName("posters") val posters: List<TmdbImageDto>,
+    @SerializedName("backdrops") val backdrops: List<TmdbImageDto>
+)
+
+data class TmdbImageDto(
+    @SerializedName("file_path") val filePath: String,
+    @SerializedName("aspect_ratio") val aspectRatio: Double?,
+    @SerializedName("width") val width: Int?,
+    @SerializedName("height") val height: Int?
+)

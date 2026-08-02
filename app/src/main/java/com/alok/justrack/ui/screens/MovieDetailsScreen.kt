@@ -1,6 +1,7 @@
 package com.alok.justrack.ui.screens
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,16 @@ fun DetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isWatchlisted by viewModel.isWatchlisted.collectAsState()
     val isWatched by viewModel.isWatched.collectAsState()
+    val isFavourite by viewModel.isFavourite.collectAsState()
+    val lists by viewModel.lists.collectAsState()
+    val mediaLists by viewModel.mediaLists.collectAsState()
+    val posterImages by viewModel.posterImages.collectAsState()
+    val backdropImages by viewModel.backdropImages.collectAsState()
+
+    var showMoreMenu by remember { mutableStateOf(false) }
+    var showListPicker by remember { mutableStateOf(false) }
+    var showPosterPicker by remember { mutableStateOf(false) }
+    var showBackdropPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(id, mediaType) {
         viewModel.loadDetail(id, mediaType)
@@ -43,17 +54,85 @@ fun DetailScreen(
             }
         }
         is DetailUiState.Success -> {
-            MovieDetailsScreen(
-                movie = state.item,
-                isWatchlisted = isWatchlisted,
-                isWatched = isWatched,
-                onBackClick = { navController.popBackStack() },
-                onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
-                onWatchedToggle = { viewModel.toggleWatched(state.item.id) },
-                onRecommendationClick = { item ->
-                    navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
+            Box(modifier = Modifier.fillMaxSize()) {
+                MovieDetailsScreen(
+                    movie = state.item,
+                    isWatchlisted = isWatchlisted,
+                    isWatched = isWatched,
+                    onBackClick = { navController.popBackStack() },
+                    onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
+                    onWatchedToggle = { viewModel.toggleWatched(state.item.id) },
+                    onMoreClick = { showMoreMenu = true },
+                    onRecommendationClick = { item ->
+                        navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
+                    }
+                )
+
+                if (showMoreMenu) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { showMoreMenu = false },
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        Box(modifier = Modifier.padding(top = 50.dp, end = 8.dp)) {
+                            MoreOptionsDropdown(
+                                isFavourite = isFavourite,
+                                onDismiss = { showMoreMenu = false },
+                                onFavouriteClick = { viewModel.toggleFavourite() },
+                                onChangePosterClick = {
+                                    viewModel.loadImages()
+                                    showPosterPicker = true
+                                },
+                                onChangeBackdropClick = {
+                                    viewModel.loadImages()
+                                    showBackdropPicker = true
+                                },
+                                onAddToListClick = { showListPicker = true }
+                            )
+                        }
+                    }
                 }
-            )
+            }
+
+            if (showListPicker) {
+                ListPickerDialog(
+                    lists = lists,
+                    mediaListIds = mediaLists,
+                    onDismiss = { showListPicker = false },
+                    onListSelected = { listId ->
+                        if (listId in mediaLists) {
+                            viewModel.removeFromList(listId)
+                        } else {
+                            viewModel.addToList(listId)
+                        }
+                    },
+                    onCreateList = { name ->
+                        viewModel.createList(name)
+                    }
+                )
+            }
+
+            if (showPosterPicker && posterImages.isNotEmpty()) {
+                ImagePickerDialog(
+                    title = "Change Poster",
+                    images = posterImages,
+                    onDismiss = { showPosterPicker = false },
+                    onImageSelected = { url -> viewModel.changePoster(url) }
+                )
+            }
+
+            if (showBackdropPicker && backdropImages.isNotEmpty()) {
+                ImagePickerDialog(
+                    title = "Change Backdrop",
+                    images = backdropImages,
+                    onDismiss = { showBackdropPicker = false },
+                    onImageSelected = { url -> viewModel.changeBackdrop(url) }
+                )
+            }
         }
         is DetailUiState.Error -> {
             Box(modifier = Modifier.fillMaxSize().background(Background), contentAlignment = Alignment.Center) {
@@ -71,6 +150,7 @@ fun MovieDetailsScreen(
     onBackClick: () -> Unit,
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit,
+    onMoreClick: () -> Unit = {},
     onRecommendationClick: (MediaItem) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -90,7 +170,7 @@ fun MovieDetailsScreen(
                 backdropUrl = movie.backdropPath,
                 onBackClick = onBackClick,
                 onShareClick = {},
-                onMoreClick = {}
+                onMoreClick = onMoreClick
             )
 
             Column(

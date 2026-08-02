@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -817,7 +818,7 @@ fun SkeletonSection(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(5) {
-                Box(
+                 Box(
                     modifier = Modifier
                         .width(130.dp)
                         .height(190.dp)
@@ -827,4 +828,194 @@ fun SkeletonSection(modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+@Composable
+fun MoreOptionsDropdown(
+    isFavourite: Boolean,
+    onDismiss: () -> Unit,
+    onFavouriteClick: () -> Unit,
+    onChangePosterClick: () -> Unit,
+    onChangeBackdropClick: () -> Unit,
+    onAddToListClick: () -> Unit
+) {
+    DropdownMenu(
+        expanded = true,
+        onDismissRequest = onDismiss
+    ) {
+        DropdownMenuItem(
+            text = { Text(if (isFavourite) "Remove from Favourite" else "Add to Favourite") },
+            leadingIcon = {
+                Icon(
+                    Icons.Rounded.Favorite,
+                    contentDescription = null,
+                    tint = if (isFavourite) HeartRed else TextSecondary
+                )
+            },
+            onClick = {
+                onFavouriteClick()
+                onDismiss()
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Change Poster") },
+            leadingIcon = { Icon(Icons.Outlined.Image, contentDescription = null, tint = TextSecondary) },
+            onClick = {
+                onChangePosterClick()
+                onDismiss()
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Change Backdrop") },
+            leadingIcon = { Icon(Icons.Outlined.WbSunny, contentDescription = null, tint = TextSecondary) },
+            onClick = {
+                onChangeBackdropClick()
+                onDismiss()
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Add to List") },
+            leadingIcon = { Icon(Icons.Outlined.PlaylistAdd, contentDescription = null, tint = TextSecondary) },
+            onClick = {
+                onAddToListClick()
+                onDismiss()
+            }
+        )
+    }
+}
+
+@Composable
+fun ListPickerDialog(
+    lists: List<Pair<String, String>>,
+    mediaListIds: List<String>,
+    onDismiss: () -> Unit,
+    onListSelected: (String) -> Unit,
+    onCreateList: (String) -> Unit
+) {
+    var showCreateInput by remember { mutableStateOf(false) }
+    var newListName by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceColor,
+        title = { Text("Add to List", color = TextPrimary) },
+        text = {
+            Column {
+                lists.forEach { (id, name) ->
+                    val isInList = id in mediaListIds
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (isInList) {
+                                    onListSelected(id)
+                                } else {
+                                    onListSelected(id)
+                                }
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (isInList) Icons.Filled.CheckCircle else Icons.Outlined.AddCircle,
+                            contentDescription = null,
+                            tint = if (isInList) AccentPrimary else TextSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(name, color = TextPrimary, fontSize = 16.sp)
+                    }
+                }
+                if (lists.isEmpty() || showCreateInput) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newListName,
+                        onValueChange = { newListName = it },
+                        label = { Text("List name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = AccentPrimary,
+                            unfocusedBorderColor = TextSecondary
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            if (newListName.isNotBlank()) {
+                                onCreateList(newListName.trim())
+                                newListName = ""
+                                showCreateInput = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentPrimary)
+                    ) {
+                        Text("Create", color = TextPrimary)
+                    }
+                }
+                if (!showCreateInput) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showCreateInput = true }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.Add, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Create new list", color = AccentPrimary, fontSize = 16.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextSecondary)
+            }
+        }
+    )
+}
+
+@Composable
+fun ImagePickerDialog(
+    title: String,
+    images: List<String>,
+    onDismiss: () -> Unit,
+    onImageSelected: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceColor,
+        title = { Text(title, color = TextPrimary) },
+        text = {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(images) { url ->
+                    AsyncImage(
+                        model = url,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(120.dp, 180.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                onImageSelected(url)
+                                onDismiss()
+                            }
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextSecondary)
+            }
+        }
+    )
 }
