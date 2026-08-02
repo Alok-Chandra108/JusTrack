@@ -15,12 +15,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.ui.components.PosterCard
 import com.alok.justrack.ui.navigation.Screen
 import com.alok.justrack.ui.theme.Background
 import com.alok.justrack.ui.theme.TextPrimary
-import com.alok.justrack.ui.viewmodel.WatchlistUiState
 import com.alok.justrack.ui.viewmodel.WatchlistViewModel
 
 @Composable
@@ -30,18 +30,32 @@ fun ViewAllScreen(
     type: String,
     viewModel: WatchlistViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val watchlistItems by viewModel.watchlistItems.collectAsState()
+    val favorites by viewModel.favorites.collectAsState()
+    val listsWithPreviews by viewModel.listsWithPreviews.collectAsState()
+
+    val filteredItems = remember(type, title, watchlistItems, favorites, listsWithPreviews) {
+        when (type) {
+            "movie" -> watchlistItems.filter { it.mediaType == MediaType.MOVIE && it.isWatched }
+            "tv" -> watchlistItems.filter { it.mediaType == MediaType.TV && it.isWatched }
+            "favorite_movie" -> favorites.filter { it.mediaType == MediaType.MOVIE }
+            "favorite_tv" -> favorites.filter { it.mediaType == MediaType.TV }
+            "list" -> listsWithPreviews.find { it.first == title }?.second ?: emptyList()
+            else -> emptyList()
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Background)
+            .statusBarsPadding()
     ) {
-        // --- Custom Immersive Header ---
+        // --- Header ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 4.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { navController.popBackStack() }) {
@@ -54,50 +68,31 @@ fun ViewAllScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
         }
 
-        when (val state = uiState) {
-            is WatchlistUiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        if (filteredItems.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("No items found in $title", color = TextPrimary.copy(alpha = 0.6f))
                 }
             }
-            is WatchlistUiState.Success -> {
-                val filteredItems = when (type) {
-                    "movies" -> state.items.filter { it.mediaType == MediaType.MOVIE }
-                    "series" -> state.items.filter { it.mediaType == MediaType.TV }
-                    "watched" -> state.items.filter { it.isWatched }
-                    else -> state.items
-                }
-
-                if (filteredItems.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No items found", color = TextPrimary)
-                    }
-                } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(3),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(filteredItems, key = { it.id }) { item ->
-                            PosterCard(
-                                item = item,
-                                onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
-                            )
-                        }
-                    }
-                }
-            }
-            is WatchlistUiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(filteredItems, key = { it.id + it.mediaType.name }) { item ->
+                    PosterCard(
+                        item = item,
+                        onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
+                    )
                 }
             }
         }

@@ -52,13 +52,6 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     override suspend fun setWatched(id: String, watched: Boolean) {
-        if (watched) {
-            val item = watchlistDao.getEntityById(id)
-            if (item != null && item.mediaType == "MOVIE") {
-                watchlistDao.deleteById(id)
-                return
-            }
-        }
         watchlistDao.updateWatched(id, watched)
     }
 

@@ -116,7 +116,17 @@ class DetailViewModel @Inject constructor(
     fun toggleWatched(id: String) {
         viewModelScope.launch {
             val currentWatched = _isWatched.value
-            repository.setWatched(id, !currentWatched)
+            val isCurrentlyInWatchlist = _isInWatchlist.value
+
+            if (!currentWatched && !isCurrentlyInWatchlist) {
+                // If marking as watched and not in watchlist, add it to watchlist first
+                _currentMediaItem.value?.let { item ->
+                    repository.addToWatchlist(item.copy(isWatched = true))
+                    _isInWatchlist.value = true
+                }
+            } else {
+                repository.setWatched(id, !currentWatched)
+            }
             _isWatched.value = !currentWatched
         }
     }
