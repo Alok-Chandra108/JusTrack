@@ -280,4 +280,11 @@ class SupabaseMediaRepository @Inject constructor(
             emptyList<String>() to emptyList()
         }
     }
+
+    // ---- Custom poster/backdrop persistence (stub) ----
+
+    override suspend fun saveCustomPoster(id: String, url: String?) {}
+    override suspend fun saveCustomBackdrop(id: String, url: String?) {}
+    override suspend fun getCustomPoster(id: String): String? = null
+    override suspend fun getCustomBackdrop(id: String): String? = null
 }

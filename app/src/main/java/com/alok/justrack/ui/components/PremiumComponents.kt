@@ -9,14 +9,19 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
@@ -203,17 +208,17 @@ fun ActionButtons(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        val watchlistBg by animateColorAsState(
+        val watchlistColor by animateColorAsState(
             if (isWatchlisted) AccentPrimary else Color.Transparent,
-            label = "watchlistBg"
+            label = "watchlistColor"
         )
         val watchlistContent by animateColorAsState(
             if (isWatchlisted) Color.White else TextSecondary,
             label = "watchlistContent"
         )
-        val watchedBg by animateColorAsState(
+        val watchedColor by animateColorAsState(
             if (isWatched) AccentSecondary else Color.Transparent,
-            label = "watchedBg"
+            label = "watchedColor"
         )
         val watchedContent by animateColorAsState(
             if (isWatched) Color.White else TextSecondary,
@@ -227,7 +232,7 @@ fun ActionButtons(
                 .height(42.dp),
             shape = RoundedCornerShape(21.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = watchlistBg,
+                containerColor = watchlistColor,
                 contentColor = watchlistContent
             ),
             border = if (isWatchlisted) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
@@ -253,7 +258,7 @@ fun ActionButtons(
                 .height(42.dp),
             shape = RoundedCornerShape(21.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = watchedBg,
+                containerColor = watchedColor,
                 contentColor = watchedContent
             ),
             border = if (isWatched) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
@@ -310,34 +315,6 @@ fun CollapsibleDescription(description: String) {
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.align(Alignment.End)
             )
-        }
-    }
-}
-
-@Composable
-fun MinimalRatingsRow(ratings: List<RatingSource>) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        ratings.forEach { rating ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = rating.label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = rating.value,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = TextPrimary
-                )
-            }
         }
     }
 }
@@ -464,57 +441,6 @@ fun RecommendationItem(item: MediaItem, onClick: () -> Unit = {}) {
             color = TextPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-fun MovieDetailsBottomNavigation() {
-    NavigationBar(
-        containerColor = Background,
-        tonalElevation = 0.dp,
-        modifier = Modifier.height(80.dp)
-    ) {
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Icon(Icons.Outlined.Folder, contentDescription = null) },
-            label = { Text("Lists") },
-            colors = NavigationBarItemDefaults.colors(
-                unselectedIconColor = TextSecondary,
-                unselectedTextColor = TextSecondary
-            )
-        )
-        NavigationBarItem(
-            selected = true,
-            onClick = {},
-            icon = { Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = null) },
-            label = { Text("Reviews") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = TextPrimary,
-                selectedTextColor = TextPrimary,
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Icon(Icons.Outlined.Link, contentDescription = null) },
-            label = { Text("Links") },
-            colors = NavigationBarItemDefaults.colors(
-                unselectedIconColor = TextSecondary,
-                unselectedTextColor = TextSecondary
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Icon(Icons.Outlined.Person, contentDescription = null) },
-            label = { Text("Me") },
-            colors = NavigationBarItemDefaults.colors(
-                unselectedIconColor = TextSecondary,
-                unselectedTextColor = TextSecondary
-            )
         )
     }
 }
@@ -831,7 +757,7 @@ fun SkeletonSection(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun MoreOptionsDropdown(
+fun MoreOptionsBottomSheet(
     isFavourite: Boolean,
     onDismiss: () -> Unit,
     onFavouriteClick: () -> Unit,
@@ -839,48 +765,173 @@ fun MoreOptionsDropdown(
     onChangeBackdropClick: () -> Unit,
     onAddToListClick: () -> Unit
 ) {
-    DropdownMenu(
-        expanded = true,
-        onDismissRequest = onDismiss
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Background, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+            .padding(horizontal = 24.dp, vertical = 20.dp)
     ) {
-        DropdownMenuItem(
-            text = { Text(if (isFavourite) "Remove from Favourite" else "Add to Favourite") },
-            leadingIcon = {
-                Icon(
-                    Icons.Rounded.Favorite,
-                    contentDescription = null,
-                    tint = if (isFavourite) HeartRed else TextSecondary
-                )
-            },
-            onClick = {
-                onFavouriteClick()
-                onDismiss()
-            }
+        Box(
+            modifier = Modifier
+                .width(40.dp)
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(TextSecondary.copy(alpha = 0.3f))
+                .align(Alignment.CenterHorizontally)
         )
-        DropdownMenuItem(
-            text = { Text("Change Poster") },
-            leadingIcon = { Icon(Icons.Outlined.Image, contentDescription = null, tint = TextSecondary) },
-            onClick = {
-                onChangePosterClick()
-                onDismiss()
-            }
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "Options",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = TextPrimary
         )
-        DropdownMenuItem(
-            text = { Text("Change Backdrop") },
-            leadingIcon = { Icon(Icons.Outlined.WbSunny, contentDescription = null, tint = TextSecondary) },
-            onClick = {
-                onChangeBackdropClick()
-                onDismiss()
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Favourite card
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onFavouriteClick()
+                    onDismiss()
+                },
+            color = SurfaceColor,
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isFavourite) HeartRed.copy(alpha = 0.15f) else SurfaceColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Rounded.Favorite,
+                        contentDescription = null,
+                        tint = if (isFavourite) HeartRed else TextSecondary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isFavourite) "Remove from Favourite" else "Add to Favourite",
+                        color = TextPrimary,
+                        fontSize = 15.sp
+                    )
+                    Text(
+                        text = if (isFavourite) "Remove this from your favourites" else "Mark as your favourite",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
             }
-        )
-        DropdownMenuItem(
-            text = { Text("Add to List") },
-            leadingIcon = { Icon(Icons.Outlined.PlaylistAdd, contentDescription = null, tint = TextSecondary) },
-            onClick = {
-                onAddToListClick()
-                onDismiss()
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Change Poster card
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onChangePosterClick()
+                    onDismiss()
+                },
+            color = SurfaceColor,
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AccentPrimary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Outlined.Image, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(22.dp))
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Change Poster", color = TextPrimary, fontSize = 15.sp)
+                    Text("Choose from available posters", color = TextSecondary, fontSize = 12.sp)
+                }
             }
-        )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Change Backdrop card
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onChangeBackdropClick()
+                    onDismiss()
+                },
+            color = SurfaceColor,
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AccentSecondary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Outlined.WbSunny, contentDescription = null, tint = AccentSecondary, modifier = Modifier.size(22.dp))
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Change Backdrop", color = TextPrimary, fontSize = 15.sp)
+                    Text("Choose from available backdrops", color = TextSecondary, fontSize = 12.sp)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Add to List card
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onAddToListClick()
+                    onDismiss()
+                },
+            color = SurfaceColor,
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(WatchlistBlue.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, contentDescription = null, tint = WatchlistBlue, modifier = Modifier.size(22.dp))
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Add to List", color = TextPrimary, fontSize = 15.sp)
+                    Text("Add to a custom list", color = TextSecondary, fontSize = 12.sp)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -981,41 +1032,122 @@ fun ListPickerDialog(
 }
 
 @Composable
-fun ImagePickerDialog(
+fun FullScreenImagePicker(
     title: String,
     images: List<String>,
     onDismiss: () -> Unit,
     onImageSelected: (String) -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
-        title = { Text(title, color = TextPrimary) },
-        text = {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+    var selectedUrl by remember { mutableStateOf<String?>(null) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Background)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                }
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.width(48.dp))
+            }
+
+            // Image grid
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 100.dp)
             ) {
                 items(images) { url ->
-                    AsyncImage(
-                        model = url,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                    val isSelected = url == selectedUrl
+                    Box(
                         modifier = Modifier
-                            .size(120.dp, 180.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                onImageSelected(url)
-                                onDismiss()
+                            .aspectRatio(0.67f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = if (isSelected) AccentPrimary else Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable { selectedUrl = url }
+                    ) {
+                        AsyncImage(
+                            model = url,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        if (isSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(AccentPrimary.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Filled.CheckCircle,
+                                    contentDescription = "Selected",
+                                    tint = AccentPrimary,
+                                    modifier = Modifier.size(36.dp)
+                                )
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply button at bottom
+        if (selectedUrl != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Background),
+                            startY = 0f,
+                            endY = 80f
+                        )
+                    )
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp, top = 24.dp)
+            ) {
+                Button(
+                    onClick = {
+                        selectedUrl?.let { onImageSelected(it) }
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentPrimary),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(
+                        "Apply",
+                        color = TextPrimary,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        fontSize = 16.sp
                     )
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
-            }
         }
-    )
+    }
 }

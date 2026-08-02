@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.alok.justrack.BuildConfig
 import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.db.AppDatabase
+import com.alok.justrack.data.db.CustomImageDao
 import com.alok.justrack.data.db.FavouriteDao
 import com.alok.justrack.data.db.ListDao
 import com.alok.justrack.data.db.WatchlistDao
@@ -56,6 +57,10 @@ abstract class DataModule {
         @Provides
         @Singleton
         fun provideListDao(db: AppDatabase): ListDao = db.listDao()
+
+        @Provides
+        @Singleton
+        fun provideCustomImageDao(db: AppDatabase): CustomImageDao = db.customImageDao()
 
         @Provides
         @Singleton

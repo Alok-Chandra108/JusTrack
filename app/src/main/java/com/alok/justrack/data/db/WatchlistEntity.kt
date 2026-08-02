@@ -10,9 +10,11 @@ data class WatchlistEntity(
     val overview: String,
     val posterPath: String?,
     val backdropPath: String?,
+    val customPosterPath: String? = null,
+    val customBackdropPath: String? = null,
     val rating: Double,
     val releaseDate: String,
-    val mediaType: String, // Store enum name ("MOVIE" or "TV")
+    val mediaType: String,
     val addedAt: Long = System.currentTimeMillis(),
     val isWatched: Boolean = false
 )

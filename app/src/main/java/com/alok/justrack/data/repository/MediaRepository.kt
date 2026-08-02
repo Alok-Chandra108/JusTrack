@@ -38,4 +38,10 @@ interface MediaRepository {
     // TMDb images
     suspend fun getMovieImages(id: String): Pair<List<String>, List<String>>
     suspend fun getTvImages(id: String): Pair<List<String>, List<String>>
+
+    // Custom poster/backdrop persistence
+    suspend fun saveCustomPoster(id: String, url: String?)
+    suspend fun saveCustomBackdrop(id: String, url: String?)
+    suspend fun getCustomPoster(id: String): String?
+    suspend fun getCustomBackdrop(id: String): String?
 }

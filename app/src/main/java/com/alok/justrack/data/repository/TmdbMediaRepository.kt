@@ -15,7 +15,8 @@ class TmdbMediaRepository @Inject constructor(
     private val apiService: TmdbApiService,
     private val watchlistDao: WatchlistDao,
     private val favouriteDao: FavouriteDao,
-    private val listDao: ListDao
+    private val listDao: ListDao,
+    private val customImageDao: CustomImageDao
 ) : MediaRepository {
 
     override suspend fun getTrending(): List<MediaItem> {
@@ -334,4 +335,31 @@ class TmdbMediaRepository @Inject constructor(
         posterPath = posterPath,
         backdropPath = backdropPath
     )
+
+    // ---- Custom poster/backdrop persistence ----
+
+    override suspend fun saveCustomPoster(id: String, url: String?) {
+        val existing = customImageDao.getBackdrop(id)
+        if (customImageDao.exists(id)) {
+            customImageDao.updatePoster(id, url)
+        } else {
+            customImageDao.upsert(CustomImageEntity(mediaId = id, mediaType = "", customPosterPath = url))
+        }
+    }
+
+    override suspend fun saveCustomBackdrop(id: String, url: String?) {
+        if (customImageDao.exists(id)) {
+            customImageDao.updateBackdrop(id, url)
+        } else {
+            customImageDao.upsert(CustomImageEntity(mediaId = id, mediaType = "", customBackdropPath = url))
+        }
+    }
+
+    override suspend fun getCustomPoster(id: String): String? {
+        return customImageDao.getPoster(id)
+    }
+
+    override suspend fun getCustomBackdrop(id: String): String? {
+        return customImageDao.getBackdrop(id)
+    }
 }

@@ -34,7 +34,6 @@ import com.alok.justrack.ui.components.*
 import com.alok.justrack.ui.navigation.Screen
 import com.alok.justrack.ui.theme.*
 import com.alok.justrack.ui.viewmodel.*
-import java.util.Locale
 
 // ─────────────────────────────────────────────
 // MOVIES SCREEN

@@ -58,20 +58,29 @@ class DetailViewModel @Inject constructor(
             try {
                 val item = repository.getMediaDetail(id, currentMediaType)
                 if (item != null) {
-                    _uiState.value = DetailUiState.Success(item)
+                    // Check for custom poster/backdrop saved in DB
+                    val customPoster = repository.getCustomPoster(id)
+                    val customBackdrop = repository.getCustomBackdrop(id)
+
+                    val finalItem = item.copy(
+                        posterPath = customPoster ?: item.posterPath,
+                        backdropPath = customBackdrop ?: item.backdropPath
+                    )
+
+                    _uiState.value = DetailUiState.Success(finalItem)
                     _isWatchlisted.value = repository.isInWatchlist(id)
                     _isWatched.value = repository.isWatched(id)
                     _isFavourite.value = repository.isFavourite(id, currentMediaType)
                     _mediaLists.value = repository.getListsForMedia(id, currentMediaType)
                     _currentMediaItem.value = MediaItem(
-                        id = item.id,
-                        title = item.title,
-                        overview = item.overview,
-                        posterPath = item.posterPath,
-                        backdropPath = item.backdropPath,
-                        rating = item.rating,
-                        releaseDate = item.releaseDate,
-                        mediaType = item.mediaType
+                        id = finalItem.id,
+                        title = finalItem.title,
+                        overview = finalItem.overview,
+                        posterPath = finalItem.posterPath,
+                        backdropPath = finalItem.backdropPath,
+                        rating = finalItem.rating,
+                        releaseDate = finalItem.releaseDate,
+                        mediaType = finalItem.mediaType
                     )
                 } else {
                     _uiState.value = DetailUiState.Error("Media not found")
@@ -152,17 +161,23 @@ class DetailViewModel @Inject constructor(
     }
 
     fun changePoster(url: String) {
-        val current = (_uiState.value as? DetailUiState.Success)?.item ?: return
-        val updated = current.copy(posterPath = url)
-        _uiState.value = DetailUiState.Success(updated)
-        _currentMediaItem.value = _currentMediaItem.value?.copy(posterPath = url)
+        viewModelScope.launch {
+            repository.saveCustomPoster(currentId, url)
+            val current = (_uiState.value as? DetailUiState.Success)?.item ?: return@launch
+            val updated = current.copy(posterPath = url)
+            _uiState.value = DetailUiState.Success(updated)
+            _currentMediaItem.value = _currentMediaItem.value?.copy(posterPath = url)
+        }
     }
 
     fun changeBackdrop(url: String) {
-        val current = (_uiState.value as? DetailUiState.Success)?.item ?: return
-        val updated = current.copy(backdropPath = url)
-        _uiState.value = DetailUiState.Success(updated)
-        _currentMediaItem.value = _currentMediaItem.value?.copy(backdropPath = url)
+        viewModelScope.launch {
+            repository.saveCustomBackdrop(currentId, url)
+            val current = (_uiState.value as? DetailUiState.Success)?.item ?: return@launch
+            val updated = current.copy(backdropPath = url)
+            _uiState.value = DetailUiState.Success(updated)
+            _currentMediaItem.value = _currentMediaItem.value?.copy(backdropPath = url)
+        }
     }
 }
 

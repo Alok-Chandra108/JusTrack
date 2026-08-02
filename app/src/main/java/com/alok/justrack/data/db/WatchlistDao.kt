@@ -20,4 +20,16 @@ interface WatchlistDao {
 
     @Query("UPDATE watchlist SET isWatched = :watched WHERE id = :id")
     suspend fun updateWatched(id: String, watched: Boolean)
+
+    @Query("UPDATE watchlist SET customPosterPath = :posterPath WHERE id = :id")
+    suspend fun updateCustomPoster(id: String, posterPath: String?)
+
+    @Query("UPDATE watchlist SET customBackdropPath = :backdropPath WHERE id = :id")
+    suspend fun updateCustomBackdrop(id: String, backdropPath: String?)
+
+    @Query("SELECT customPosterPath FROM watchlist WHERE id = :id")
+    suspend fun getCustomPoster(id: String): String?
+
+    @Query("SELECT customBackdropPath FROM watchlist WHERE id = :id")
+    suspend fun getCustomBackdrop(id: String): String?
 }
