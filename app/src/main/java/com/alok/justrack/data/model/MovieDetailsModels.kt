@@ -26,5 +26,30 @@ data class MovieDetails(
     val mediaType: MediaType = MediaType.MOVIE,
     val cast: List<CastMember>,
     val ratings: List<RatingSource>,
-    val recommendations: List<MediaItem>
+    val recommendations: List<MediaItem>,
+    val seasons: List<Season> = emptyList()
+)
+
+data class Season(
+    val id: String,
+    val name: String,
+    val overview: String,
+    val posterPath: String?,
+    val seasonNumber: Int,
+    val episodeCount: Int,
+    val airDate: String?,
+    val episodes: List<Episode> = emptyList(),
+    val watchedCount: Int = 0
+)
+
+data class Episode(
+    val id: String,
+    val name: String,
+    val overview: String,
+    val stillPath: String?,
+    val seasonNumber: Int,
+    val episodeNumber: Int,
+    val airDate: String?,
+    val voteAverage: Double,
+    val isWatched: Boolean = false
 )

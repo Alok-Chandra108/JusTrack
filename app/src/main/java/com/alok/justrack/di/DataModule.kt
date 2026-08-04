@@ -6,8 +6,10 @@ import com.alok.justrack.BuildConfig
 import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.db.AppDatabase
 import com.alok.justrack.data.db.CustomImageDao
+import com.alok.justrack.data.db.EpisodeDao
 import com.alok.justrack.data.db.FavouriteDao
 import com.alok.justrack.data.db.ListDao
+import com.alok.justrack.data.db.WatchedEpisodeDao
 import com.alok.justrack.data.db.WatchlistDao
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.data.repository.TmdbMediaRepository
@@ -61,6 +63,14 @@ abstract class DataModule {
         @Provides
         @Singleton
         fun provideCustomImageDao(db: AppDatabase): CustomImageDao = db.customImageDao()
+
+        @Provides
+        @Singleton
+        fun provideWatchedEpisodeDao(db: AppDatabase): WatchedEpisodeDao = db.watchedEpisodeDao()
+
+        @Provides
+        @Singleton
+        fun provideEpisodeDao(db: AppDatabase): EpisodeDao = db.episodeDao()
 
         @Provides
         @Singleton

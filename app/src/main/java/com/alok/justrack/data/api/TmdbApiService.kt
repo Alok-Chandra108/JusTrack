@@ -26,6 +26,12 @@ interface TmdbApiService {
         @Query("append_to_response") appendToResponse: String = "credits,content_ratings,recommendations"
     ): TmdbMediaDto
 
+    @GET("3/tv/{tv_id}/season/{season_number}")
+    suspend fun getTvSeasonDetails(
+        @Path("tv_id") tvId: String,
+        @Path("season_number") seasonNumber: Int
+    ): TmdbSeasonDto
+
     @GET("3/movie/{movie_id}/images")
     suspend fun getMovieImages(@Path("movie_id") id: String): TmdbImagesResponse
 

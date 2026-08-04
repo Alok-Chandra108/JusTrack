@@ -1,7 +1,6 @@
 package com.alok.justrack.data.repository
 
-import com.alok.justrack.data.api.TmdbApiService
-import com.alok.justrack.data.api.TmdbMediaDto
+import com.alok.justrack.data.api.*
 import com.alok.justrack.data.model.*
 import com.alok.justrack.data.supabase.SupabaseClientProvider
 import com.alok.justrack.data.supabase.SupabaseWatchlistItem
@@ -46,8 +45,9 @@ class SupabaseMediaRepository @Inject constructor(
 
     override suspend fun addToWatchlist(item: MediaItem) {
         try {
-            val supabaseItem = item.toSupabaseItem()
-            postgrest.insert(supabaseItem)
+            // Upsert with inWatchlist=true
+            val supabaseItem = item.toSupabaseItem().copy(inWatchlist = true, addedAt = System.currentTimeMillis())
+            postgrest.upsert(supabaseItem)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -81,11 +81,25 @@ class SupabaseMediaRepository @Inject constructor(
 
     override suspend fun setWatched(item: MediaItem, watched: Boolean) {
         try {
-            postgrest.update({
-                set("is_watched", watched)
-            }) {
-                filter {
-                    eq("id", item.id)
+            if (watched) {
+                // Upsert with isWatched=true, inWatchlist=false
+                val supabaseItem = item.toSupabaseItem().copy(isWatched = true, inWatchlist = false, addedAt = System.currentTimeMillis())
+                postgrest.upsert(supabaseItem)
+            } else {
+                // If unmarking, we need to know if it's in watchlist
+                val result = postgrest.select { filter { eq("id", item.id) } }.decodeSingleOrNull<SupabaseWatchlistItem>()
+                if (result != null) {
+                    if (result.inWatchlist) {
+                        postgrest.update({
+                            set("is_watched", false)
+                        }) {
+                            filter { eq("id", item.id) }
+                        }
+                    } else {
+                        postgrest.delete {
+                            filter { eq("id", item.id) }
+                        }
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -141,7 +155,8 @@ class SupabaseMediaRepository @Inject constructor(
             mediaType == "tv" -> MediaType.TV
             mediaType == "movie" -> MediaType.MOVIE
             fallbackType != null -> fallbackType
-            title == null && name != null -> MediaType.TV
+            name != null && title == null -> MediaType.TV
+            name != null && firstAirDate != null -> MediaType.TV
             else -> MediaType.MOVIE
         }
         val displayTitle = title ?: name ?: "Untitled"
@@ -222,7 +237,9 @@ class SupabaseMediaRepository @Inject constructor(
         rating = rating,
         releaseDate = releaseDate,
         mediaType = MediaType.valueOf(mediaType),
-        isWatched = isWatched
+        isWatched = isWatched,
+        inWatchlist = inWatchlist,
+        addedAt = addedAt
     )
 
     private fun MediaItem.toSupabaseItem(): SupabaseWatchlistItem = SupabaseWatchlistItem(
@@ -234,7 +251,9 @@ class SupabaseMediaRepository @Inject constructor(
         rating = rating,
         releaseDate = releaseDate,
         mediaType = mediaType.name,
-        isWatched = isWatched
+        isWatched = isWatched,
+        inWatchlist = inWatchlist,
+        addedAt = addedAt
     )
 
     // ---- Favourites (stub - not implemented for Supabase yet) ----
@@ -287,4 +306,12 @@ class SupabaseMediaRepository @Inject constructor(
     override suspend fun saveCustomBackdrop(id: String, url: String?) {}
     override suspend fun getCustomPoster(id: String): String? = null
     override suspend fun getCustomBackdrop(id: String): String? = null
+
+    // Episode Tracking (stub for Supabase)
+    override suspend fun syncEpisodes(showId: String) {}
+    override suspend fun getSeasonDetails(tvId: String, seasonNumber: Int): Season? = null
+    override suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean) {}
+    override fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> = flow { emit(emptyList()) }
+    override fun getAllWatchedEpisodesFlow(): Flow<Map<String, Set<String>>> = flow { emit(emptyMap()) }
+    override suspend fun getNextEpisodeToWatch(showId: String): Episode? = null
 }

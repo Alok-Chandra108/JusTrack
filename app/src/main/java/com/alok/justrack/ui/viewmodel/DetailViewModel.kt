@@ -55,6 +55,9 @@ class DetailViewModel @Inject constructor(
     private val _backdropImages = MutableStateFlow<List<String>>(emptyList())
     val backdropImages: StateFlow<List<String>> = _backdropImages
 
+    private val _selectedSeason = MutableStateFlow<com.alok.justrack.data.model.Season?>(null)
+    val selectedSeason: StateFlow<com.alok.justrack.data.model.Season?> = _selectedSeason
+
     private val _currentMediaItem = MutableStateFlow<MediaItem?>(null)
 
     private var currentId: String = ""
@@ -62,7 +65,11 @@ class DetailViewModel @Inject constructor(
 
     fun loadDetail(id: String, mediaType: String = "MOVIE") {
         currentId = id
-        currentMediaType = try { MediaType.valueOf(mediaType) } catch (_: Exception) { MediaType.MOVIE }
+        currentMediaType = try { 
+            MediaType.valueOf(mediaType.uppercase()) 
+        } catch (_: Exception) { 
+            MediaType.MOVIE 
+        }
 
         viewModelScope.launch {
             _rawDetails.value = DetailUiState.Loading
@@ -82,6 +89,10 @@ class DetailViewModel @Inject constructor(
                     _isWatched.value = repository.isWatched(id)
                     _isFavourite.value = repository.isFavourite(id, currentMediaType)
                     _mediaLists.value = repository.getListsForMedia(id, currentMediaType)
+                    
+                    // Fetch existing entity to get correct addedAt if it exists
+                    val existingItem = repository.getWatchlist().find { it.id == id }
+                    
                     _currentMediaItem.value = MediaItem(
                         id = finalItem.id,
                         title = finalItem.title,
@@ -90,7 +101,10 @@ class DetailViewModel @Inject constructor(
                         backdropPath = finalItem.backdropPath,
                         rating = finalItem.rating,
                         releaseDate = finalItem.releaseDate,
-                        mediaType = finalItem.mediaType
+                        mediaType = finalItem.mediaType,
+                        isWatched = _isWatched.value,
+                        inWatchlist = _isInWatchlist.value,
+                        addedAt = existingItem?.addedAt ?: System.currentTimeMillis()
                     )
                 } else {
                     _rawDetails.value = DetailUiState.Error("Media not found")
@@ -130,15 +144,10 @@ class DetailViewModel @Inject constructor(
             val markingAsWatched = !currentWatched
 
             _currentMediaItem.value?.let { item ->
+                repository.setWatched(item, markingAsWatched)
+                _isWatched.value = markingAsWatched
                 if (markingAsWatched) {
-                    // Moving to watched history removes from wishlist
-                    repository.setWatched(item, true)
-                    _isWatched.value = true
                     _isInWatchlist.value = false
-                } else {
-                    // Unmarking from watched
-                    repository.setWatched(item, false)
-                    _isWatched.value = false
                 }
             }
         }
@@ -200,6 +209,30 @@ class DetailViewModel @Inject constructor(
             val updated = current.copy(backdropPath = url)
             _rawDetails.value = DetailUiState.Success(updated)
             _currentMediaItem.value = _currentMediaItem.value?.copy(backdropPath = url)
+        }
+    }
+
+    // --- TV Show specific methods ---
+
+    fun loadSeason(seasonNumber: Int) {
+        viewModelScope.launch {
+            val season = repository.getSeasonDetails(currentId, seasonNumber)
+            _selectedSeason.value = season
+        }
+    }
+
+    fun markEpisodeWatched(seasonNumber: Int, episodeNumber: Int, watched: Boolean) {
+        viewModelScope.launch {
+            repository.markEpisodeWatched(currentId, seasonNumber, episodeNumber, watched)
+            // Reload details to reflect progress in season list
+            val updatedDetails = repository.getMediaDetail(currentId, currentMediaType)
+            if (updatedDetails != null) {
+                _rawDetails.value = DetailUiState.Success(updatedDetails)
+            }
+            // Reload current season if it's the one we're viewing
+            if (_selectedSeason.value?.seasonNumber == seasonNumber) {
+                loadSeason(seasonNumber)
+            }
         }
     }
 }

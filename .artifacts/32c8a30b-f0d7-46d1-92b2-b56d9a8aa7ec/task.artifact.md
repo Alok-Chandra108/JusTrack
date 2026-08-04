@@ -1,0 +1,13 @@
+- `[x]` Implement `TmdbMediaRepository.kt`
+    - `[x]` Implement network methods (`getTrending`, `getMediaDetail`, `searchMedia`, etc.)
+    - `[x]` Implement watchlist methods (Room backed)
+    - `[x]` Implement favourites methods (Room backed)
+    - `[x]` Implement custom lists methods (Room backed)
+    - `[x]` Implement custom image methods (Room backed)
+    - `[x]` Implement episode tracking methods (Room backed)
+    - `[x]` Add DTO to Domain/Entity mappers
+- `[x]` Fix `WatchlistViewModel.kt` and UI screens
+    - `[x]` Relocate `WatchlistUiState` to top-level
+    - `[x]` Fix async calls in `WatchlistViewModel` flows
+    - `[x]` Add `syncEpisodes` to `MediaRepository` interface
+- `[x]` Verify build with `./gradlew :app:compileDebugKotlin`

@@ -712,15 +712,22 @@ private fun ExploreLongPressSheet(
             )
 
             // Mark as Watched
+            val isItemWatched = remember { mutableStateOf(false) }
+            LaunchedEffect(item) {
+                isItemWatched.value = viewModel.isWatched(item.id)
+            }
+            
             BottomSheetOption(
-                icon = Icons.Rounded.CheckCircle,
-                label = "Mark as Watched",
+                icon = if (isItemWatched.value) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                label = if (isItemWatched.value) "Watched" else "Mark as Watched",
                 iconTint = AccentSecondary,
                 onClick = {
                     scope.launch {
-                        if (!isInWatchlist) viewModel.addToWatchlist(item)
+                        viewModel.toggleWatched(item)
+                        isItemWatched.value = !isItemWatched.value
+                        if (isItemWatched.value) isInWatchlist = false
                     }
-                    onDismiss()
+                    if (isItemWatched.value) onDismiss()
                 }
             )
 

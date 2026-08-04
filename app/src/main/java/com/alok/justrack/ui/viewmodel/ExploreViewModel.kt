@@ -135,9 +135,12 @@ class ExploreViewModel @Inject constructor(
             try {
                 val response = apiService.searchMulti(query)
                 val items = response.results.mapNotNull { dto ->
-                    val mediaType = when (dto.mediaType) {
-                        "movie" -> MediaType.MOVIE
-                        "tv" -> MediaType.TV
+                    val mediaType = when {
+                        dto.mediaType == "movie" -> MediaType.MOVIE
+                        dto.mediaType == "tv" -> MediaType.TV
+                        dto.name != null && dto.title == null -> MediaType.TV
+                        dto.name != null && dto.firstAirDate != null -> MediaType.TV
+                        dto.title != null -> MediaType.MOVIE
                         else -> return@mapNotNull null
                     }
                     MediaItem(
@@ -205,11 +208,20 @@ class ExploreViewModel @Inject constructor(
         viewModelScope.launch { repository.addToWatchlist(item) }
     }
 
+    fun toggleWatched(item: MediaItem) {
+        viewModelScope.launch {
+            val isCurrentlyWatched = repository.isWatched(item.id)
+            repository.setWatched(item, !isCurrentlyWatched)
+        }
+    }
+
     fun removeFromWatchlist(id: String) {
         viewModelScope.launch { repository.removeFromWatchlist(id) }
     }
 
     suspend fun isInWatchlist(id: String): Boolean = repository.isInWatchlist(id)
+
+    suspend fun isWatched(id: String): Boolean = repository.isWatched(id)
 
     fun toggleFavourite(item: MediaItem) {
         viewModelScope.launch { repository.toggleFavourite(item) }
@@ -228,14 +240,11 @@ class ExploreViewModel @Inject constructor(
 
     fun getLists() = repository.getListsFlow()
 
-    private suspend fun <T> loadWithCache(key: String, fetcher: suspend () -> List<T>): List<T> {
-        @Suppress("UNCHECKED_CAST")
-        val cached = sectionCache[key] as? List<T>
+    private suspend fun loadWithCache(key: String, fetcher: suspend () -> List<MediaItem>): List<MediaItem> {
+        val cached = sectionCache[key]
         if (cached != null) return cached
         val result = fetcher()
-        if (result is List<*>) {
-            sectionCache[key] = result as List<MediaItem>
-        }
+        sectionCache[key] = result
         return result
     }
 
@@ -278,9 +287,11 @@ class ExploreViewModel @Inject constructor(
     private suspend fun fetchTrending(): List<MediaItem> {
         val response = apiService.getTrending()
         return response.results.map { dto ->
-            val mediaType = when (dto.mediaType) {
-                "movie" -> MediaType.MOVIE
-                "tv" -> MediaType.TV
+            val mediaType = when {
+                dto.mediaType == "movie" -> MediaType.MOVIE
+                dto.mediaType == "tv" -> MediaType.TV
+                dto.name != null && dto.title == null -> MediaType.TV
+                dto.name != null && dto.firstAirDate != null -> MediaType.TV
                 else -> MediaType.MOVIE
             }
             MediaItem(

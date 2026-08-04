@@ -26,7 +26,30 @@ data class TmdbMediaDto(
     @SerializedName("release_dates") val releaseDates: TmdbReleaseDatesResponse?,
     @SerializedName("content_ratings") val contentRatings: TmdbContentRatingsResponse?,
     @SerializedName("created_by") val createdBy: List<TmdbCreatedByDto>?,
+    @SerializedName("seasons") val seasons: List<TmdbSeasonDto>?,
     @SerializedName("recommendations") val recommendations: TmdbPaginatedResponse<TmdbMediaDto>?
+)
+
+data class TmdbSeasonDto(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("season_number") val seasonNumber: Int,
+    @SerializedName("episode_count") val episodeCount: Int?,
+    @SerializedName("air_date") val airDate: String?,
+    @SerializedName("episodes") val episodes: List<TmdbEpisodeDto>?
+)
+
+data class TmdbEpisodeDto(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("still_path") val stillPath: String?,
+    @SerializedName("season_number") val seasonNumber: Int,
+    @SerializedName("episode_number") val episodeNumber: Int,
+    @SerializedName("air_date") val airDate: String?,
+    @SerializedName("vote_average") val voteAverage: Double?
 )
 
 data class TmdbReleaseDatesResponse(

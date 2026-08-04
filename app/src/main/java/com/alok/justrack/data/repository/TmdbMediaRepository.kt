@@ -2,10 +2,11 @@ package com.alok.justrack.data.repository
 
 import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.api.TmdbMediaDto
+import com.alok.justrack.data.api.TmdbEpisodeDto
+import com.alok.justrack.data.api.TmdbSeasonDto
 import com.alok.justrack.data.db.*
 import com.alok.justrack.data.model.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +17,9 @@ class TmdbMediaRepository @Inject constructor(
     private val watchlistDao: WatchlistDao,
     private val favouriteDao: FavouriteDao,
     private val listDao: ListDao,
-    private val customImageDao: CustomImageDao
+    private val customImageDao: CustomImageDao,
+    private val episodeDao: EpisodeDao,
+    private val watchedEpisodeDao: WatchedEpisodeDao
 ) : MediaRepository {
 
     override suspend fun getTrending(): List<MediaItem> {
@@ -30,76 +33,24 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     override suspend fun getWatchlist(): List<MediaItem> {
-        return getTrending().take(5)
-    }
-
-    override fun getWatchlistFlow(): Flow<List<MediaItem>> {
-        return watchlistDao.getAllFlow().map { entities ->
-            entities.map { it.toMediaItem() }
+        return try {
+            val entities = watchlistDao.getAllOnce()
+            entities
+                .sortedByDescending { it.addedAt }
+                .map { it.toMediaItem() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
         }
-    }
-
-    override suspend fun addToWatchlist(item: MediaItem) {
-        val existing = watchlistDao.getEntityById(item.id)
-        if (existing == null) {
-            watchlistDao.insert(item.toEntity().copy(inWatchlist = true))
-        } else {
-            watchlistDao.updateInWatchlist(item.id, true)
-        }
-    }
-
-    override suspend fun removeFromWatchlist(id: String) {
-        val existing = watchlistDao.getEntityById(id)
-        if (existing != null) {
-            if (existing.isWatched) {
-                // If it's watched, just unmark from watchlist
-                watchlistDao.updateInWatchlist(id, false)
-            } else {
-                // If not watched, delete completely
-                watchlistDao.deleteById(id)
-            }
-        }
-    }
-
-    override suspend fun isInWatchlist(id: String): Boolean {
-        return watchlistDao.getWatchlistStatus(id) ?: false
-    }
-
-    override suspend fun setWatched(item: MediaItem, watched: Boolean) {
-        val existing = watchlistDao.getEntityById(item.id)
-        if (existing != null) {
-            watchlistDao.updateWatched(item.id, watched)
-            if (watched) {
-                // Moving to watched history removes from wishlist
-                watchlistDao.updateInWatchlist(item.id, false)
-            } else {
-                // If unmarking from watched and not in watchlist, delete
-                if (!existing.inWatchlist) {
-                    watchlistDao.deleteById(item.id)
-                }
-            }
-        } else if (watched) {
-            // New item being marked as watched - insert directly
-            watchlistDao.insert(item.toEntity().copy(isWatched = true, inWatchlist = false))
-        }
-    }
-
-    override suspend fun isWatched(id: String): Boolean {
-        return watchlistDao.getWatchedStatus(id) ?: false
     }
 
     override suspend fun getMediaDetail(id: String, mediaType: MediaType): MovieDetails? {
         return try {
-            when (mediaType) {
-                MediaType.MOVIE -> {
-                    val movieDto = apiService.getMovieDetails(id)
-                    movieDto.toMovieDetails(MediaType.MOVIE)
-                }
-                MediaType.TV -> {
-                    val tvDto = apiService.getTvDetails(id)
-                    tvDto.toMovieDetails(MediaType.TV)
-                }
+            val detail = when (mediaType) {
+                MediaType.MOVIE -> apiService.getMovieDetails(id)
+                MediaType.TV -> apiService.getTvDetails(id)
             }
+            detail.toMovieDetails(mediaType)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -117,50 +68,79 @@ class TmdbMediaRepository @Inject constructor(
         }
     }
 
-    // ---- Favourites ----
+    override fun getWatchlistFlow(): Flow<List<MediaItem>> = watchlistDao.getAllFlow()
+        .map { entities -> 
+            entities
+                .sortedByDescending { it.addedAt }
+                .map { it.toMediaItem() } 
+        }
 
-    override fun getFavouritesFlow(): Flow<List<MediaItem>> {
-        return favouriteDao.getAllFlow().map { entities ->
-            entities.map { it.toMediaItem() }
+    override suspend fun addToWatchlist(item: MediaItem) {
+        val entity = item.toWatchlistEntity(inWatchlist = true).copy(addedAt = System.currentTimeMillis())
+        watchlistDao.insert(entity)
+    }
+
+    override suspend fun removeFromWatchlist(id: String) {
+        watchlistDao.deleteById(id)
+    }
+
+    override suspend fun isInWatchlist(id: String): Boolean {
+        return watchlistDao.exists(id)
+    }
+
+    override suspend fun setWatched(item: MediaItem, watched: Boolean) {
+        if (watched) {
+            // Marking as watched: Ensure in DB with isWatched=true, inWatchlist=false
+            val entity = item.toWatchlistEntity(inWatchlist = false).copy(isWatched = true, addedAt = System.currentTimeMillis())
+            watchlistDao.insert(entity)
+        } else {
+            // Unmarking as watched: If also not in wishlist, delete entirely
+            val existing = watchlistDao.getEntityById(item.id)
+            if (existing != null) {
+                if (existing.inWatchlist) {
+                    watchlistDao.updateWatched(item.id, false)
+                } else {
+                    watchlistDao.deleteById(item.id)
+                }
+            }
         }
     }
 
-    override fun getFavouritesByTypeFlow(mediaType: MediaType): Flow<List<MediaItem>> {
-        return favouriteDao.getByTypeFlow(mediaType.name).map { entities ->
-            entities.map { it.toMediaItem() }
-        }
+    override suspend fun isWatched(id: String): Boolean {
+        return watchlistDao.getWatchedStatus(id) ?: false
     }
+
+    override fun getFavouritesFlow(): Flow<List<MediaItem>> = favouriteDao.getAllFlow()
+        .map { entities -> entities.map { it.toMediaItem() } }
+
+    override fun getFavouritesByTypeFlow(mediaType: MediaType): Flow<List<MediaItem>> = 
+        favouriteDao.getByTypeFlow(mediaType.name)
+            .map { entities -> entities.map { it.toMediaItem() } }
 
     override suspend fun toggleFavourite(item: MediaItem): Boolean {
         val exists = favouriteDao.exists(item.id, item.mediaType.name)
         if (exists) {
             favouriteDao.delete(item.id, item.mediaType.name)
-            return false
         } else {
             favouriteDao.insert(item.toFavouriteEntity())
-            return true
         }
+        return !exists
     }
 
     override suspend fun isFavourite(mediaId: String, mediaType: MediaType): Boolean {
         return favouriteDao.exists(mediaId, mediaType.name)
     }
 
-    // ---- Custom Lists ----
-
-    override fun getListsFlow(): Flow<List<Pair<String, String>>> {
-        return listDao.getAllListsFlow().map { lists ->
-            lists.map { it.id to it.name }
-        }
-    }
+    override fun getListsFlow(): Flow<List<Pair<String, String>>> = listDao.getAllListsFlow()
+        .map { entities -> entities.map { it.id to it.name } }
 
     override suspend fun createList(name: String) {
         listDao.createList(ListEntity(id = UUID.randomUUID().toString(), name = name))
     }
 
     override suspend fun deleteList(listId: String) {
-        listDao.deleteListItems(listId)
         listDao.deleteList(listId)
+        listDao.deleteListItems(listId)
     }
 
     override suspend fun addToList(listId: String, item: MediaItem) {
@@ -179,13 +159,8 @@ class TmdbMediaRepository @Inject constructor(
         return listDao.getListsForMedia(mediaId, mediaType.name)
     }
 
-    override fun getListItemsFlow(listId: String): Flow<List<MediaItem>> {
-        return listDao.getListItemsFlow(listId).map { entities ->
-            entities.map { it.toMediaItem() }
-        }
-    }
-
-    // ---- TMDb Images ----
+    override fun getListItemsFlow(listId: String): Flow<List<MediaItem>> = listDao.getListItemsFlow(listId)
+        .map { entities -> entities.map { it.toMediaItem() } }
 
     override suspend fun getMovieImages(id: String): Pair<List<String>, List<String>> {
         return try {
@@ -211,6 +186,90 @@ class TmdbMediaRepository @Inject constructor(
         }
     }
 
+    override suspend fun saveCustomPoster(id: String, url: String?) {
+        customImageDao.updatePoster(id, url)
+        watchlistDao.updateCustomPoster(id, url)
+    }
+
+    override suspend fun saveCustomBackdrop(id: String, url: String?) {
+        customImageDao.updateBackdrop(id, url)
+        watchlistDao.updateCustomBackdrop(id, url)
+    }
+
+    override suspend fun getCustomPoster(id: String): String? {
+        return watchlistDao.getCustomPoster(id) ?: customImageDao.getPoster(id)
+    }
+
+    override suspend fun getCustomBackdrop(id: String): String? {
+        return watchlistDao.getCustomBackdrop(id) ?: customImageDao.getBackdrop(id)
+    }
+
+    override suspend fun syncEpisodes(showId: String) {
+        try {
+            val tvDetails = apiService.getTvDetails(showId)
+            tvDetails.seasons?.forEach { seasonDto ->
+                val seasonDetails = apiService.getTvSeasonDetails(showId, seasonDto.seasonNumber)
+                val entities = seasonDetails.episodes?.map { episodeDto ->
+                    episodeDto.toEntity(showId)
+                } ?: emptyList()
+                episodeDao.insertAll(entities)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun getSeasonDetails(tvId: String, seasonNumber: Int): Season? {
+        return try {
+            val response = apiService.getTvSeasonDetails(tvId, seasonNumber)
+            val watchedEpisodes = watchedEpisodeDao.getWatchedEpisodesForShowOnce(tvId)
+                .filter { it.seasonNumber == seasonNumber }
+                .map { "S${it.seasonNumber}E${it.episodeNumber}" }
+                .toSet()
+            
+            response.toSeason(watchedEpisodes)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean) {
+        if (watched) {
+            watchedEpisodeDao.insert(WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = episodeNumber))
+        } else {
+            watchedEpisodeDao.delete(showId, seasonNumber, episodeNumber)
+        }
+    }
+
+    override fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> = 
+        watchedEpisodeDao.getWatchedEpisodesForShow(showId)
+            .map { list -> list.map { "S${it.seasonNumber}E${it.episodeNumber}" } }
+
+    override fun getAllWatchedEpisodesFlow(): Flow<Map<String, Set<String>>> = 
+        watchedEpisodeDao.getAllWatchedEpisodesFlow()
+            .map { list ->
+                list.groupBy({ it.showId }, { "S${it.seasonNumber}E${it.episodeNumber}" })
+                    .mapValues { it.value.toSet() }
+            }
+
+    override suspend fun getNextEpisodeToWatch(showId: String): Episode? {
+        val nextEntity = episodeDao.getNextUnwatchedEpisode(showId)
+        return nextEntity?.let { entity ->
+            Episode(
+                id = "${entity.showId}_${entity.seasonNumber}_${entity.episodeNumber}",
+                name = entity.title,
+                overview = entity.overview ?: "",
+                stillPath = entity.stillPath,
+                seasonNumber = entity.seasonNumber,
+                episodeNumber = entity.episodeNumber,
+                airDate = entity.airDate,
+                voteAverage = entity.voteAverage ?: 0.0,
+                isWatched = false
+            )
+        }
+    }
+
     // ---- Mappers ----
 
     private fun TmdbMediaDto.toMediaItem(fallbackType: MediaType? = null): MediaItem {
@@ -218,17 +277,15 @@ class TmdbMediaRepository @Inject constructor(
             mediaType == "tv" -> MediaType.TV
             mediaType == "movie" -> MediaType.MOVIE
             fallbackType != null -> fallbackType
-            title == null && name != null -> MediaType.TV
+            // TV shows use 'name', Movies use 'title'
+            name != null && title == null -> MediaType.TV
+            name != null && firstAirDate != null -> MediaType.TV
             else -> MediaType.MOVIE
         }
         val displayTitle = title ?: name ?: "Untitled"
         val rawDate = releaseDate ?: firstAirDate ?: ""
-        val posterUrl = posterPath?.let {
-            if (it.startsWith("http")) it else "https://image.tmdb.org/t/p/w500$it"
-        }
-        val backdropUrl = backdropPath?.let {
-            if (it.startsWith("http")) it else "https://image.tmdb.org/t/p/w780$it"
-        }
+        val posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
+        val backdropUrl = backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" }
         return MediaItem(
             id = id.toString(),
             title = displayTitle,
@@ -241,7 +298,83 @@ class TmdbMediaRepository @Inject constructor(
         )
     }
 
+    private fun WatchlistEntity.toMediaItem(): MediaItem = MediaItem(
+        id = id,
+        title = title,
+        overview = overview,
+        posterPath = posterPath,
+        backdropPath = backdropPath,
+        rating = rating,
+        releaseDate = releaseDate,
+        mediaType = MediaType.valueOf(mediaType),
+        isWatched = isWatched,
+        inWatchlist = inWatchlist,
+        addedAt = addedAt
+    )
+
+    private fun MediaItem.toWatchlistEntity(inWatchlist: Boolean): WatchlistEntity = WatchlistEntity(
+        id = id,
+        title = title,
+        overview = overview,
+        posterPath = posterPath,
+        backdropPath = backdropPath,
+        rating = rating,
+        releaseDate = releaseDate,
+        mediaType = mediaType.name,
+        isWatched = isWatched,
+        inWatchlist = inWatchlist,
+        addedAt = addedAt
+    )
+
+    private fun FavouriteEntity.toMediaItem(): MediaItem = MediaItem(
+        id = mediaId,
+        title = title,
+        overview = "",
+        posterPath = posterPath,
+        backdropPath = backdropPath,
+        rating = 0.0,
+        releaseDate = "",
+        mediaType = MediaType.valueOf(mediaType)
+    )
+
+    private fun MediaItem.toFavouriteEntity(): FavouriteEntity = FavouriteEntity(
+        id = UUID.randomUUID().toString(),
+        mediaId = id,
+        mediaType = mediaType.name,
+        title = title,
+        posterPath = posterPath,
+        backdropPath = backdropPath
+    )
+
+    private fun ListItemEntity.toMediaItem(): MediaItem = MediaItem(
+        id = mediaId,
+        title = title,
+        overview = "",
+        posterPath = posterPath,
+        backdropPath = backdropPath,
+        rating = 0.0,
+        releaseDate = "",
+        mediaType = MediaType.valueOf(mediaType)
+    )
+
+    private fun MediaItem.toListItemEntity(listId: String): ListItemEntity = ListItemEntity(
+        id = UUID.randomUUID().toString(),
+        listId = listId,
+        mediaId = id,
+        mediaType = mediaType.name,
+        title = title,
+        posterPath = posterPath,
+        backdropPath = backdropPath
+    )
+
     private fun TmdbMediaDto.toMovieDetails(type: MediaType): MovieDetails {
+        val detectedType = when {
+            mediaType == "tv" -> MediaType.TV
+            mediaType == "movie" -> MediaType.MOVIE
+            name != null && title == null -> MediaType.TV
+            name != null && firstAirDate != null -> MediaType.TV
+            else -> type
+        }
         val displayTitle = title ?: name ?: "Untitled"
         val rawDate = releaseDate ?: firstAirDate ?: ""
         val posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
@@ -262,23 +395,10 @@ class TmdbMediaRepository @Inject constructor(
             )
         } ?: emptyList()
 
-        val directorNames = when (type) {
+        val directorNames = when (detectedType) {
             MediaType.MOVIE -> credits?.crew?.filter { it.job == "Director" }?.map { it.name }?.distinct() ?: emptyList()
-            MediaType.TV -> {
-                val creators = createdBy?.map { it.name }?.distinct()
-                if (!creators.isNullOrEmpty()) creators
-                else credits?.crew?.filter { it.job == "Executive Producer" }?.map { it.name }?.distinct() ?: emptyList()
-            }
+            MediaType.TV -> createdBy?.map { it.name }?.distinct() ?: emptyList()
         }.ifEmpty { listOf("-") }
-
-        val cert = when (type) {
-            MediaType.MOVIE -> {
-                releaseDates?.results?.find { it.iso31661 == "US" }?.releaseDates?.firstOrNull { it.certification.isNotBlank() }?.certification
-            }
-            MediaType.TV -> {
-                contentRatings?.results?.find { it.iso31661 == "US" }?.rating
-            }
-        } ?: "-"
 
         return MovieDetails(
             id = id.toString(),
@@ -289,108 +409,55 @@ class TmdbMediaRepository @Inject constructor(
             rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
             releaseDate = rawDate,
             runtime = runtimeStr,
-            certification = cert,
+            certification = "-",
             director = directorNames,
-            mediaType = type,
+            mediaType = detectedType,
             cast = castMembers,
             ratings = listOf(
                 RatingSource("TMDb", String.format("%.1f", voteAverage ?: 0.0))
             ),
-            recommendations = recommendations?.results?.map { it.toMediaItem(type) } ?: emptyList()
+            recommendations = recommendations?.results?.map { it.toMediaItem() } ?: emptyList(),
+            seasons = seasons?.map { it.toSeason(emptySet()) } ?: emptyList()
         )
     }
 
-    private fun WatchlistEntity.toMediaItem(): MediaItem = MediaItem(
-        id = id,
-        title = title,
-        overview = overview,
-        posterPath = posterPath,
-        backdropPath = backdropPath,
-        rating = rating,
-        releaseDate = releaseDate,
-        mediaType = MediaType.valueOf(mediaType),
-        isWatched = isWatched,
-        inWatchlist = inWatchlist
-    )
-
-    private fun MediaItem.toEntity(): WatchlistEntity = WatchlistEntity(
-        id = id,
-        title = title,
-        overview = overview,
-        posterPath = posterPath,
-        backdropPath = backdropPath,
-        rating = rating,
-        releaseDate = releaseDate,
-        mediaType = mediaType.name,
-        isWatched = isWatched,
-        inWatchlist = inWatchlist
-    )
-
-    private fun FavouriteEntity.toMediaItem(): MediaItem = MediaItem(
-        id = mediaId,
-        title = title,
-        overview = "",
-        posterPath = posterPath,
-        backdropPath = backdropPath,
-        rating = 0.0,
-        releaseDate = "",
-        mediaType = MediaType.valueOf(mediaType)
-    )
-
-    private fun MediaItem.toFavouriteEntity(): FavouriteEntity = FavouriteEntity(
-        id = "${mediaType.name}_$id",
-        mediaId = id,
-        mediaType = mediaType.name,
-        title = title,
-        posterPath = posterPath,
-        backdropPath = backdropPath
-    )
-
-    private fun ListItemEntity.toMediaItem(): MediaItem = MediaItem(
-        id = mediaId,
-        title = title,
-        overview = "",
-        posterPath = posterPath,
-        backdropPath = backdropPath,
-        rating = 0.0,
-        releaseDate = "",
-        mediaType = MediaType.valueOf(mediaType)
-    )
-
-    private fun MediaItem.toListItemEntity(listId: String): ListItemEntity = ListItemEntity(
-        id = "${listId}_${mediaType.name}_$id",
-        listId = listId,
-        mediaId = id,
-        mediaType = mediaType.name,
-        title = title,
-        posterPath = posterPath,
-        backdropPath = backdropPath
-    )
-
-    // ---- Custom poster/backdrop persistence ----
-
-    override suspend fun saveCustomPoster(id: String, url: String?) {
-        val existing = customImageDao.getBackdrop(id)
-        if (customImageDao.exists(id)) {
-            customImageDao.updatePoster(id, url)
-        } else {
-            customImageDao.upsert(CustomImageEntity(mediaId = id, mediaType = "", customPosterPath = url))
-        }
+    private fun TmdbSeasonDto.toSeason(watchedEpisodes: Set<String>): Season {
+        return Season(
+            id = id.toString(),
+            name = name,
+            overview = overview ?: "",
+            posterPath = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+            seasonNumber = seasonNumber,
+            episodeCount = episodeCount ?: 0,
+            airDate = airDate,
+            episodes = episodes?.map { it.toEpisode(watchedEpisodes.contains("S${it.seasonNumber}E${it.episodeNumber}")) } ?: emptyList()
+        )
     }
 
-    override suspend fun saveCustomBackdrop(id: String, url: String?) {
-        if (customImageDao.exists(id)) {
-            customImageDao.updateBackdrop(id, url)
-        } else {
-            customImageDao.upsert(CustomImageEntity(mediaId = id, mediaType = "", customBackdropPath = url))
-        }
+    private fun TmdbEpisodeDto.toEpisode(isWatched: Boolean): Episode {
+        return Episode(
+            id = id.toString(),
+            name = name,
+            overview = overview ?: "",
+            stillPath = stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
+            seasonNumber = seasonNumber,
+            episodeNumber = episodeNumber,
+            airDate = airDate,
+            voteAverage = voteAverage ?: 0.0,
+            isWatched = isWatched
+        )
     }
 
-    override suspend fun getCustomPoster(id: String): String? {
-        return customImageDao.getPoster(id)
-    }
-
-    override suspend fun getCustomBackdrop(id: String): String? {
-        return customImageDao.getBackdrop(id)
+    private fun TmdbEpisodeDto.toEntity(showId: String): EpisodeEntity {
+        return EpisodeEntity(
+            showId = showId,
+            seasonNumber = seasonNumber,
+            episodeNumber = episodeNumber,
+            title = name,
+            overview = overview,
+            airDate = airDate,
+            stillPath = stillPath,
+            voteAverage = voteAverage
+        )
     }
 }
