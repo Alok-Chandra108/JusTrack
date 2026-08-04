@@ -143,25 +143,28 @@ fun PosterInfoRow(movie: MovieDetails) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (movie.certification.isNotBlank() && movie.certification != "-") {
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = Color.Transparent,
-                        border = BorderStroke(1.dp, TextSecondary)
+                        border = BorderStroke(1.dp, TextPrimary.copy(alpha = 0.8f))
                     ) {
                         Text(
                             text = movie.certification,
                             style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 12.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             color = TextPrimary
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                 }
                 Text(
                     text = "${movie.releaseDate}  •  ${movie.runtime}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    color = TextPrimary.copy(alpha = 0.9f)
                 )
             }
 

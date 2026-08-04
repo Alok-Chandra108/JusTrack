@@ -7,9 +7,10 @@ import com.alok.justrack.data.api.TmdbSeasonDto
 import com.alok.justrack.data.db.*
 import com.alok.justrack.data.model.*
 import kotlinx.coroutines.flow.*
-import java.util.UUID
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -439,6 +440,21 @@ class TmdbMediaRepository @Inject constructor(
             MediaType.TV -> createdBy?.map { it.name }?.distinct() ?: emptyList()
         }.ifEmpty { listOf("-") }
 
+        val cert = when (detectedType) {
+            MediaType.MOVIE -> {
+                val results = releaseDates?.results
+                val usCert = results?.find { it.iso31661 == "US" }?.releaseDates?.firstOrNull { it.certification.isNotBlank() }?.certification
+                val gbCert = results?.find { it.iso31661 == "GB" }?.releaseDates?.firstOrNull { it.certification.isNotBlank() }?.certification
+                usCert ?: gbCert ?: results?.flatMap { it.releaseDates }?.firstOrNull { it.certification.isNotBlank() }?.certification ?: "-"
+            }
+            MediaType.TV -> {
+                val results = contentRatings?.results
+                val usCert = results?.find { it.iso31661 == "US" }?.rating
+                val gbCert = results?.find { it.iso31661 == "GB" }?.rating
+                usCert ?: gbCert ?: results?.firstOrNull { it.rating.isNotBlank() }?.rating ?: "-"
+            }
+        }
+
         return MovieDetails(
             id = id.toString(),
             title = displayTitle,
@@ -446,9 +462,9 @@ class TmdbMediaRepository @Inject constructor(
             posterPath = posterUrl,
             backdropPath = backdropUrl,
             rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
-            releaseDate = rawDate,
+            releaseDate = formatDate(rawDate),
             runtime = runtimeStr,
-            certification = "-",
+            certification = cert,
             director = directorNames,
             mediaType = detectedType,
             cast = castMembers,
@@ -458,6 +474,16 @@ class TmdbMediaRepository @Inject constructor(
             recommendations = recommendations?.results?.map { it.toMediaItem() } ?: emptyList(),
             seasons = seasons?.map { it.toSeason(emptySet()) } ?: emptyList()
         )
+    }
+
+    private fun formatDate(dateStr: String): String {
+        if (dateStr.isBlank()) return "-"
+        return try {
+            val date = LocalDate.parse(dateStr)
+            date.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH))
+        } catch (e: Exception) {
+            dateStr
+        }
     }
 
     private fun TmdbSeasonDto.toSeason(watchedEpisodes: Set<String>): Season {
