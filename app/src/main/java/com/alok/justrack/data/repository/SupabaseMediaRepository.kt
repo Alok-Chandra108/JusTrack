@@ -317,4 +317,5 @@ class SupabaseMediaRepository @Inject constructor(
     override suspend fun getUnwatchedEpisodeCount(showId: String): Int = 0
     override suspend fun getWatchedEpisodeCount(showId: String): Int = 0
     override suspend fun getTotalEpisodeCount(showId: String): Int = 0
+    override suspend fun getFutureEpisodes(showId: String): List<Episode> = emptyList()
 }
