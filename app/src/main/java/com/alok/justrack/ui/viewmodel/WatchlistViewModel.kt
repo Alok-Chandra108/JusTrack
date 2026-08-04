@@ -233,9 +233,14 @@ class WatchlistViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    // Grouped episodes for the UI
+    // Grouped episodes for the UI (maintains "IN PROGRESS" first)
     val groupedWatchlistEpisodes = watchlistEpisodes.map { items ->
-        items.groupBy { if (it.watchedCount == 0) "HAVEN'T STARTED" else "IN PROGRESS" }
+        val groups = items.groupBy { if (it.watchedCount == 0) "HAVEN'T STARTED" else "IN PROGRESS" }
+        // Ensure "IN PROGRESS" is first if it exists
+        val sortedGroups = mutableMapOf<String, List<WatchlistEpisodeItem>>()
+        groups["IN PROGRESS"]?.let { sortedGroups["IN PROGRESS"] = it }
+        groups["HAVEN'T STARTED"]?.let { sortedGroups["HAVEN'T STARTED"] = it }
+        sortedGroups
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
     // Upcoming tab: shows upcoming episodes for shows in watchlist

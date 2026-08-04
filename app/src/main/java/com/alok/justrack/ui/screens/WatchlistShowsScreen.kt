@@ -127,25 +127,36 @@ private fun WatchlistTabContent(
     val isGridView by viewModel.isGridView.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Toolbar with Grid/List toggle
-        Row(
+        // Toolbar with Grid/List toggle and centered Group Header
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
         ) {
-            IconButton(
-                onClick = { viewModel.toggleGridView() },
+            // Centered Header
+            if (groupedEpisodes.isNotEmpty()) {
+                SectionHeader(
+                    title = groupedEpisodes.keys.first(),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            // Grid/List toggle on the right
+            Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .align(Alignment.CenterEnd)
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(6.dp))
                     .background(SurfaceVariant)
+                    .clickable { viewModel.toggleGridView() },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (isGridView) Icons.Rounded.List else Icons.Rounded.GridView,
                     contentDescription = "Toggle View",
-                    tint = TextPrimary
+                    tint = TextPrimary,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -176,10 +187,12 @@ private fun WatchlistTabContent(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp)
                     ) {
-                        groupedEpisodes.forEach { (header, items) ->
-                            item {
-                                SectionHeader(header)
-                                Spacer(modifier = Modifier.height(16.dp))
+                        groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
+                            if (index > 0) {
+                                item {
+                                    SectionHeader(header)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
                             }
                             item {
                                 // Nested Grid-like layout in LazyColumn to support headers
@@ -211,12 +224,14 @@ private fun WatchlistTabContent(
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        groupedEpisodes.forEach { (header, items) ->
-                            item {
-                                SectionHeader(header)
+                        groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
+                            if (index > 0) {
+                                item {
+                                    SectionHeader(header)
+                                }
                             }
                             items(items, key = { it.showId }) { progress ->
                                 EpisodeTrackingCard(
@@ -228,7 +243,6 @@ private fun WatchlistTabContent(
                                     onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name)) }
                                 )
                             }
-                            item { Spacer(modifier = Modifier.height(8.dp)) }
                         }
                     }
                 }
@@ -238,19 +252,27 @@ private fun WatchlistTabContent(
 }
 
 @Composable
-fun SectionHeader(title: String) {
-    Surface(
-        color = SurfaceVariant,
-        shape = CircleShape,
-        modifier = Modifier.padding(vertical = 8.dp)
+fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = TextSecondary,
-            fontWeight = FontWeight.Black,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-        )
+        Surface(
+            color = SurfaceVariant.copy(alpha = 0.5f),
+            shape = CircleShape
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                fontWeight = FontWeight.Black,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+            )
+        }
     }
 }
 
@@ -362,28 +384,32 @@ fun EpisodeTrackingCard(
             .fillMaxWidth()
             .clickable { onClick() },
         color = Background,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, SurfaceVariant)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             modifier = Modifier.padding(8.dp)
         ) {
-            // Image on the left (Poster-like aspect)
+            // Image on the left (Poster)
             AsyncImage(
                 model = showPosterPath,
                 contentDescription = showName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(70.dp, 100.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(64.dp, 92.dp)
+                    .clip(RoundedCornerShape(6.dp))
                     .background(SurfaceColor)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                // Show title Capsule
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 2.dp)
+            ) {
+                // Show title Capsule at TOP
                 Surface(
                     color = Background,
                     shape = CircleShape,
@@ -398,6 +424,7 @@ fun EpisodeTrackingCard(
                             text = showName.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextPrimary,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Black,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -407,36 +434,45 @@ fun EpisodeTrackingCard(
                             imageVector = Icons.Rounded.ChevronRight,
                             contentDescription = null,
                             tint = TextSecondary,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(12.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
                     style = MaterialTheme.typography.labelMedium,
                     color = TextPrimary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
                 )
 
                 Text(
                     text = episode.name,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Checkmark Icon on the far right
-            IconButton(onClick = onMarkWatched) {
+            // Checkmark Icon on the right with grey circular background
+            Box(
+                modifier = Modifier
+                    .padding(top = 16.dp, end = 8.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(SurfaceVariant.copy(alpha = 0.4f))
+                    .clickable { onMarkWatched() },
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = "Mark Watched",
                     tint = TextSecondary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
