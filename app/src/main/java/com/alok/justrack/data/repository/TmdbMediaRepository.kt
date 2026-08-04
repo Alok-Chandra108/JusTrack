@@ -8,6 +8,8 @@ import com.alok.justrack.data.db.*
 import com.alok.justrack.data.model.*
 import kotlinx.coroutines.flow.*
 import java.util.UUID
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -282,6 +284,25 @@ class TmdbMediaRepository @Inject constructor(
 
     override suspend fun getTotalEpisodeCount(showId: String): Int {
         return episodeDao.getTotalEpisodeCount(showId)
+    }
+
+    override suspend fun getFutureEpisodes(showId: String): List<Episode> {
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        return episodeDao.getFutureEpisodes(showId, today)
+            .filter { it.seasonNumber > 0 }
+            .map { entity ->
+            Episode(
+                id = "${entity.showId}_${entity.seasonNumber}_${entity.episodeNumber}",
+                name = entity.title,
+                overview = entity.overview ?: "",
+                stillPath = entity.stillPath,
+                seasonNumber = entity.seasonNumber,
+                episodeNumber = entity.episodeNumber,
+                airDate = entity.airDate,
+                voteAverage = entity.voteAverage ?: 0.0,
+                isWatched = false
+            )
+        }
     }
 
     // ---- Mappers ----

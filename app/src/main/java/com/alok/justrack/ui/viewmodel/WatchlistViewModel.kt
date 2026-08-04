@@ -134,6 +134,7 @@ class WatchlistViewModel @Inject constructor(
         val showPosterPath: String?,
         val episode: Episode,
         val isPremiere: Boolean,
+        val isNew: Boolean,
         val remainingCount: Int,
         val watchedCount: Int,
         val totalCount: Int
@@ -175,6 +176,9 @@ class WatchlistViewModel @Inject constructor(
                         }
                         
                         val isPremiere = nextEpisode?.seasonNumber == 1 && nextEpisode?.episodeNumber == 1
+                        val daysAway = calculateDaysAway(nextEpisode?.airDate)
+                        val isNew = daysAway != null && daysAway < 0 // Aired but not watched
+                        
                         val totalCount = repository.getTotalEpisodeCount(show.id)
                         val watchedCount = repository.getWatchedEpisodeCount(show.id)
                         val remainingCount = (totalCount - watchedCount).coerceAtLeast(0)
@@ -196,6 +200,7 @@ class WatchlistViewModel @Inject constructor(
                                     isWatched = false
                                 ),
                                 isPremiere = isPremiere,
+                                isNew = isNew,
                                 remainingCount = remainingCount,
                                 watchedCount = watchedCount,
                                 totalCount = totalCount
@@ -222,6 +227,7 @@ class WatchlistViewModel @Inject constructor(
                                     isWatched = false
                                 ),
                                 isPremiere = false,
+                                isNew = false,
                                 remainingCount = 0,
                                 watchedCount = 0,
                                 totalCount = 0
@@ -229,7 +235,7 @@ class WatchlistViewModel @Inject constructor(
                         )
                     }
                 }
-                emit(episodeItems)
+                emit(episodeItems.filter { it.episode.seasonNumber > 0 }.sortedByDescending { it.isNew })
             }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -243,7 +249,6 @@ class WatchlistViewModel @Inject constructor(
         sortedGroups
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
-    // Upcoming tab: shows upcoming episodes for shows in watchlist
     @OptIn(ExperimentalCoroutinesApi::class)
     val upcomingEpisodes: StateFlow<List<UpcomingEpisodeItem>> = explicitWatchlistItems
         .filter { items -> items.any { it.mediaType == MediaType.TV } }
@@ -253,56 +258,59 @@ class WatchlistViewModel @Inject constructor(
                 val upcomingList = mutableListOf<UpcomingEpisodeItem>()
                 for (show in tvShows) {
                     try {
-                        // Try to get next episode from cache/DB
-                        val nextEpisode = repository.getNextEpisodeToWatch(show.id)
+                        // For upcoming, we want episodes that haven't aired yet or air today
+                        val futureEpisodes = repository.getFutureEpisodes(show.id)
                         
-                        // If we don't have any episodes for this show yet, trigger a sync in the background
-                        if (nextEpisode == null) {
+                        if (futureEpisodes.isEmpty()) {
+                            // If we have no future episodes, maybe sync to check for new ones
                             viewModelScope.launch {
                                 repository.syncEpisodes(show.id)
                             }
                         }
                         
-                        nextEpisode?.let { episode ->
+                        futureEpisodes.forEach { episode ->
                             val daysAway = calculateDaysAway(episode.airDate)
-                            upcomingList.add(
-                                UpcomingEpisodeItem(
-                                    showId = show.id,
-                                    showName = show.title,
-                                    showPosterPath = show.posterPath,
-                                    episode = episode,
-                                    daysAway = daysAway
+                            if (daysAway != null && daysAway >= 0 && episode.seasonNumber > 0) {
+                                upcomingList.add(
+                                    UpcomingEpisodeItem(
+                                        showId = show.id,
+                                        showName = show.title,
+                                        showPosterPath = show.posterPath,
+                                        episode = episode,
+                                        daysAway = daysAway
+                                    )
                                 )
-                            )
+                            }
                         }
                     } catch (e: Exception) {
-                        // Log error for this specific show but continue processing others
                         e.printStackTrace()
-                        // Add a placeholder episode for this show so UI doesn't break
-                        upcomingList.add(
-                            UpcomingEpisodeItem(
-                                showId = show.id,
-                                showName = show.title,
-                                showPosterPath = show.posterPath,
-                                episode = Episode(
-                                    id = "-1",
-                                    name = "Error loading episode",
-                                    overview = "",
-                                    stillPath = null,
-                                    seasonNumber = 1,
-                                    episodeNumber = 1,
-                                    airDate = null,
-                                    voteAverage = 0.0,
-                                    isWatched = false
-                                ),
-                                daysAway = null
-                            )
-                        )
                     }
                 }
-                emit(upcomingList)
+                emit(upcomingList.sortedBy { it.daysAway })
             }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    // Grouped upcoming episodes for the UI
+    val groupedUpcomingEpisodes = upcomingEpisodes.map { items ->
+        val today = LocalDate.now()
+        items.groupBy { item ->
+            val airDateStr = item.episode.airDate ?: return@groupBy "LATER"
+            val airDate = try {
+                LocalDate.parse(airDateStr, DateTimeFormatter.ISO_LOCAL_DATE)
+            } catch (e: Exception) {
+                return@groupBy "LATER"
+            }
+            
+            val daysAway = ChronoUnit.DAYS.between(today, airDate)
+            when {
+                daysAway in 0..6 -> "THIS WEEK"
+                daysAway in 7..13 -> "NEXT WEEK"
+                airDate.month == today.month && airDate.year == today.year -> "THIS MONTH"
+                airDate.month == today.plusMonths(1).month && airDate.year == today.plusMonths(1).year -> "NEXT MONTH"
+                else -> "LATER"
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
     fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int) {
         viewModelScope.launch {

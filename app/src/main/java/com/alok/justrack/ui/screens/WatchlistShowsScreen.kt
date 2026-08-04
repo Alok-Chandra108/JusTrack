@@ -146,7 +146,7 @@ private fun WatchlistTabContent(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .size(28.dp)
+                    .size(26.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(SurfaceVariant)
                     .clickable { viewModel.toggleGridView() },
@@ -156,7 +156,7 @@ private fun WatchlistTabContent(
                     imageVector = if (isGridView) Icons.Rounded.List else Icons.Rounded.GridView,
                     contentDescription = "Toggle View",
                     tint = TextPrimary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
@@ -224,7 +224,7 @@ private fun WatchlistTabContent(
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
@@ -257,7 +257,7 @@ fun SectionHeader(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.padding(vertical = 8.dp),
+        modifier = modifier.padding(vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
@@ -269,8 +269,8 @@ fun SectionHeader(
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
                 fontWeight = FontWeight.Black,
-                fontSize = 10.sp,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                fontSize = 13.sp,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
             )
         }
     }
@@ -297,6 +297,22 @@ fun EpisodeGridItem(
                     .clip(RoundedCornerShape(12.dp))
                     .background(SurfaceVariant)
             )
+
+            if (progress.isNew) {
+                Surface(
+                    color = AccentPrimary,
+                    shape = RoundedCornerShape(bottomEnd = 8.dp),
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
+                    Text(
+                        text = "NEW",
+                        color = Color.Black,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
             
             // Progress Bar at the bottom
             val progressPercent = if (progress.totalCount > 0) progress.watchedCount.toFloat() / progress.totalCount else 0f
@@ -324,7 +340,7 @@ private fun UpcomingTabContent(
     viewModel: WatchlistViewModel,
     navController: NavController
 ) {
-    val upcomingEpisodes by viewModel.upcomingEpisodes.collectAsState()
+    val groupedUpcoming by viewModel.groupedUpcomingEpisodes.collectAsState()
 
     when {
         uiState is WatchlistViewModel.WatchlistUiState.Loading -> {
@@ -335,11 +351,11 @@ private fun UpcomingTabContent(
                 items(5) { SkeletonBox(modifier = Modifier.fillMaxWidth().height(120.dp), cornerRadius = 12) }
             }
         }
-        uiState is WatchlistViewModel.WatchlistUiState.Success && upcomingEpisodes.isEmpty() -> {
+        uiState is WatchlistViewModel.WatchlistUiState.Success && groupedUpcoming.isEmpty() -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 PremiumEmptyState(
                     title = "No Upcoming Episodes",
-                    subtitle = "We'll notify you when shows in your watchlist have new episodes scheduled.",
+                    subtitle = "Add more shows to your watchlist to track their upcoming releases.",
                     buttonLabel = "BROWSE",
                     onClick = { navController.navigate(Screen.Explore.route) },
                     illustration = { TvShowIllustration() }
@@ -354,14 +370,27 @@ private fun UpcomingTabContent(
         else -> {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(upcomingEpisodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }) { episode ->
-                    UpcomingEpisodeCard(
-                        episode = episode,
-                        onClick = { navController.navigate(Screen.Detail.createRoute(episode.showId, MediaType.TV.name)) }
-                    )
+                val order = listOf("THIS WEEK", "NEXT WEEK", "THIS MONTH", "NEXT MONTH", "LATER")
+                order.forEach { groupName ->
+                    val episodes = groupedUpcoming[groupName] ?: emptyList()
+                    if (episodes.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = groupName,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                        items(episodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }) { episode ->
+                            UpcomingEpisodeCard(
+                                episode = episode,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                onClick = { navController.navigate(Screen.Detail.createRoute(episode.showId, MediaType.TV.name)) }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -388,16 +417,16 @@ fun EpisodeTrackingCard(
         border = BorderStroke(1.dp, SurfaceVariant)
     ) {
         Row(
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(8.dp)
         ) {
-            // Image on the left (Poster)
+            // Image on the left (Poster) - Restored Size
             AsyncImage(
                 model = showPosterPath,
                 contentDescription = showName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(64.dp, 92.dp)
+                    .size(68.dp, 98.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(SurfaceColor)
             )
@@ -407,7 +436,8 @@ fun EpisodeTrackingCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(top = 2.dp)
+                    .height(98.dp)
+                    .padding(vertical = 4.dp)
             ) {
                 // Show title Capsule at TOP
                 Surface(
@@ -424,45 +454,68 @@ fun EpisodeTrackingCard(
                             text = showName.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextPrimary,
-                            fontSize = 10.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Black,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             imageVector = Icons.Rounded.ChevronRight,
                             contentDescription = null,
                             tint = TextSecondary,
-                            modifier = Modifier.size(12.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.weight(1f))
 
-                Text(
-                    text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
+                // Episode Details - Positioned slightly above the bottom
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                        if (progress.isNew) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                color = AccentPrimary,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = "NEW",
+                                    color = Color.Black,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Black,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                )
+                            }
+                        }
+                    }
 
-                Text(
-                    text = episode.name,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                    Text(
+                        text = episode.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Light,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(2.dp))
             }
 
-            // Checkmark Icon on the right with grey circular background
+            // Checkmark Icon on the right with grey circular background - VERTICALLY CENTERED
             Box(
                 modifier = Modifier
-                    .padding(top = 16.dp, end = 8.dp)
-                    .size(32.dp)
+                    .padding(horizontal = 8.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
                     .background(SurfaceVariant.copy(alpha = 0.4f))
                     .clickable { onMarkWatched() },
@@ -472,7 +525,7 @@ fun EpisodeTrackingCard(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = "Mark Watched",
                     tint = TextSecondary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -490,81 +543,110 @@ fun UpcomingEpisodeCard(
     val ep = episode.episode
     val daysAway = episode.daysAway
 
-    val countdownText = when {
-        daysAway == null -> ""
-        daysAway == 0L -> "Available Today"
-        daysAway == 1L -> "Tomorrow"
-        daysAway < 0 -> "Released ${(-daysAway).toInt()} days ago"
-        else -> "Releases in $daysAway days"
+    val statusColor = when {
+        daysAway == 0L -> AccentPrimary
+        daysAway == 1L -> Color(0xFFFFA500) // Orange
+        else -> TextSecondary
     }
 
-    NeuCard(
+    val airDateFormatted = remember(ep.airDate) {
+        if (ep.airDate == null) "" else {
+            try {
+                val date = LocalDate.parse(ep.airDate)
+                val dayOfWeek = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+                val datePart = date.format(DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US))
+                "$dayOfWeek, $datePart"
+            } catch (_: Exception) {
+                ep.airDate
+            }
+        }
+    }
+
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { onClick() },
+        color = Color.Transparent
     ) {
-        Column {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(vertical = 4.dp)
-            ) {
-                AsyncImage(
-                    model = ep.stillPath ?: showPosterPath,
-                    contentDescription = ep.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(120.dp, 68.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SurfaceColor)
+        Row(
+            modifier = Modifier.padding(vertical = 8.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Vertical Poster on the Left
+            AsyncImage(
+                model = showPosterPath,
+                contentDescription = showName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(80.dp, 120.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(SurfaceColor)
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Details on the Right
+            Column(modifier = Modifier.weight(1f)) {
+                // Air Date & Time (Top)
+                Text(
+                    text = airDateFormatted,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = statusColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp
                 )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                // Show Name
+                Text(
+                    text = showName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                // Season | Episode
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "S%02d | E%02d".format(Locale.US, ep.seasonNumber, ep.episodeNumber),
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = TextSecondary,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
+                        fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = ep.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = showName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = countdownText,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (daysAway == 0L) AccentPrimary else TextSecondary,
-                        fontWeight = FontWeight.Black
-                    )
+                    
+                    if (ep.seasonNumber == 1 && ep.episodeNumber == 1) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Badge(containerColor = AccentPrimary.copy(alpha = 0.2f), contentColor = AccentPrimary) {
+                            Text("PREMIERE", fontSize = 8.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(2.dp))
+                        }
+                    }
                 }
-            }
 
-            if (ep.airDate != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                val airDateString = try {
-                    LocalDate.parse(ep.airDate).format(DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.US))
-                } catch (_: Exception) {
-                    ep.airDate
-                }
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Episode Name
                 Text(
-                    text = airDateString,
-                    style = MaterialTheme.typography.labelMedium,
+                    text = ep.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Brief Synopsis
+                Text(
+                    text = ep.overview,
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Medium
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 14.sp
                 )
             }
         }

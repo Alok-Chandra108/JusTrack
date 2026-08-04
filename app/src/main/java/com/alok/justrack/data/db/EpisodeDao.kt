@@ -38,6 +38,7 @@ interface EpisodeDao {
     @Query("""
         SELECT e.* FROM episode_entity e
         WHERE e.showId = :showId
+          AND e.seasonNumber > 0
           AND NOT EXISTS (
             SELECT 1 FROM watched_episodes we
             WHERE we.showId = :showId AND we.seasonNumber = e.seasonNumber AND we.episodeNumber = e.episodeNumber
@@ -60,4 +61,7 @@ interface EpisodeDao {
         WHERE ee.showId = :showId
     """)
     suspend fun getTotalEpisodeCount(showId: String): Int
+
+    @Query("SELECT * FROM episode_entity WHERE showId = :showId AND airDate >= :today ORDER BY airDate ASC")
+    suspend fun getFutureEpisodes(showId: String, today: String): List<EpisodeEntity>
 }
