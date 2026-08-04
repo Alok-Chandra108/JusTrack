@@ -230,6 +230,13 @@ private fun WatchlistTabContent(
                         groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
                             if (index > 0) {
                                 item {
+                                    if (header == "HAVEN'T STARTED") {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                                            thickness = 1.dp,
+                                            color = SurfaceVariant.copy(alpha = 0.5f)
+                                        )
+                                    }
                                     SectionHeader(header)
                                 }
                             }
@@ -257,7 +264,7 @@ fun SectionHeader(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.padding(vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
@@ -269,8 +276,8 @@ fun SectionHeader(
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
                 fontWeight = FontWeight.Black,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                fontSize = 10.sp,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp)
             )
         }
     }
@@ -299,18 +306,8 @@ fun EpisodeGridItem(
             )
 
             if (progress.isNew) {
-                Surface(
-                    color = AccentPrimary,
-                    shape = RoundedCornerShape(bottomEnd = 8.dp),
-                    modifier = Modifier.align(Alignment.TopStart)
-                ) {
-                    Text(
-                        text = "NEW",
-                        color = Color.Black,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                Box(modifier = Modifier.padding(4.dp)) {
+                    WatchlistBadge(text = "NEW", color = AccentPrimary)
                 }
             }
             
@@ -379,8 +376,7 @@ private fun UpcomingTabContent(
                     if (episodes.isNotEmpty()) {
                         item {
                             SectionHeader(
-                                title = groupName,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                title = groupName
                             )
                         }
                         items(episodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }) { episode ->
@@ -437,7 +433,7 @@ fun EpisodeTrackingCard(
                 modifier = Modifier
                     .weight(1f)
                     .height(98.dp)
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 2.dp)
             ) {
                 // Show title Capsule at TOP
                 Surface(
@@ -448,23 +444,23 @@ fun EpisodeTrackingCard(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = showName.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextPrimary,
-                            fontSize = 12.sp,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.Black,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = Icons.Rounded.ChevronRight,
                             contentDescription = null,
                             tint = TextSecondary,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(10.dp)
                         )
                     }
                 }
@@ -479,21 +475,26 @@ fun EpisodeTrackingCard(
                             style = MaterialTheme.typography.labelMedium,
                             color = TextPrimary,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
+                            fontSize = 12.sp
                         )
-                        if (progress.isNew) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Surface(
-                                color = AccentPrimary,
-                                shape = RoundedCornerShape(4.dp)
-                            ) {
-                                Text(
-                                    text = "NEW",
-                                    color = Color.Black,
-                                    fontSize = 8.sp,
-                                    fontWeight = FontWeight.Black,
-                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                )
+                        if (progress.remainingCount > 0) {
+                            Text(
+                                text = " +${progress.remainingCount}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 11.sp
+                            )
+                        }
+                        
+                        // Badges
+                        Row(modifier = Modifier.padding(start = 6.dp)) {
+                            if (progress.isNew) {
+                                WatchlistBadge(text = "NEW", color = AccentPrimary)
+                            } else if (progress.isPremiere) {
+                                WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
+                            } else if (progress.isFinale) {
+                                WatchlistBadge(text = "FINALE", color = GoldAccent)
                             }
                         }
                     }
@@ -503,8 +504,9 @@ fun EpisodeTrackingCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                         fontWeight = FontWeight.Light,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 14.sp
                     )
                 }
                 
@@ -514,8 +516,8 @@ fun EpisodeTrackingCard(
             // Checkmark Icon on the right with grey circular background - VERTICALLY CENTERED
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .size(34.dp)
+                    .padding(horizontal = 4.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
                     .background(SurfaceVariant.copy(alpha = 0.4f))
                     .clickable { onMarkWatched() },
@@ -525,10 +527,27 @@ fun EpisodeTrackingCard(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = "Mark Watched",
                     tint = TextSecondary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
+    }
+}
+
+@Composable
+fun WatchlistBadge(text: String, color: Color) {
+    Surface(
+        color = color.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(4.dp),
+        border = BorderStroke(0.5.dp, color.copy(alpha = 0.5f))
+    ) {
+        Text(
+            text = text,
+            color = color,
+            fontSize = 7.sp,
+            fontWeight = FontWeight.Black,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+        )
     }
 }
 

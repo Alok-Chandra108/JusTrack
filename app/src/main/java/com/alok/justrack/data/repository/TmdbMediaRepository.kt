@@ -286,6 +286,10 @@ class TmdbMediaRepository @Inject constructor(
         return episodeDao.getTotalEpisodeCount(showId)
     }
 
+    override suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int? {
+        return episodeDao.getMaxEpisodeNumberForSeason(showId, seasonNumber)
+    }
+
     override suspend fun getFutureEpisodes(showId: String): List<Episode> {
         val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         return episodeDao.getFutureEpisodes(showId, today)

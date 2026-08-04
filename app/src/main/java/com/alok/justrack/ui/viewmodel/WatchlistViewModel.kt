@@ -134,6 +134,7 @@ class WatchlistViewModel @Inject constructor(
         val showPosterPath: String?,
         val episode: Episode,
         val isPremiere: Boolean,
+        val isFinale: Boolean,
         val isNew: Boolean,
         val remainingCount: Int,
         val watchedCount: Int,
@@ -175,13 +176,17 @@ class WatchlistViewModel @Inject constructor(
                             }
                         }
                         
-                        val isPremiere = nextEpisode?.seasonNumber == 1 && nextEpisode?.episodeNumber == 1
+                        val isPremiere = nextEpisode?.episodeNumber == 1
+                        val maxEp = nextEpisode?.let { repository.getMaxEpisodeNumberForSeason(show.id, it.seasonNumber) }
+                        val isFinale = nextEpisode?.episodeNumber != null && nextEpisode.episodeNumber == maxEp
+                        
                         val daysAway = calculateDaysAway(nextEpisode?.airDate)
-                        val isNew = daysAway != null && daysAway < 0 // Aired but not watched
+                        // Aired in the last 7 days
+                        val isNew = daysAway != null && daysAway < 0 && daysAway >= -7
                         
                         val totalCount = repository.getTotalEpisodeCount(show.id)
                         val watchedCount = repository.getWatchedEpisodeCount(show.id)
-                        val remainingCount = (totalCount - watchedCount).coerceAtLeast(0)
+                        val remainingCount = (totalCount - watchedCount - 1).coerceAtLeast(0)
 
                         episodeItems.add(
                             WatchlistEpisodeItem(
@@ -200,6 +205,7 @@ class WatchlistViewModel @Inject constructor(
                                     isWatched = false
                                 ),
                                 isPremiere = isPremiere,
+                                isFinale = isFinale,
                                 isNew = isNew,
                                 remainingCount = remainingCount,
                                 watchedCount = watchedCount,
@@ -227,6 +233,7 @@ class WatchlistViewModel @Inject constructor(
                                     isWatched = false
                                 ),
                                 isPremiere = false,
+                                isFinale = false,
                                 isNew = false,
                                 remainingCount = 0,
                                 watchedCount = 0,

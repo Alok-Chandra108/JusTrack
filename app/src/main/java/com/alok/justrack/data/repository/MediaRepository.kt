@@ -57,5 +57,6 @@ interface MediaRepository {
     suspend fun getUnwatchedEpisodeCount(showId: String): Int
     suspend fun getWatchedEpisodeCount(showId: String): Int
     suspend fun getTotalEpisodeCount(showId: String): Int
+    suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int?
     suspend fun getFutureEpisodes(showId: String): List<Episode>
 }

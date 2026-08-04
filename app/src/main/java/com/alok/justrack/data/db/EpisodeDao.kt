@@ -62,6 +62,9 @@ interface EpisodeDao {
     """)
     suspend fun getTotalEpisodeCount(showId: String): Int
 
+    @Query("SELECT MAX(episodeNumber) FROM episode_entity WHERE showId = :showId AND seasonNumber = :seasonNumber")
+    suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int?
+
     @Query("SELECT * FROM episode_entity WHERE showId = :showId AND airDate >= :today ORDER BY airDate ASC")
     suspend fun getFutureEpisodes(showId: String, today: String): List<EpisodeEntity>
 }
