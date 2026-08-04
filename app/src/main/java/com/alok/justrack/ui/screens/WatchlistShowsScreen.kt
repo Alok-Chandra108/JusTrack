@@ -232,9 +232,9 @@ private fun WatchlistTabContent(
                                 item {
                                     if (header == "HAVEN'T STARTED") {
                                         HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
-                                            thickness = 1.dp,
-                                            color = SurfaceVariant.copy(alpha = 0.5f)
+                                            modifier = Modifier.padding(vertical = 12.dp),
+                                            thickness = 2.dp,
+                                            color = SurfaceVariant
                                         )
                                     }
                                     SectionHeader(header)
@@ -433,7 +433,8 @@ fun EpisodeTrackingCard(
                 modifier = Modifier
                     .weight(1f)
                     .height(98.dp)
-                    .padding(vertical = 2.dp)
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // Show title Capsule at TOP
                 Surface(
@@ -465,10 +466,8 @@ fun EpisodeTrackingCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Episode Details - Positioned slightly above the bottom
-                Column {
+                // Episode Details - Positioned slightly above the bottom with spacing
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
@@ -538,7 +537,7 @@ fun EpisodeTrackingCard(
 fun WatchlistBadge(text: String, color: Color) {
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(4.dp),
+        shape = CircleShape,
         border = BorderStroke(0.5.dp, color.copy(alpha = 0.5f))
     ) {
         Text(
@@ -546,7 +545,7 @@ fun WatchlistBadge(text: String, color: Color) {
             color = color,
             fontSize = 7.sp,
             fontWeight = FontWeight.Black,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
         )
     }
 }

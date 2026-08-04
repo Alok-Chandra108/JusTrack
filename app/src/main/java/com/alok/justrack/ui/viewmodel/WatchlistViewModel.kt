@@ -169,6 +169,12 @@ class WatchlistViewModel @Inject constructor(
                         // Try to get next episode from cache/DB
                         val nextEpisode = repository.getNextEpisodeToWatch(show.id)
                         
+                        // Filter out season 0 if it somehow leaked through
+                        if (nextEpisode != null && nextEpisode.seasonNumber == 0) {
+                             // This case is handled by DAO, but being defensive
+                             continue 
+                        }
+                        
                         // If we don't have any episodes for this show yet, trigger a sync in the background
                         if (nextEpisode == null) {
                             viewModelScope.launch {
@@ -188,30 +194,22 @@ class WatchlistViewModel @Inject constructor(
                         val watchedCount = repository.getWatchedEpisodeCount(show.id)
                         val remainingCount = (totalCount - watchedCount - 1).coerceAtLeast(0)
 
-                        episodeItems.add(
-                            WatchlistEpisodeItem(
-                                showId = show.id,
-                                showName = show.title,
-                                showPosterPath = show.posterPath,
-                                episode = nextEpisode ?: Episode(
-                                    id = "-1",
-                                    name = "Loading episodes...",
-                                    overview = "",
-                                    stillPath = null,
-                                    seasonNumber = 1,
-                                    episodeNumber = 1,
-                                    airDate = null,
-                                    voteAverage = 0.0,
-                                    isWatched = false
-                                ),
-                                isPremiere = isPremiere,
-                                isFinale = isFinale,
-                                isNew = isNew,
-                                remainingCount = remainingCount,
-                                watchedCount = watchedCount,
-                                totalCount = totalCount
+                        if (nextEpisode != null && nextEpisode.seasonNumber > 0) {
+                            episodeItems.add(
+                                WatchlistEpisodeItem(
+                                    showId = show.id,
+                                    showName = show.title,
+                                    showPosterPath = show.posterPath,
+                                    episode = nextEpisode,
+                                    isPremiere = isPremiere,
+                                    isFinale = isFinale,
+                                    isNew = isNew,
+                                    remainingCount = remainingCount,
+                                    watchedCount = watchedCount,
+                                    totalCount = totalCount
+                                )
                             )
-                        )
+                        }
                     } catch (e: Exception) {
                         // Log error for this specific show but continue processing others
                         e.printStackTrace()

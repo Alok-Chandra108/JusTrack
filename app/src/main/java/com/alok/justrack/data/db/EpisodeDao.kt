@@ -48,17 +48,17 @@ interface EpisodeDao {
     """)
     suspend fun getNextUnwatchedEpisode(showId: String): EpisodeEntity?
 
-    // Get the count of watched episodes for a show (for progress tracking)
+    // Get the count of watched episodes for a show (excluding specials)
     @Query("""
         SELECT COUNT(*) FROM watched_episodes we
-        WHERE we.showId = :showId
+        WHERE we.showId = :showId AND we.seasonNumber > 0
     """)
     suspend fun getWatchedEpisodeCount(showId: String): Int
 
-    // Get the total number of episodes for a show (from our local episode_entity table)
+    // Get the total number of episodes for a show (excluding specials)
     @Query("""
         SELECT COUNT(*) FROM episode_entity ee
-        WHERE ee.showId = :showId
+        WHERE ee.showId = :showId AND ee.seasonNumber > 0
     """)
     suspend fun getTotalEpisodeCount(showId: String): Int
 
