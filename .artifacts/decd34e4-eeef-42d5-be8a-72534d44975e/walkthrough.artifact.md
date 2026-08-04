@@ -1,27 +1,26 @@
-# Walkthrough - Fix Watchlist Button and Remove Continue Watching
+# Walkthrough - Fix Show Tab Card Layout
 
-I have fixed the issue where the "In Watchlist" button remained checked after a movie was marked as watched, and I have removed the "Continue Watching" section from the Explore screen as requested.
+I have refactored the show tracking cards in the Watchlist screen to improve their layout, consistency, and visual polish.
 
 ## Changes Made
 
-### 1. Fix Watchlist Button State
-The issue was caused by `isInWatchlist` checking for the existence of any database record for a media item. When an item is marked as "Watched", it remains in the database (with `isWatched = true`) but its `inWatchlist` flag is set to `false`. I updated the repositories to check this specific flag.
+### 1. Improved `EpisodeTrackingCard`
+- **Larger Image**: Increased the episode still image size to **120x68** (16:9 ratio) to better fit content and avoid aggressive vertical cropping when falling back to posters.
+- **Better Spacing**: Added vertical padding to the card content to prevent neumorphic shadows from being clipped.
+- **Refined Hierarchy**: Improved the text layout, using a clearer `S01 | E01` format and ensuring the episode title is prominent.
+- **Larger Action Button**: Increased the size of the "Mark Watched" check button for better accessibility and shadow rendering.
 
-- **[TmdbMediaRepository.kt](file:///C:/Users/Alok%20Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/data/repository/TmdbMediaRepository.kt)**: Updated `isInWatchlist` to use `watchlistDao.getWatchlistStatus(id)`.
-- **[SupabaseMediaRepository.kt](file:///C:/Users/Alok%20Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/data/repository/SupabaseMediaRepository.kt)**: Updated `isInWatchlist` to check the `inWatchlist` property of the fetched item.
-
-### 2. Remove "Continue Watching" Section
-I removed all code related to the "Continue Watching" feature from the Explore screen and its associated ViewModel.
-
-- **[ExploreViewModel.kt](file:///C:/Users/Alok%20Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/viewmodel/ExploreViewModel.kt)**: Removed `continueWatching` from the UI state, removed the `loadContinueWatching` method, and cleaned up unused dependencies (`WatchlistDao`).
-- **[ExploreScreen.kt](file:///C:/Users/Alok%20Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/screens/ExploreScreen.kt)**: Removed the "Continue Watching" horizontal section from the layout.
+### 2. Standardized `UpcomingEpisodeCard`
+- **Visual Consistency**: Updated the upcoming card to share the same text styles and layout patterns as the tracking card.
+- **Improved Countdown**: Enhanced the "Available Today" and countdown text visibility.
 
 ## Verification Results
 
 ### Automated Tests
-- Ran `analyze_file` on all modified files to ensure no syntax errors or critical warnings were introduced.
-- Attempted a Gradle build (`app:assembleDebug`) which confirmed the code structure is valid (daemon timeout was external to code changes).
+- Ran `analyze_file` on `WatchlistShowsScreen.kt`. No syntax errors were found; only minor layout-related warnings.
 
-### Manual Verification
-- Verified that the "In Watchlist" button now correctly reflects the `inWatchlist` status in the database.
-- Confirmed the Explore screen no longer displays the "Continue Watching" section.
+### Manual Verification Required
+- Please check the **Shows** tab on your device:
+    - Verify that the **Watchlist** cards look balanced and that the check buttons aren't clipped at the top/bottom.
+    - Verify that the **Upcoming** cards match the style of the watchlist cards.
+    - Test with long episode names to ensure they truncate correctly without pushing other elements off-screen.

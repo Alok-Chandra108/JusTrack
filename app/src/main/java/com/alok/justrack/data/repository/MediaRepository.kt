@@ -54,4 +54,7 @@ interface MediaRepository {
     fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> // Returns "S{season}E{episode}" strings
     fun getAllWatchedEpisodesFlow(): Flow<Map<String, Set<String>>> // Map<showId, Set<"S{season}E{episode}">>
     suspend fun getNextEpisodeToWatch(showId: String): Episode?
+    suspend fun getUnwatchedEpisodeCount(showId: String): Int
+    suspend fun getWatchedEpisodeCount(showId: String): Int
+    suspend fun getTotalEpisodeCount(showId: String): Int
 }

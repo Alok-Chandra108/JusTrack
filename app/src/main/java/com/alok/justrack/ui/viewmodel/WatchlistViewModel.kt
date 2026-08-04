@@ -133,8 +133,18 @@ class WatchlistViewModel @Inject constructor(
         val showName: String,
         val showPosterPath: String?,
         val episode: Episode,
-        val isPremiere: Boolean
+        val isPremiere: Boolean,
+        val remainingCount: Int,
+        val watchedCount: Int,
+        val totalCount: Int
     )
+
+    private val _isGridView = MutableStateFlow(false)
+    val isGridView: StateFlow<Boolean> = _isGridView.asStateFlow()
+
+    fun toggleGridView() {
+        _isGridView.value = !_isGridView.value
+    }
 
     data class UpcomingEpisodeItem(
         val showId: String,
@@ -165,6 +175,10 @@ class WatchlistViewModel @Inject constructor(
                         }
                         
                         val isPremiere = nextEpisode?.seasonNumber == 1 && nextEpisode?.episodeNumber == 1
+                        val totalCount = repository.getTotalEpisodeCount(show.id)
+                        val watchedCount = repository.getWatchedEpisodeCount(show.id)
+                        val remainingCount = (totalCount - watchedCount).coerceAtLeast(0)
+
                         episodeItems.add(
                             WatchlistEpisodeItem(
                                 showId = show.id,
@@ -181,7 +195,10 @@ class WatchlistViewModel @Inject constructor(
                                     voteAverage = 0.0,
                                     isWatched = false
                                 ),
-                                isPremiere = isPremiere
+                                isPremiere = isPremiere,
+                                remainingCount = remainingCount,
+                                watchedCount = watchedCount,
+                                totalCount = totalCount
                             )
                         )
                     } catch (e: Exception) {
@@ -204,7 +221,10 @@ class WatchlistViewModel @Inject constructor(
                                     voteAverage = 0.0,
                                     isWatched = false
                                 ),
-                                isPremiere = false
+                                isPremiere = false,
+                                remainingCount = 0,
+                                watchedCount = 0,
+                                totalCount = 0
                             )
                         )
                     }
@@ -212,6 +232,11 @@ class WatchlistViewModel @Inject constructor(
                 emit(episodeItems)
             }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    // Grouped episodes for the UI
+    val groupedWatchlistEpisodes = watchlistEpisodes.map { items ->
+        items.groupBy { if (it.watchedCount == 0) "HAVEN'T STARTED" else "IN PROGRESS" }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
     // Upcoming tab: shows upcoming episodes for shows in watchlist
     @OptIn(ExperimentalCoroutinesApi::class)

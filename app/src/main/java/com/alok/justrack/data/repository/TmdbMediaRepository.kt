@@ -270,6 +270,20 @@ class TmdbMediaRepository @Inject constructor(
         }
     }
 
+    override suspend fun getUnwatchedEpisodeCount(showId: String): Int {
+        val total = episodeDao.getTotalEpisodeCount(showId)
+        val watched = episodeDao.getWatchedEpisodeCount(showId)
+        return (total - watched).coerceAtLeast(0)
+    }
+
+    override suspend fun getWatchedEpisodeCount(showId: String): Int {
+        return episodeDao.getWatchedEpisodeCount(showId)
+    }
+
+    override suspend fun getTotalEpisodeCount(showId: String): Int {
+        return episodeDao.getTotalEpisodeCount(showId)
+    }
+
     // ---- Mappers ----
 
     private fun TmdbMediaDto.toMediaItem(fallbackType: MediaType? = null): MediaItem {

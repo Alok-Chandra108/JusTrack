@@ -1,12 +1,10 @@
-# Tasks - Fix Watchlist Button and Remove Continue Watching
+# Tasks - Fix Show Tab Card Layout
 
-- [x] Fix Watchlist Button State
-    - [x] Update `TmdbMediaRepository.kt` to check `inWatchlist` flag
-    - [x] Update `SupabaseMediaRepository.kt` to check `inWatchlist` flag
-- [x] Remove "Continue Watching" Section
-    - [x] Update `ExploreViewModel.kt` to remove `continueWatching` logic
-    - [x] Update `ExploreScreen.kt` to remove the UI section
+- [x] Refactor `EpisodeTrackingCard` in `WatchlistShowsScreen.kt`
+    - [x] Increase image size to 120x68
+    - [x] Add vertical padding to Row
+    - [x] Improve text hierarchy and "PREMIERE" badge
+- [x] Refactor `UpcomingEpisodeCard` in `WatchlistShowsScreen.kt` for consistency
 - [x] Verification
     - [x] Build project
-    - [x] Verify watchlist button behavior
-    - [x] Verify Explore screen layout
+    - [x] Verify card layouts in "Watchlist" and "Upcoming" tabs
