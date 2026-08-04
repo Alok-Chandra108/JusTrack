@@ -487,7 +487,7 @@ fun EpisodeTrackingCard(
                         }
                         
                         // Badges
-                        Row(modifier = Modifier.padding(start = 6.dp)) {
+                        Row(modifier = Modifier.padding(start = 4.dp)) {
                             if (progress.isNew) {
                                 WatchlistBadge(text = "NEW", color = AccentPrimary)
                             } else if (progress.isPremiere) {
@@ -536,16 +536,16 @@ fun EpisodeTrackingCard(
 @Composable
 fun WatchlistBadge(text: String, color: Color) {
     Surface(
-        color = color.copy(alpha = 0.1f),
+        color = Background,
         shape = CircleShape,
-        border = BorderStroke(0.5.dp, color.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
     ) {
         Text(
             text = text,
             color = color,
-            fontSize = 7.sp,
+            fontSize = 9.sp,
             fontWeight = FontWeight.Black,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 5.dp, vertical = .2.dp)
         )
     }
 }
