@@ -147,10 +147,9 @@ class WatchlistViewModel @Inject constructor(
     // Watchlist tab: shows next unwatched episode for each show in watchlist
     @OptIn(ExperimentalCoroutinesApi::class)
     val watchlistEpisodes: StateFlow<List<WatchlistEpisodeItem>> = explicitWatchlistItems
-        .filter { items -> items.any { it != null && it.mediaType == MediaType.TV } }
+        .filter { items -> items.any { it.mediaType == MediaType.TV } }
         .flatMapLatest { items ->
-            val nonNullItems = items.filterNotNull()
-            val tvShows = nonNullItems.filter { it.mediaType == MediaType.TV }
+            val tvShows = items.filter { it.mediaType == MediaType.TV }
             flow {
                 val episodeItems = mutableListOf<WatchlistEpisodeItem>()
                 for (show in tvShows) {
@@ -217,10 +216,9 @@ class WatchlistViewModel @Inject constructor(
     // Upcoming tab: shows upcoming episodes for shows in watchlist
     @OptIn(ExperimentalCoroutinesApi::class)
     val upcomingEpisodes: StateFlow<List<UpcomingEpisodeItem>> = explicitWatchlistItems
-        .filter { items -> items.any { it != null && it.mediaType == MediaType.TV } }
+        .filter { items -> items.any { it.mediaType == MediaType.TV } }
         .flatMapLatest { items ->
-            val nonNullItems = items.filterNotNull()
-            val tvShows = nonNullItems.filter { it.mediaType == MediaType.TV }
+            val tvShows = items.filter { it.mediaType == MediaType.TV }
             flow {
                 val upcomingList = mutableListOf<UpcomingEpisodeItem>()
                 for (show in tvShows) {

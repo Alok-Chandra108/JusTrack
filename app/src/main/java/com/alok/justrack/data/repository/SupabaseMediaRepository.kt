@@ -67,12 +67,12 @@ class SupabaseMediaRepository @Inject constructor(
 
     override suspend fun isInWatchlist(id: String): Boolean {
         return try {
-            val result = postgrest.select(columns = Columns.list("id")) {
+            val result = postgrest.select {
                 filter {
                     eq("id", id)
                 }
             }.decodeList<SupabaseWatchlistItem>()
-            result.isNotEmpty()
+            result.firstOrNull()?.inWatchlist ?: false
         } catch (e: Exception) {
             e.printStackTrace()
             false

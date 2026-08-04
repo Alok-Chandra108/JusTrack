@@ -152,18 +152,6 @@ fun ExploreScreen(
                                 item { FeaturedBanner(items = state.bannerItems, navController = navController) }
                             }
 
-                            // Continue Watching
-                            if (state.continueWatching.isNotEmpty()) {
-                                item {
-                                    ExploreSection(
-                                        title = "Continue Watching",
-                                        items = state.continueWatching,
-                                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
-                                        onItemLongPress = { longPressItem = it; showLongPressSheet = true }
-                                    )
-                                }
-                            }
-
                             // Genre Chips
                             if (state.genres.isNotEmpty()) {
                                 item {

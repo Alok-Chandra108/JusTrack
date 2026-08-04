@@ -3,10 +3,8 @@ package com.alok.justrack.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alok.justrack.data.api.TmdbApiService
-import com.alok.justrack.data.db.WatchlistDao
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
-import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +24,6 @@ sealed class ExploreUiState {
         val topRatedTv: List<MediaItem> = emptyList(),
         val upcomingMovies: List<MediaItem> = emptyList(),
         val onTheAirTv: List<MediaItem> = emptyList(),
-        val continueWatching: List<MediaItem> = emptyList(),
         val genres: List<Genre> = emptyList(),
         val genreResults: List<MediaItem> = emptyList(),
         val selectedGenre: Genre? = null
@@ -44,8 +41,7 @@ sealed class ExploreSearchUiState {
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
     private val apiService: TmdbApiService,
-    private val repository: MediaRepository,
-    private val watchlistDao: WatchlistDao
+    private val repository: MediaRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ExploreUiState>(ExploreUiState.Loading)
@@ -67,13 +63,11 @@ class ExploreViewModel @Inject constructor(
             try {
                 val trending = loadWithCache("trending") { fetchTrending() }
                 val genres = loadGenres()
-                val continueWatching = loadContinueWatching()
 
                 _uiState.value = ExploreUiState.Success(
                     bannerItems = trending.take(10),
                     trending = trending,
-                    genres = genres,
-                    continueWatching = continueWatching
+                    genres = genres
                 )
             } catch (e: Exception) {
                 _uiState.value = ExploreUiState.Error(e.message ?: "Failed to load explore data")
@@ -254,31 +248,6 @@ class ExploreViewModel @Inject constructor(
             val tvGenres = apiService.getTvGenres().genres
             val allGenres = (movieGenres + tvGenres).distinctBy { it.id }.sortedBy { it.name }
             allGenres.map { Genre(it.id, it.name) }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    private suspend fun loadContinueWatching(): List<MediaItem> {
-        return try {
-            val entities = watchlistDao.getAllOnce()
-            entities
-                .filter { it.isWatched }
-                .sortedByDescending { it.addedAt }
-                .take(10)
-                .map { entity ->
-                    MediaItem(
-                        id = entity.id,
-                        title = entity.title,
-                        overview = entity.overview,
-                        posterPath = entity.customPosterPath ?: entity.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                        backdropPath = entity.customBackdropPath ?: entity.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
-                        rating = entity.rating,
-                        releaseDate = entity.releaseDate,
-                        mediaType = MediaType.valueOf(entity.mediaType),
-                        isWatched = entity.isWatched
-                    )
-                }
         } catch (e: Exception) {
             emptyList()
         }

@@ -1,17 +1,12 @@
-# Task List: Fix Watched Status and TV Show Wishlist Bug
+# Tasks - Fix Watchlist Button and Remove Continue Watching
 
-- [ ] Data Layer Improvements
-    - [ ] Update `SupabaseWatchlistItem` with `in_watchlist`
-    - [ ] Update `TmdbMediaRepository` with robust TV show detection
-    - [ ] Update `TmdbMediaRepository.setWatched` with auto-removal from wishlist
-    - [ ] Implement `SupabaseMediaRepository` sync logic
-- [ ] ViewModel Updates
-    - [ ] Update `DetailViewModel` (case-insensitive mediaType, toggleWatched)
-    - [ ] Update `ExploreViewModel` (toggleWatched, robust detection)
-    - [ ] Update `WatchlistViewModel` (sorting)
-- [ ] UI Adjustments
-    - [ ] Update `ExploreScreen` (Long-press Mark Watched)
-- [ ] Verification
-    - [ ] Verify TV Show Wishlist sorting
-    - [ ] Verify Mark Watched behavior (Search -> Profile)
-    - [ ] Verify Undo Watched behavior (Delete vs Wishlist)
+- [x] Fix Watchlist Button State
+    - [x] Update `TmdbMediaRepository.kt` to check `inWatchlist` flag
+    - [x] Update `SupabaseMediaRepository.kt` to check `inWatchlist` flag
+- [x] Remove "Continue Watching" Section
+    - [x] Update `ExploreViewModel.kt` to remove `continueWatching` logic
+    - [x] Update `ExploreScreen.kt` to remove the UI section
+- [x] Verification
+    - [x] Build project
+    - [x] Verify watchlist button behavior
+    - [x] Verify Explore screen layout

@@ -85,7 +85,7 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     override suspend fun isInWatchlist(id: String): Boolean {
-        return watchlistDao.exists(id)
+        return watchlistDao.getWatchlistStatus(id) ?: false
     }
 
     override suspend fun setWatched(item: MediaItem, watched: Boolean) {
