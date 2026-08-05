@@ -7,6 +7,7 @@ import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,6 +18,8 @@ class DetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _rawDetails = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
+    private val _watchedEpisodes = MutableStateFlow<Set<String>>(emptySet())
+    private var watchedEpisodesJob: Job? = null
     
     // Watchlist flow to track watched IDs for filtering recommendations
     private val _watchedIds = repository.getWatchlistFlow()
@@ -24,10 +27,27 @@ class DetailViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     // Reactive UI state that filters recommendations based on watched status
-    val uiState: StateFlow<DetailUiState> = combine(_rawDetails, _watchedIds) { state, watched ->
+    val uiState: StateFlow<DetailUiState> = combine(_rawDetails, _watchedIds, _watchedEpisodes) { state, watched, watchedEps ->
         if (state is DetailUiState.Success) {
             val filteredRecs = state.item.recommendations.filter { it.id !in watched }
-            state.copy(item = state.item.copy(recommendations = filteredRecs))
+            
+            // For TV shows, ensure episodes in seasons reflect latest watched status
+            val finalItem = if (state.item.mediaType == MediaType.TV) {
+                state.item.copy(
+                    recommendations = filteredRecs,
+                    seasons = state.item.seasons.map { season ->
+                        season.copy(
+                            episodes = season.episodes.map { ep ->
+                                ep.copy(isWatched = watchedEps.contains("S${ep.seasonNumber}E${ep.episodeNumber}"))
+                            }
+                        )
+                    }
+                )
+            } else {
+                state.item.copy(recommendations = filteredRecs)
+            }
+            
+            state.copy(item = finalItem)
         } else {
             state
         }
@@ -56,7 +76,13 @@ class DetailViewModel @Inject constructor(
     val backdropImages: StateFlow<List<String>> = _backdropImages
 
     private val _selectedSeason = MutableStateFlow<com.alok.justrack.data.model.Season?>(null)
-    val selectedSeason: StateFlow<com.alok.justrack.data.model.Season?> = _selectedSeason
+    val selectedSeason: StateFlow<com.alok.justrack.data.model.Season?> = combine(_selectedSeason, _watchedEpisodes) { season, watchedEps ->
+        season?.copy(
+            episodes = season.episodes.map { ep ->
+                ep.copy(isWatched = watchedEps.contains("S${ep.seasonNumber}E${ep.episodeNumber}"))
+            }
+        )
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     private val _currentMediaItem = MutableStateFlow<MediaItem?>(null)
 
@@ -69,6 +95,15 @@ class DetailViewModel @Inject constructor(
             MediaType.valueOf(mediaType.uppercase()) 
         } catch (_: Exception) { 
             MediaType.MOVIE 
+        }
+
+        // Setup reactive episode tracking for TV shows
+        watchedEpisodesJob?.cancel()
+        _watchedEpisodes.value = emptySet()
+        if (currentMediaType == MediaType.TV) {
+            watchedEpisodesJob = repository.getWatchedEpisodesFlow(id)
+                .onEach { _watchedEpisodes.value = it.toSet() }
+                .launchIn(viewModelScope)
         }
 
         viewModelScope.launch {
@@ -224,15 +259,7 @@ class DetailViewModel @Inject constructor(
     fun markEpisodeWatched(seasonNumber: Int, episodeNumber: Int, watched: Boolean) {
         viewModelScope.launch {
             repository.markEpisodeWatched(currentId, seasonNumber, episodeNumber, watched)
-            // Reload details to reflect progress in season list
-            val updatedDetails = repository.getMediaDetail(currentId, currentMediaType)
-            if (updatedDetails != null) {
-                _rawDetails.value = DetailUiState.Success(updatedDetails)
-            }
-            // Reload current season if it's the one we're viewing
-            if (_selectedSeason.value?.seasonNumber == seasonNumber) {
-                loadSeason(seasonNumber)
-            }
+            // No manual reload needed as _watchedEpisodes flow is reactive
         }
     }
 }
