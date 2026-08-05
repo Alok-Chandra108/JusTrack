@@ -311,6 +311,21 @@ fun EpisodeGridItem(
                 }
             }
             
+            if (progress.isSyncing) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.4f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = AccentPrimary,
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
+            
             // Progress Bar at the bottom
             val progressPercent = if (progress.totalCount > 0) progress.watchedCount.toFloat() / progress.totalCount else 0f
             Box(
@@ -499,7 +514,7 @@ fun EpisodeTrackingCard(
                     }
 
                     Text(
-                        text = episode.name,
+                        text = if (progress.isSyncing) "Fetching data..." else episode.name,
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                         fontWeight = FontWeight.Light,
@@ -519,15 +534,23 @@ fun EpisodeTrackingCard(
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(SurfaceVariant.copy(alpha = 0.4f))
-                    .clickable { onMarkWatched() },
+                    .clickable(enabled = !progress.isSyncing) { onMarkWatched() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = "Mark Watched",
-                    tint = TextSecondary,
-                    modifier = Modifier.size(22.dp)
-                )
+                if (progress.isSyncing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = AccentPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = "Mark Watched",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
         }
     }

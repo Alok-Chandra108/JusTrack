@@ -147,7 +147,8 @@ class WatchlistViewModel @Inject constructor(
         val isNew: Boolean,
         val remainingCount: Int,
         val watchedCount: Int,
-        val totalCount: Int
+        val totalCount: Int,
+        val isSyncing: Boolean = false
     )
 
     private val _isGridView = MutableStateFlow(false)
@@ -210,7 +211,25 @@ class WatchlistViewModel @Inject constructor(
                                     isNew = isNew,
                                     remainingCount = remainingCount,
                                     watchedCount = watchedCount,
-                                    totalCount = totalCount
+                                    totalCount = totalCount,
+                                    isSyncing = false
+                                )
+                            )
+                        } else if (totalCount == 0) {
+                            // Show is in watchlist but has no episodes in DB yet -> Syncing
+                            episodeItems.add(
+                                WatchlistEpisodeItem(
+                                    showId = show.id,
+                                    showName = show.title,
+                                    showPosterPath = show.posterPath,
+                                    episode = Episode("-1", "Syncing episodes...", "", null, 1, 1, null, 0.0, false),
+                                    isPremiere = false,
+                                    isFinale = false,
+                                    isNew = false,
+                                    remainingCount = 0,
+                                    watchedCount = 0,
+                                    totalCount = 0,
+                                    isSyncing = true
                                 )
                             )
                         }
