@@ -7,6 +7,7 @@ import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.alok.justrack.util.Constants
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -141,8 +142,8 @@ class ExploreViewModel @Inject constructor(
                         id = dto.id.toString(),
                         title = dto.title ?: dto.name ?: "",
                         overview = dto.overview ?: "",
-                        posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                        backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                        posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                        backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                         rating = dto.voteAverage ?: 0.0,
                         releaseDate = dto.releaseDate ?: dto.firstAirDate ?: "",
                         mediaType = mediaType
@@ -178,8 +179,8 @@ class ExploreViewModel @Inject constructor(
                             id = dto.id.toString(),
                             title = dto.title ?: dto.name ?: "",
                             overview = dto.overview ?: "",
-                            posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                            backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                            posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                            backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                             rating = dto.voteAverage ?: 0.0,
                             releaseDate = dto.releaseDate ?: dto.firstAirDate ?: "",
                             mediaType = mediaType
@@ -267,8 +268,8 @@ class ExploreViewModel @Inject constructor(
                 id = dto.id.toString(),
                 title = dto.title ?: dto.name ?: "",
                 overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                 rating = dto.voteAverage ?: 0.0,
                 releaseDate = dto.releaseDate ?: dto.firstAirDate ?: "",
                 mediaType = mediaType
@@ -282,8 +283,8 @@ class ExploreViewModel @Inject constructor(
                 id = dto.id.toString(),
                 title = dto.title ?: dto.name ?: "",
                 overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                 rating = dto.voteAverage ?: 0.0,
                 releaseDate = dto.releaseDate ?: "",
                 mediaType = MediaType.MOVIE
@@ -297,8 +298,8 @@ class ExploreViewModel @Inject constructor(
                 id = dto.id.toString(),
                 title = dto.name ?: dto.title ?: "",
                 overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                 rating = dto.voteAverage ?: 0.0,
                 releaseDate = dto.firstAirDate ?: "",
                 mediaType = MediaType.TV
@@ -312,8 +313,8 @@ class ExploreViewModel @Inject constructor(
                 id = dto.id.toString(),
                 title = dto.title ?: dto.name ?: "",
                 overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                 rating = dto.voteAverage ?: 0.0,
                 releaseDate = dto.releaseDate ?: "",
                 mediaType = MediaType.MOVIE
@@ -327,8 +328,8 @@ class ExploreViewModel @Inject constructor(
                 id = dto.id.toString(),
                 title = dto.name ?: dto.title ?: "",
                 overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                 rating = dto.voteAverage ?: 0.0,
                 releaseDate = dto.firstAirDate ?: "",
                 mediaType = MediaType.TV
@@ -342,8 +343,8 @@ class ExploreViewModel @Inject constructor(
                 id = dto.id.toString(),
                 title = dto.title ?: dto.name ?: "",
                 overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                 rating = dto.voteAverage ?: 0.0,
                 releaseDate = dto.releaseDate ?: "",
                 mediaType = MediaType.MOVIE
@@ -357,8 +358,8 @@ class ExploreViewModel @Inject constructor(
                 id = dto.id.toString(),
                 title = dto.name ?: dto.title ?: "",
                 overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
-                backdropPath = dto.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },
+                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
                 rating = dto.voteAverage ?: 0.0,
                 releaseDate = dto.firstAirDate ?: "",
                 mediaType = MediaType.TV

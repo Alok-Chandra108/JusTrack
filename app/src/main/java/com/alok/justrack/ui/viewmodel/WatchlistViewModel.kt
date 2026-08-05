@@ -119,6 +119,15 @@ class WatchlistViewModel @Inject constructor(
     val explicitWatchlistItems: StateFlow<List<MediaItem>> = watchlistItems.map { items -> 
         items.filterNotNull()
             .filter { it.inWatchlist }
+    }.onEach { items ->
+        // Trigger sync for TV shows that have no episodes in DB yet
+        items.filter { it.mediaType == MediaType.TV }.forEach { show ->
+            viewModelScope.launch {
+                if (repository.getTotalEpisodeCount(show.id) == 0) {
+                    repository.syncEpisodes(show.id)
+                }
+            }
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,
@@ -173,13 +182,6 @@ class WatchlistViewModel @Inject constructor(
                         if (nextEpisode != null && nextEpisode.seasonNumber == 0) {
                              // This case is handled by DAO, but being defensive
                              continue 
-                        }
-                        
-                        // If we don't have any episodes for this show yet, trigger a sync in the background
-                        if (nextEpisode == null) {
-                            viewModelScope.launch {
-                                repository.syncEpisodes(show.id)
-                            }
                         }
                         
                         val isPremiere = nextEpisode?.episodeNumber == 1
@@ -265,13 +267,6 @@ class WatchlistViewModel @Inject constructor(
                     try {
                         // For upcoming, we want episodes that haven't aired yet or air today
                         val futureEpisodes = repository.getFutureEpisodes(show.id)
-                        
-                        if (futureEpisodes.isEmpty()) {
-                            // If we have no future episodes, maybe sync to check for new ones
-                            viewModelScope.launch {
-                                repository.syncEpisodes(show.id)
-                            }
-                        }
                         
                         futureEpisodes.forEach { episode ->
                             val daysAway = calculateDaysAway(episode.airDate)

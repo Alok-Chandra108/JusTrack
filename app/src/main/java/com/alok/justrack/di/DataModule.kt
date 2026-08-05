@@ -45,7 +45,7 @@ abstract class DataModule {
                 context,
                 AppDatabase::class.java,
                 "justrack.db"
-            ).fallbackToDestructiveMigration().build()
+            ).build()
         }
 
         @Provides
@@ -95,7 +95,7 @@ abstract class DataModule {
         @Singleton
         fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
             return Retrofit.Builder()
-                .baseUrl("https://api.themoviedb.org/")
+                .baseUrl(com.alok.justrack.util.Constants.TMDB_BASE_URL)
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()

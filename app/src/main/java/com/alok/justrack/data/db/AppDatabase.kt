@@ -17,7 +17,7 @@ import androidx.room.RoomDatabase
         EpisodeEntity::class // Added for episode tracking
     ],
     version = 7, // Incremented version
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun watchlistDao(): WatchlistDao

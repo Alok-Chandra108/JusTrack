@@ -6,6 +6,8 @@ import com.alok.justrack.data.api.TmdbEpisodeDto
 import com.alok.justrack.data.api.TmdbSeasonDto
 import com.alok.justrack.data.db.*
 import com.alok.justrack.data.model.*
+import com.alok.justrack.util.Constants
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -168,8 +170,8 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun getMovieImages(id: String): Pair<List<String>, List<String>> {
         return try {
             val response = apiService.getMovieImages(id)
-            val posters = response.posters.map { "https://image.tmdb.org/t/p/w500${it.filePath}" }
-            val backdrops = response.backdrops.map { "https://image.tmdb.org/t/p/w780${it.filePath}" }
+            val posters = response.posters.map { "${Constants.TMDB_IMAGE_BASE_URL_W500}${it.filePath}" }
+            val backdrops = response.backdrops.map { "${Constants.TMDB_IMAGE_BASE_URL_W780}${it.filePath}" }
             posters to backdrops
         } catch (e: Exception) {
             e.printStackTrace()
@@ -180,8 +182,8 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun getTvImages(id: String): Pair<List<String>, List<String>> {
         return try {
             val response = apiService.getTvImages(id)
-            val posters = response.posters.map { "https://image.tmdb.org/t/p/w500${it.filePath}" }
-            val backdrops = response.backdrops.map { "https://image.tmdb.org/t/p/w780${it.filePath}" }
+            val posters = response.posters.map { "${Constants.TMDB_IMAGE_BASE_URL_W500}${it.filePath}" }
+            val backdrops = response.backdrops.map { "${Constants.TMDB_IMAGE_BASE_URL_W780}${it.filePath}" }
             posters to backdrops
         } catch (e: Exception) {
             e.printStackTrace()
@@ -210,12 +212,22 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun syncEpisodes(showId: String) {
         try {
             val tvDetails = apiService.getTvDetails(showId)
-            tvDetails.seasons?.forEach { seasonDto ->
-                val seasonDetails = apiService.getTvSeasonDetails(showId, seasonDto.seasonNumber)
-                val entities = seasonDetails.episodes?.map { episodeDto ->
-                    episodeDto.toEntity(showId)
-                } ?: emptyList()
-                episodeDao.insertAll(entities)
+            val seasons = tvDetails.seasons ?: return
+            
+            coroutineScope {
+                seasons.map { seasonDto ->
+                    async {
+                        try {
+                            val seasonDetails = apiService.getTvSeasonDetails(showId, seasonDto.seasonNumber)
+                            val entities = seasonDetails.episodes?.map { episodeDto ->
+                                episodeDto.toEntity(showId)
+                            } ?: emptyList()
+                            episodeDao.insertAll(entities)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }.awaitAll()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -324,8 +336,8 @@ class TmdbMediaRepository @Inject constructor(
         }
         val displayTitle = title ?: name ?: "Untitled"
         val rawDate = releaseDate ?: firstAirDate ?: ""
-        val posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
-        val backdropUrl = backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" }
+        val posterUrl = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" }
+        val backdropUrl = backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" }
         return MediaItem(
             id = id.toString(),
             title = displayTitle,
@@ -417,8 +429,8 @@ class TmdbMediaRepository @Inject constructor(
         }
         val displayTitle = title ?: name ?: "Untitled"
         val rawDate = releaseDate ?: firstAirDate ?: ""
-        val posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
-        val backdropUrl = backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" }
+        val posterUrl = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" }
+        val backdropUrl = backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" }
 
         val runtimeStr = when {
             runtime != null -> "${runtime / 60}h ${runtime % 60}m"
@@ -431,7 +443,7 @@ class TmdbMediaRepository @Inject constructor(
                 id = it.id.toString(),
                 name = it.name,
                 character = it.character,
-                profilePath = it.profilePath?.let { path -> "https://image.tmdb.org/t/p/w185$path" }
+                profilePath = it.profilePath?.let { path -> "${Constants.TMDB_IMAGE_BASE_URL_W185}$path" }
             )
         } ?: emptyList()
 
@@ -491,7 +503,7 @@ class TmdbMediaRepository @Inject constructor(
             id = id.toString(),
             name = name,
             overview = overview ?: "",
-            posterPath = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+            posterPath = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
             seasonNumber = seasonNumber,
             episodeCount = episodeCount ?: 0,
             airDate = airDate,
@@ -504,7 +516,7 @@ class TmdbMediaRepository @Inject constructor(
             id = id.toString(),
             name = name,
             overview = overview ?: "",
-            stillPath = stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
+            stillPath = stillPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W300}$it" },
             seasonNumber = seasonNumber,
             episodeNumber = episodeNumber,
             airDate = airDate,
