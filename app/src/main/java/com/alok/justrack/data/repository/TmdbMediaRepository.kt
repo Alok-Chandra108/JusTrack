@@ -27,6 +27,9 @@ class TmdbMediaRepository @Inject constructor(
     private val watchedEpisodeDao: WatchedEpisodeDao
 ) : MediaRepository {
 
+    private val _episodesUpdateEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    override val episodesUpdateEvents: Flow<Unit> = _episodesUpdateEvents.asSharedFlow()
+
     override suspend fun getTrending(): List<MediaItem> {
         return try {
             val response = apiService.getTrending()
@@ -223,6 +226,7 @@ class TmdbMediaRepository @Inject constructor(
                                 episodeDto.toEntity(showId)
                             } ?: emptyList()
                             episodeDao.insertAll(entities)
+                            _episodesUpdateEvents.emit(Unit)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

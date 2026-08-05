@@ -7,6 +7,8 @@ import com.alok.justrack.data.supabase.SupabaseWatchlistItem
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flow
 import java.util.UUID
 import javax.inject.Inject
@@ -18,6 +20,9 @@ class SupabaseMediaRepository @Inject constructor(
 ) : MediaRepository {
 
     private val postgrest = SupabaseClientProvider.client.postgrest["watchlist"]
+
+    private val _episodesUpdateEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    override val episodesUpdateEvents: Flow<Unit> = _episodesUpdateEvents.asSharedFlow()
 
     override suspend fun getTrending(): List<MediaItem> {
         return try {

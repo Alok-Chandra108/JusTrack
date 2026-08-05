@@ -48,6 +48,7 @@ interface MediaRepository {
     suspend fun getCustomBackdrop(id: String): String?
 
     // Episode Tracking
+    val episodesUpdateEvents: Flow<Unit>
     suspend fun syncEpisodes(showId: String)
     suspend fun getSeasonDetails(tvId: String, seasonNumber: Int): Season?
     suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean)

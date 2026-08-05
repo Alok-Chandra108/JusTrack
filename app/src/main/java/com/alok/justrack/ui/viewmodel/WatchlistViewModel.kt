@@ -170,8 +170,9 @@ class WatchlistViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val watchlistEpisodes: StateFlow<List<WatchlistEpisodeItem>> = combine(
         explicitWatchlistItems,
-        repository.getAllWatchedEpisodesFlow()
-    ) { items, _ -> items }
+        repository.getAllWatchedEpisodesFlow(),
+        repository.episodesUpdateEvents.onStart { emit(Unit) }
+    ) { items, _, _ -> items }
         .flatMapLatest { items ->
             val tvShows = items.filter { it.mediaType == MediaType.TV }
             flow {
@@ -280,8 +281,9 @@ class WatchlistViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val upcomingEpisodes: StateFlow<List<UpcomingEpisodeItem>> = combine(
         explicitWatchlistItems,
-        repository.getAllWatchedEpisodesFlow()
-    ) { items, _ -> items }
+        repository.getAllWatchedEpisodesFlow(),
+        repository.episodesUpdateEvents.onStart { emit(Unit) }
+    ) { items, _, _ -> items }
         .flatMapLatest { items ->
             val tvShows = items.filter { it.mediaType == MediaType.TV }
             flow {
