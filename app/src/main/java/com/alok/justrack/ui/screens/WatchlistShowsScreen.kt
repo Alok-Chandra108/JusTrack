@@ -1,8 +1,7 @@
 package com.alok.justrack.ui.screens
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.EaseOutExpo
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,7 +23,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -418,6 +419,29 @@ fun EpisodeTrackingCard(
     val episode = progress.episode
     val showName = progress.showName
     val showPosterPath = progress.showPosterPath
+    
+    // Animation state
+    var isClicked by remember(progress.showId, episode.id) { mutableStateOf(false) }
+    
+    val swipeProgress by animateFloatAsState(
+        targetValue = if (isClicked) 1f else 0f,
+        animationSpec = tween(durationMillis = 450, easing = LinearOutSlowInEasing),
+        label = "swipe_progress"
+    )
+    
+    val buttonColor by animateColorAsState(
+        targetValue = if (isClicked) WatchedGreen else SurfaceVariant.copy(alpha = 0.4f),
+        animationSpec = tween(200),
+        label = "button_color"
+    )
+
+    // Delay the actual data update until the animation finishes
+    LaunchedEffect(isClicked) {
+        if (isClicked) {
+            kotlinx.coroutines.delay(450)
+            onMarkWatched()
+        }
+    }
 
     Surface(
         modifier = modifier
@@ -427,130 +451,156 @@ fun EpisodeTrackingCard(
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, SurfaceVariant)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            // Image on the left (Poster) - Restored Size
-            AsyncImage(
-                model = showPosterPath,
-                contentDescription = showName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(68.dp, 98.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SurfaceColor)
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(98.dp)
-                    .padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(8.dp)
             ) {
-                // Show title Capsule at TOP
-                Surface(
-                    color = Background,
-                    shape = CircleShape,
-                    border = BorderStroke(1.dp, SurfaceVariant),
-                    modifier = Modifier.clickable { onClick() }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = showName.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextPrimary,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Rounded.ChevronRight,
-                            contentDescription = null,
-                            tint = TextSecondary,
-                            modifier = Modifier.size(10.dp)
-                        )
-                    }
-                }
+                // Image on the left (Poster) - Restored Size
+                AsyncImage(
+                    model = showPosterPath,
+                    contentDescription = showName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(68.dp, 98.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(SurfaceColor)
+                )
 
-                // Episode Details - Positioned slightly above the bottom with spacing
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                        if (progress.remainingCount > 0) {
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(98.dp)
+                        .padding(vertical = 4.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Show title Capsule at TOP
+                    Surface(
+                        color = Background,
+                        shape = CircleShape,
+                        border = BorderStroke(1.dp, SurfaceVariant),
+                        modifier = Modifier.clickable { onClick() }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
                             Text(
-                                text = " +${progress.remainingCount}",
+                                text = showName.uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 11.sp
+                                color = TextPrimary,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.ChevronRight,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(10.dp)
                             )
                         }
-                        
-                        // Badges
-                        Row(modifier = Modifier.padding(start = 4.dp)) {
-                            if (progress.isNew) {
-                                WatchlistBadge(text = "NEW", color = AccentPrimary)
-                            } else if (progress.isPremiere) {
-                                WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
-                            } else if (progress.isFinale) {
-                                WatchlistBadge(text = "FINALE", color = GoldAccent)
-                            }
-                        }
                     }
 
-                    Text(
-                        text = if (progress.isSyncing) "Fetching data..." else episode.name,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        fontWeight = FontWeight.Light,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        lineHeight = 14.sp
-                    )
+                    // Episode Details - Positioned slightly above the bottom with spacing
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                            if (progress.remainingCount > 0) {
+                                Text(
+                                    text = " +${progress.remainingCount}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            
+                            // Badges
+                            Row(modifier = Modifier.padding(start = 4.dp)) {
+                                if (progress.isNew) {
+                                    WatchlistBadge(text = "NEW", color = AccentPrimary)
+                                } else if (progress.isPremiere) {
+                                    WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
+                                } else if (progress.isFinale) {
+                                    WatchlistBadge(text = "FINALE", color = GoldAccent)
+                                }
+                            }
+                        }
+
+                        Text(
+                            text = if (progress.isSyncing) "Fetching data..." else episode.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Light,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 14.sp
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(2.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(2.dp))
+
+                // Checkmark Icon on the right with animated background - VERTICALLY CENTERED
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(buttonColor)
+                        .clickable(enabled = !progress.isSyncing && !isClicked) { 
+                            isClicked = true
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (progress.isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = AccentPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Mark Watched",
+                            tint = if (isClicked) Color.White else TextSecondary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
             }
 
-            // Checkmark Icon on the right with grey circular background - VERTICALLY CENTERED
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(SurfaceVariant.copy(alpha = 0.4f))
-                    .clickable(enabled = !progress.isSyncing) { onMarkWatched() },
-                contentAlignment = Alignment.Center
-            ) {
-                if (progress.isSyncing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = AccentPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = "Mark Watched",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+            // --- Success Swipe Overlay ---
+            if (swipeProgress > 0f) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            translationX = (swipeProgress - 1f) * size.width
+                        }
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    WatchedGreen.copy(alpha = 0.2f),
+                                    WatchedGreen.copy(alpha = 0.4f),
+                                    WatchedGreen.copy(alpha = 0.1f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
             }
         }
     }
