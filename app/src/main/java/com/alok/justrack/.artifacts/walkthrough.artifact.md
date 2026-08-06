@@ -5,8 +5,8 @@ I have redesigned the TV Show details page to match the tabbed layout and modern
 ## Changes Made
 
 ### UI Redesign
-- **Tabbed Navigation**: Introduced "ABOUT" and "EPISODES" tabs for TV Shows.
-    - **ABOUT**: Contains the overview, cast, and recommendations.
+- **Tabbed Navigation**: Introduced "ABOUT" and "EPISODES" tabs for TV Shows, now positioned **directly below the backdrop image**.
+    - **ABOUT**: Now contains the Poster, Title, Action Buttons (Watchlist/Watched), Overview, Cast, and Recommendations.
     - **EPISODES**: Houses the "All episodes" list.
 - **Modern Seasons List**: Redesigned `SeasonCard` with:
     - Neumorphic styling for a premium look.
@@ -19,9 +19,9 @@ I have redesigned the TV Show details page to match the tabbed layout and modern
 - **Reactive Progress**: Updated `DetailViewModel` to reactively calculate the number of watched episodes per season. This ensures that when you mark an episode as watched in the bottom sheet, the season progress updates immediately on the main screen.
 
 ## Verification Results
-- **Layout**: Verified that the tabs correctly switch between info and episodes.
+- **Layout**: Verified that the tabs correctly switch between info and episodes and are positioned under the backdrop.
 - **Movies**: Confirmed that Movie details pages remain unchanged and functional.
 - **Build**: Successfully built the project with no errors.
 
 > [!TIP]
-> You can now easily track your progress through multiple seasons by switching to the "EPISODES" tab and seeing at a glance which seasons you've completed!
+> The new layout makes better use of the screen real estate by separating the general info and episode tracking, making the app feel more organized!

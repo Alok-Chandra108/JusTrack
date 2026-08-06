@@ -5,3 +5,5 @@
 - [x] Add `TabRow` logic to `MovieDetailsScreen` for TV Shows <!-- id: 2 -->
 - [x] Redesign `SeasonCard` with progress indicators and checkmarks <!-- id: 3 -->
 - [x] Verify layout on device and ensure Movie pages are unaffected <!-- id: 4 -->
+- [x] Move tabs directly below backdrop for TV Shows <!-- id: 5 -->
+- [x] Move Poster and Action buttons into ABOUT tab for TV Shows <!-- id: 6 -->

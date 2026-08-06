@@ -214,62 +214,70 @@ fun MovieDetailsScreen(
                 onMoreClick = onMoreClick
             )
 
+            if (movie.mediaType == MediaType.TV) {
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = Color.Transparent,
+                    contentColor = AccentPrimary,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            color = TextPrimary
+                        )
+                    },
+                    divider = {
+                        HorizontalDivider(color = SurfaceVariant, thickness = 1.dp)
+                    }
+                ) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (selectedTab == index) TextPrimary else TextSecondary
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
             ) {
-                Spacer(modifier = Modifier.height(12.dp))
-                PosterInfoRow(movie = movie)
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                ActionButtons(
-                    isInWatchlist = isInWatchlist,
-                    isWatched = isWatched,
-                    releaseDate = movie.releaseDate,
-                    onWatchlistToggle = onWatchlistToggle,
-                    onWatchedToggle = onWatchedToggle
-                )
-
                 if (movie.mediaType == MediaType.TV) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    TabRow(
-                        selectedTabIndex = selectedTab,
-                        containerColor = Color.Transparent,
-                        contentColor = AccentPrimary,
-                        indicator = { tabPositions ->
-                            TabRowDefaults.SecondaryIndicator(
-                                Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                                color = TextPrimary
-                            )
-                        },
-                        divider = {
-                            HorizontalDivider(color = SurfaceVariant, thickness = 1.dp)
-                        }
-                    ) {
-                        tabs.forEachIndexed { index, title ->
-                            Tab(
-                                selected = selectedTab == index,
-                                onClick = { selectedTab = index },
-                                text = {
-                                    Text(
-                                        text = title,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (selectedTab == index) TextPrimary else TextSecondary
-                                    )
-                                }
-                            )
-                        }
-                    }
-                    
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     when (selectedTab) {
-                        0 -> TvShowAboutSection(movie = movie, onRecommendationClick = onRecommendationClick)
+                        0 -> TvShowAboutSection(
+                            movie = movie,
+                            isInWatchlist = isInWatchlist,
+                            isWatched = isWatched,
+                            onWatchlistToggle = onWatchlistToggle,
+                            onWatchedToggle = onWatchedToggle,
+                            onRecommendationClick = onRecommendationClick
+                        )
                         1 -> TvShowEpisodesSection(seasons = movie.seasons, onSeasonClick = onSeasonClick)
                     }
                 } else {
                     // Movie Layout
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PosterInfoRow(movie = movie)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    ActionButtons(
+                        isInWatchlist = isInWatchlist,
+                        isWatched = isWatched,
+                        releaseDate = movie.releaseDate,
+                        onWatchlistToggle = onWatchlistToggle,
+                        onWatchedToggle = onWatchedToggle
+                    )
+
                     Spacer(modifier = Modifier.height(16.dp))
                     CollapsibleDescription(description = movie.overview)
                     Spacer(modifier = Modifier.height(20.dp))
@@ -287,9 +295,23 @@ fun MovieDetailsScreen(
 @Composable
 fun TvShowAboutSection(
     movie: MovieDetails,
+    isInWatchlist: Boolean,
+    isWatched: Boolean,
+    onWatchlistToggle: () -> Unit,
+    onWatchedToggle: () -> Unit,
     onRecommendationClick: (MediaItem) -> Unit
 ) {
     Column {
+        PosterInfoRow(movie = movie)
+        Spacer(modifier = Modifier.height(16.dp))
+        ActionButtons(
+            isInWatchlist = isInWatchlist,
+            isWatched = isWatched,
+            releaseDate = movie.releaseDate,
+            onWatchlistToggle = onWatchlistToggle,
+            onWatchedToggle = onWatchedToggle
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         CollapsibleDescription(description = movie.overview)
         Spacer(modifier = Modifier.height(20.dp))
         CastSection(cast = movie.cast)
