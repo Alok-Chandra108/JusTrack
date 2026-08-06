@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
+import com.alok.justrack.data.model.Season
 import com.alok.justrack.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -275,6 +276,19 @@ class DetailViewModel @Inject constructor(
         viewModelScope.launch {
             repository.markEpisodeWatched(currentId, seasonNumber, episodeNumber, watched)
             // No manual reload needed as _watchedEpisodes flow is reactive
+        }
+    }
+
+    fun toggleSeasonWatched(season: Season) {
+        viewModelScope.launch {
+            val allWatched = season.watchedCount == season.episodeCount
+            val episodes = if (season.episodes.isNotEmpty()) {
+                season.episodes
+            } else {
+                repository.getSeasonDetails(currentId, season.seasonNumber)?.episodes ?: emptyList()
+            }
+            
+            repository.markSeasonWatched(currentId, season.seasonNumber, !allWatched, episodes)
         }
     }
 }

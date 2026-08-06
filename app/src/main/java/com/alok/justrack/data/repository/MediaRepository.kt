@@ -52,6 +52,7 @@ interface MediaRepository {
     suspend fun syncEpisodes(showId: String)
     suspend fun getSeasonDetails(tvId: String, seasonNumber: Int): Season?
     suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean)
+    suspend fun markSeasonWatched(showId: String, seasonNumber: Int, watched: Boolean, episodes: List<Episode>)
     fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> // Returns "S{season}E{episode}" strings
     fun getAllWatchedEpisodesFlow(): Flow<Map<String, Set<String>>> // Map<showId, Set<"S{season}E{episode}">>
     suspend fun getNextEpisodeToWatch(showId: String): Episode?

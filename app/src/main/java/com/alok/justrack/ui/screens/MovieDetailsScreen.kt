@@ -91,6 +91,9 @@ fun DetailScreen(
                 onEpisodeWatchedToggle = { seasonNum, epNum, watched ->
                     viewModel.markEpisodeWatched(seasonNum, epNum, watched)
                 },
+                onSeasonWatchedToggle = { season ->
+                    viewModel.toggleSeasonWatched(season)
+                },
                 onRecommendationClick = { item ->
                     navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
                 }
@@ -176,6 +179,7 @@ fun MovieDetailsScreen(
     onMoreClick: () -> Unit = {},
     onSeasonClick: (Int) -> Unit = {},
     onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
+    onSeasonWatchedToggle: (Season) -> Unit = {},
     onRecommendationClick: (MediaItem) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
@@ -250,7 +254,8 @@ fun MovieDetailsScreen(
                         1 -> TvShowEpisodesSection(
                             seasons = movie.seasons,
                             onSeasonClick = onSeasonClick,
-                            onEpisodeWatchedToggle = onEpisodeWatchedToggle
+                            onEpisodeWatchedToggle = onEpisodeWatchedToggle,
+                            onSeasonWatchedToggle = onSeasonWatchedToggle
                         )
                     }
                 } else {
@@ -313,7 +318,8 @@ fun TvShowAboutSection(
 fun TvShowEpisodesSection(
     seasons: List<Season>,
     onSeasonClick: (Int) -> Unit,
-    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit
+    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit,
+    onSeasonWatchedToggle: (Season) -> Unit
 ) {
     var expandedSeason by remember { mutableIntStateOf(-1) }
 
@@ -339,7 +345,8 @@ fun TvShowEpisodesSection(
                             onSeasonClick(season.seasonNumber)
                         }
                     },
-                    onEpisodeWatchedToggle = onEpisodeWatchedToggle
+                    onEpisodeWatchedToggle = onEpisodeWatchedToggle,
+                    onSeasonWatchedToggle = onSeasonWatchedToggle
                 )
             }
         }
@@ -351,7 +358,8 @@ fun SeasonCard(
     season: Season,
     isExpanded: Boolean,
     onClick: () -> Unit,
-    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit
+    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit,
+    onSeasonWatchedToggle: (Season) -> Unit
 ) {
     val isCompleted = season.episodeCount > 0 && season.watchedCount == season.episodeCount
     val rotationState by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "rotation")
@@ -396,12 +404,23 @@ fun SeasonCard(
                     color = TextSecondary
                 )
                 Spacer(modifier = Modifier.width(16.dp))
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = if (isCompleted) "Completed" else "Mark all watched",
-                    tint = if (isCompleted) WatchedGreen else TextSecondary.copy(alpha = 0.3f),
-                    modifier = Modifier.size(24.dp)
-                )
+                
+                // Clickable Solid Checkmark
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(if (isCompleted) WatchedGreen else TextSecondary.copy(alpha = 0.1f))
+                        .clickable { onSeasonWatchedToggle(season) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = if (isCompleted) "Completed" else "Mark all watched",
+                        tint = if (isCompleted) Color.White else TextSecondary.copy(alpha = 0.3f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
 

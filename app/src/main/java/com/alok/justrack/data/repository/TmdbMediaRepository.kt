@@ -261,6 +261,17 @@ class TmdbMediaRepository @Inject constructor(
         }
     }
 
+    override suspend fun markSeasonWatched(showId: String, seasonNumber: Int, watched: Boolean, episodes: List<Episode>) {
+        if (watched) {
+            val entities = episodes.map { 
+                WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = it.episodeNumber) 
+            }
+            watchedEpisodeDao.insertAll(entities)
+        } else {
+            watchedEpisodeDao.deleteSeason(showId, seasonNumber)
+        }
+    }
+
     override fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> = 
         watchedEpisodeDao.getWatchedEpisodesForShow(showId)
             .map { list -> list.map { "S${it.seasonNumber}E${it.episodeNumber}" } }

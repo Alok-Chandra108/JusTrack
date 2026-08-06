@@ -21,6 +21,9 @@ interface WatchedEpisodeDao {
     @Query("DELETE FROM watched_episodes WHERE showId = :showId AND seasonNumber = :seasonNumber AND episodeNumber = :episodeNumber")
     suspend fun delete(showId: String, seasonNumber: Int, episodeNumber: Int)
 
+    @Query("DELETE FROM watched_episodes WHERE showId = :showId AND seasonNumber = :seasonNumber")
+    suspend fun deleteSeason(showId: String, seasonNumber: Int)
+
     @Query("SELECT EXISTS(SELECT 1 FROM watched_episodes WHERE showId = :showId AND seasonNumber = :seasonNumber AND episodeNumber = :episodeNumber LIMIT 1)")
     suspend fun isWatched(showId: String, seasonNumber: Int, episodeNumber: Int): Boolean
 
