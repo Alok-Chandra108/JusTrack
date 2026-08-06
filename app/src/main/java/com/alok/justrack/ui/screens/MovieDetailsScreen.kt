@@ -464,6 +464,7 @@ fun EpisodeRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Thumbnail - NO CLICKABLE
         AsyncImage(
             model = episode.stillPath,
             contentDescription = episode.name,
@@ -476,6 +477,7 @@ fun EpisodeRow(
         
         Spacer(modifier = Modifier.width(16.dp))
         
+        // Text Info - NO CLICKABLE
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "S${episode.seasonNumber.toString().padStart(2, '0')} | E${episode.episodeNumber.toString().padStart(2, '0')}",
@@ -494,7 +496,7 @@ fun EpisodeRow(
         
         Spacer(modifier = Modifier.width(8.dp))
         
-        // Circular Solid Check Button
+        // Circular Solid Check Button - ONLY CLICKABLE PART
         Box(
             modifier = Modifier
                 .size(32.dp)

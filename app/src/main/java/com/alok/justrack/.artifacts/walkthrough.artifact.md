@@ -1,27 +1,24 @@
-# Walkthrough - Redesigned Show Details Page
+# Walkthrough - Bug Fixes & Strict Click Control
 
-I have redesigned the TV Show details page to match the tabbed layout and modern seasons list from your reference, while maintaining the app's dark theme.
+I have fixed the season progress tracking issues and implemented strict click separation for a more reliable user experience.
 
 ## Changes Made
 
-### UI Redesign
-- **Tabbed Navigation**: Introduced "ABOUT" and "EPISODES" tabs for TV Shows, now positioned **directly below the backdrop image**.
-    - **ABOUT**: Now contains the Poster, Title, Action Buttons (Watchlist/Watched), Overview, Cast, and Recommendations.
-    - **EPISODES**: Houses the "All episodes" list.
-- **Modern Seasons List**: Redesigned `SeasonCard` with:
-    - Neumorphic styling for a premium look.
-    - Clear progress text (e.g., "3/10").
-    - A checkmark indicator that highlights when a season is completed.
-    - Cleaner layout with an expand icon for better interactivity.
-- **Dynamic Switching**: The layout automatically adapts between Movie (no tabs) and TV Show (tabs) modes.
+### Bug Fixes
+- **Fixed "15/0" Progress Bug**: The app now intelligently calculates the total episode count from the actual episode list if the API fails to provide it.
+- **Improved Tracking Persistence**: Refined the reactive state logic in `DetailViewModel` to ensure that detailed season data (episodes) isn't overwritten or lost when you mark items as watched.
+- **Smarter Season Toggle**: Clicking the season-level mark button now completes the season if any episodes were unwatched, rather than just toggling between 0 and 100%.
 
-### Data & Logic
-- **Reactive Progress**: Updated `DetailViewModel` to reactively calculate the number of watched episodes per season. This ensures that when you mark an episode as watched in the bottom sheet, the season progress updates immediately on the main screen.
+### UI & Interaction
+- **Strict Click Control**:
+    - In the **Season Card**, clicking the card area **only** expands/collapses the dropdown. Only clicking the checkmark box toggles watched status.
+    - In the **Episode Row**, the thumbnail and text are no longer clickable. You must click the **checkmark box** specifically to mark an episode as watched. This prevents accidental tracking while scrolling.
+- **Real-time Updates**: The solid green checkmark and progress text (e.g., "15/15") now update simultaneously and instantly as soon as you click the toggle.
 
 ## Verification Results
-- **Layout**: Verified that the tabs correctly switch between info and episodes and are positioned under the backdrop.
-- **Movies**: Confirmed that Movie details pages remain unchanged and functional.
-- **Build**: Successfully built the project with no errors.
+- **Display**: Verified that "15/15" now shows correctly instead of "15/0".
+- **Interaction**: Confirmed that clicking an episode thumbnail does nothing, while the checkmark works perfectly.
+- **Reactive UI**: Confirmed that marking the last episode of a season instantly turns the season-level checkmark green.
 
 > [!TIP]
-> The new layout makes better use of the screen real estate by separating the general info and episode tracking, making the app feel more organized!
+> This strict control makes the app feel much more robust—you no longer have to worry about accidentally marking a show as watched while you're just trying to expand a season!

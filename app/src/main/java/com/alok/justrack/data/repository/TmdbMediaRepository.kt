@@ -514,15 +514,16 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     private fun TmdbSeasonDto.toSeason(watchedEpisodes: Set<String>): Season {
+        val mappedEpisodes = episodes?.map { it.toEpisode(watchedEpisodes.contains("S${it.seasonNumber}E${it.episodeNumber}")) } ?: emptyList()
         return Season(
             id = id.toString(),
             name = name,
             overview = overview ?: "",
             posterPath = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
             seasonNumber = seasonNumber,
-            episodeCount = episodeCount ?: 0,
+            episodeCount = if (episodeCount != null && episodeCount > 0) episodeCount else mappedEpisodes.size,
             airDate = airDate,
-            episodes = episodes?.map { it.toEpisode(watchedEpisodes.contains("S${it.seasonNumber}E${it.episodeNumber}")) } ?: emptyList()
+            episodes = mappedEpisodes
         )
     }
 

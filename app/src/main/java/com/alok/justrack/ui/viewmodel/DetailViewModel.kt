@@ -38,11 +38,16 @@ class DetailViewModel @Inject constructor(
                     recommendations = filteredRecs,
                     seasons = state.item.seasons.map { season ->
                         val seasonWatchedEps = watchedEps.filter { it.startsWith("S${season.seasonNumber}E") }
+                        val episodesWithWatchedStatus = season.episodes.map { ep ->
+                            ep.copy(isWatched = watchedEps.contains("S${ep.seasonNumber}E${ep.episodeNumber}"))
+                        }
+                        
                         season.copy(
                             watchedCount = seasonWatchedEps.size,
-                            episodes = season.episodes.map { ep ->
-                                ep.copy(isWatched = watchedEps.contains("S${ep.seasonNumber}E${ep.episodeNumber}"))
-                            }
+                            // If we have detailed episodes, use them. Otherwise keep current.
+                            episodes = if (episodesWithWatchedStatus.isNotEmpty()) episodesWithWatchedStatus else season.episodes,
+                            // Ensure total count is updated if episodes are present but count is 0
+                            episodeCount = if (season.episodeCount == 0 && episodesWithWatchedStatus.isNotEmpty()) episodesWithWatchedStatus.size else season.episodeCount
                         )
                     }
                 )
