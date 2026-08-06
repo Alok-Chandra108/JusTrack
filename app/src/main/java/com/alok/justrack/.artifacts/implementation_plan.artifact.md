@@ -1,48 +1,36 @@
-# Implementation Plan - UI Pixel Perfection
+# Implementation Plan - Redesign Show Details Page
 
-Refine the UI of JusTrack to exactly match the provided reference screenshots for Shows, Movies, and Profile screens.
+Redesign the TV Show details page to match the tabbed layout from the provided reference screenshot, focusing on the "ABOUT" and "EPISODES" separation.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Tab Styling**: Moving to all-caps "WATCH LIST" and "UPCOMING" with white indicators.
-> - **Buttons**: Standardizing on gold pill-shaped buttons for all empty states.
-> - **Movies Screen**: Will be updated to match the tabbed layout seen in the screenshots.
-> - **Profile Screen**: Adding social stats and specific "Favorite" sections with heart icons.
+> The current app uses a **Dark Theme** (`#111315`), while the reference screenshot uses a **Light Theme**. I will implement the new layout using the existing Dark Theme colors to maintain consistency with the rest of the app.
 
 ## Proposed Changes
 
-### [Theme & Foundations]
+### UI Components
 
-#### [MODIFY] [Color.kt](file:///C:/Users/Alok Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/theme/Color.kt)
-- Define `GoldAccent` (`#FFC107`) for buttons.
-- Define `HeartRed` (`#E91E63`) for favorite icons.
+#### [MODIFY] [MovieDetailsScreen.kt](file:///C:/Users/Alok Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/screens/MovieDetailsScreen.kt)
+- Introduce a `TabRow` for TV Shows with "ABOUT" and "EPISODES" tabs.
+- Create a `TvShowAboutSection` to house existing overview, cast, and recommendations.
+- Create a `TvShowEpisodesSection` to house the "All episodes" (Seasons) section.
+- Redesign `SeasonsSection` and `SeasonCard` to match the cleaner look in the screenshot (including the checkmark for progress).
+- Refactor `MovieDetailsScreen` to toggle between these sections based on the selected tab.
 
-### [Components]
+### Data & ViewModel
 
-#### [MODIFY] [PremiumComponents.kt](file:///C:/Users/Alok Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/components/PremiumComponents.kt)
-- **PremiumEmptyState**: Update to use centered vertical layout, gold pill button, and improved spacing.
-- **SectionHeader**: Add support for optional leading icons and white chevrons.
-- **SocialStatsRow**: New component for Following/Followers/Comments.
-
-### [Screens]
-
-#### [MODIFY] [WatchlistShowsScreen.kt](file:///C:/Users/Alok Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/screens/WatchlistShowsScreen.kt)
-- Update `TabRow` to match the white/black high-contrast look and all-caps labels.
-
-#### [MODIFY] [PlaceholderScreens.kt](file:///C:/Users/Alok Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/screens/PlaceholderScreens.kt)
-- **MoviesScreen**: Redesign to use a `WatchlistMoviesScreen` composable with tabs.
-- **ProfileScreen**:
-    - Implement TopBar with Notification Bell and More options.
-    - Add `SocialStatsRow` at the top.
-    - Reorder sections to match: Stats, Lists, Shows, Favorite Shows, Movies, Favorite Movies.
-
----
+#### [MODIFY] [DetailViewModel.kt](file:///C:/Users/Alok Chandra/AndroidStudioProjects/JusTrack/app/src/main/java/com/alok/justrack/ui/viewmodel/DetailViewModel.kt)
+- Ensure season progress (watched/total count) is correctly calculated and exposed for the UI.
 
 ## Verification Plan
 
+### Automated Tests
+- Build the project to ensure no regressions in layout or logic.
+
 ### Manual Verification
-- Deploy and compare side-by-side with reference screenshots.
-- Ensure "Shows" and "Movies" screens are consistent in their tabbed behavior.
-- Verify the Profile screen sections and icons.
-- Check accessibility of the new gold button (contrast ratio).
+- Deploy to the device and verify:
+    - Tab switching between "ABOUT" and "EPISODES" works smoothly.
+    - "ABOUT" tab shows general info, cast, and recommendations.
+    - "EPISODES" tab shows the redesigned seasons list with progress indicators.
+    - Movie details page remains unaffected (no tabs).

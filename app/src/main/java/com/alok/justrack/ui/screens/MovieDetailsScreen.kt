@@ -11,9 +11,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -191,6 +194,8 @@ fun MovieDetailsScreen(
     onRecommendationClick: (MediaItem) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabs = listOf("ABOUT", "EPISODES")
 
     Box(
         modifier = modifier
@@ -216,6 +221,7 @@ fun MovieDetailsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 PosterInfoRow(movie = movie)
                 Spacer(modifier = Modifier.height(16.dp))
+                
                 ActionButtons(
                     isInWatchlist = isInWatchlist,
                     isWatched = isWatched,
@@ -223,18 +229,55 @@ fun MovieDetailsScreen(
                     onWatchlistToggle = onWatchlistToggle,
                     onWatchedToggle = onWatchedToggle
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                CollapsibleDescription(description = movie.overview)
-                
-                if (movie.mediaType == MediaType.TV && movie.seasons.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    SeasonsSection(seasons = movie.seasons, onSeasonClick = onSeasonClick)
-                }
 
-                Spacer(modifier = Modifier.height(20.dp))
-                CastSection(cast = movie.cast)
-                Spacer(modifier = Modifier.height(20.dp))
-                RecommendationsSection(recommendations = movie.recommendations, onRecommendationClick = onRecommendationClick)
+                if (movie.mediaType == MediaType.TV) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    TabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = Color.Transparent,
+                        contentColor = AccentPrimary,
+                        indicator = { tabPositions ->
+                            TabRowDefaults.SecondaryIndicator(
+                                Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                                color = TextPrimary
+                            )
+                        },
+                        divider = {
+                            HorizontalDivider(color = SurfaceVariant, thickness = 1.dp)
+                        }
+                    ) {
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                text = {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (selectedTab == index) TextPrimary else TextSecondary
+                                    )
+                                }
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    when (selectedTab) {
+                        0 -> TvShowAboutSection(movie = movie, onRecommendationClick = onRecommendationClick)
+                        1 -> TvShowEpisodesSection(seasons = movie.seasons, onSeasonClick = onSeasonClick)
+                    }
+                } else {
+                    // Movie Layout
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CollapsibleDescription(description = movie.overview)
+                    Spacer(modifier = Modifier.height(20.dp))
+                    CastSection(cast = movie.cast)
+                    Spacer(modifier = Modifier.height(20.dp))
+                    RecommendationsSection(recommendations = movie.recommendations, onRecommendationClick = onRecommendationClick)
+                }
+                
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -242,18 +285,32 @@ fun MovieDetailsScreen(
 }
 
 @Composable
-fun SeasonsSection(
+fun TvShowAboutSection(
+    movie: MovieDetails,
+    onRecommendationClick: (MediaItem) -> Unit
+) {
+    Column {
+        CollapsibleDescription(description = movie.overview)
+        Spacer(modifier = Modifier.height(20.dp))
+        CastSection(cast = movie.cast)
+        Spacer(modifier = Modifier.height(20.dp))
+        RecommendationsSection(recommendations = movie.recommendations, onRecommendationClick = onRecommendationClick)
+    }
+}
+
+@Composable
+fun TvShowEpisodesSection(
     seasons: List<Season>,
     onSeasonClick: (Int) -> Unit
 ) {
     Column {
         Text(
-            text = "Seasons",
-            style = MaterialTheme.typography.titleLarge,
-            color = TextPrimary,
-            fontWeight = FontWeight.Bold
+            text = "All episodes",
+            style = MaterialTheme.typography.titleMedium,
+            color = TextSecondary,
+            fontWeight = FontWeight.Medium
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             seasons.forEach { season ->
                 SeasonCard(season = season, onClick = { onSeasonClick(season.seasonNumber) })
@@ -267,69 +324,51 @@ fun SeasonCard(
     season: Season,
     onClick: () -> Unit
 ) {
-    NeuCard(
+    val isCompleted = season.episodeCount > 0 && season.watchedCount == season.episodeCount
+    
+    Box(
         modifier = Modifier
             .fillMaxWidth()
+            .neumorphicShadow(cornerRadius = 12.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Background)
             .clickable { onClick() }
+            .padding(16.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = season.posterPath,
-                contentDescription = season.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(60.dp, 90.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(SurfaceColor)
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 Text(
                     text = season.name,
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Rounded.ExpandMore,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${season.episodeCount} Episodes",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "${season.watchedCount}/${season.episodeCount}",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary
                 )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Progress Bar
-                val progress = if (season.episodeCount > 0) season.watchedCount.toFloat() / season.episodeCount else 0f
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Progress",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary
-                        )
-                        Text(
-                            text = "${season.watchedCount}/${season.episodeCount}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AccentPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(CircleShape),
-                        color = AccentPrimary,
-                        trackColor = SurfaceColor
-                    )
-                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = if (isCompleted) "Completed" else "Mark all watched",
+                    tint = if (isCompleted) WatchedGreen else TextSecondary.copy(alpha = 0.3f),
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

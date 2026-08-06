@@ -31,12 +31,14 @@ class DetailViewModel @Inject constructor(
         if (state is DetailUiState.Success) {
             val filteredRecs = state.item.recommendations.filter { it.id !in watched }
             
-            // For TV shows, ensure episodes in seasons reflect latest watched status
+            // For TV shows, ensure episodes in seasons reflect latest watched status and update counts
             val finalItem = if (state.item.mediaType == MediaType.TV) {
                 state.item.copy(
                     recommendations = filteredRecs,
                     seasons = state.item.seasons.map { season ->
+                        val seasonWatchedEps = watchedEps.filter { it.startsWith("S${season.seasonNumber}E") }
                         season.copy(
+                            watchedCount = seasonWatchedEps.size,
                             episodes = season.episodes.map { ep ->
                                 ep.copy(isWatched = watchedEps.contains("S${ep.seasonNumber}E${ep.episodeNumber}"))
                             }
