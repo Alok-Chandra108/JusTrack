@@ -254,7 +254,20 @@ class DetailViewModel @Inject constructor(
     fun loadSeason(seasonNumber: Int) {
         viewModelScope.launch {
             val season = repository.getSeasonDetails(currentId, seasonNumber)
-            _selectedSeason.value = season
+            if (season != null) {
+                _selectedSeason.value = season
+                
+                // Merge into main details for inline display
+                val currentState = _rawDetails.value
+                if (currentState is DetailUiState.Success) {
+                    val updatedSeasons = currentState.item.seasons.map {
+                        if (it.seasonNumber == seasonNumber) season else it
+                    }
+                    _rawDetails.value = currentState.copy(
+                        item = currentState.item.copy(seasons = updatedSeasons)
+                    )
+                }
+            }
         }
     }
 

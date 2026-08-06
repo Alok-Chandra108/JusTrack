@@ -1,6 +1,7 @@
 package com.alok.justrack.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,16 +58,13 @@ fun DetailScreen(
     val mediaLists by viewModel.mediaLists.collectAsState()
     val posterImages by viewModel.posterImages.collectAsState()
     val backdropImages by viewModel.backdropImages.collectAsState()
-    val selectedSeason by viewModel.selectedSeason.collectAsState()
 
     var showMoreSheet by remember { mutableStateOf(false) }
     var showListPicker by remember { mutableStateOf(false) }
     var showPosterPicker by remember { mutableStateOf(false) }
     var showBackdropPicker by remember { mutableStateOf(false) }
-    var showEpisodeSheet by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val episodeSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     LaunchedEffect(id, mediaType) {
         viewModel.loadDetail(id, mediaType)
@@ -88,29 +87,14 @@ fun DetailScreen(
                 onMoreClick = { showMoreSheet = true },
                 onSeasonClick = { seasonNumber ->
                     viewModel.loadSeason(seasonNumber)
-                    showEpisodeSheet = true
+                },
+                onEpisodeWatchedToggle = { seasonNum, epNum, watched ->
+                    viewModel.markEpisodeWatched(seasonNum, epNum, watched)
                 },
                 onRecommendationClick = { item ->
                     navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
                 }
             )
-
-            if (showEpisodeSheet && selectedSeason != null) {
-                ModalBottomSheet(
-                    onDismissRequest = { showEpisodeSheet = false },
-                    sheetState = episodeSheetState,
-                    containerColor = Background,
-                    dragHandle = null
-                ) {
-                    EpisodeListBottomSheet(
-                        season = selectedSeason!!,
-                        onEpisodeWatchedToggle = { seasonNum, epNum, watched ->
-                            viewModel.markEpisodeWatched(seasonNum, epNum, watched)
-                        },
-                        onDismiss = { showEpisodeSheet = false }
-                    )
-                }
-            }
 
             if (showMoreSheet) {
                 ModalBottomSheet(
@@ -191,6 +175,7 @@ fun MovieDetailsScreen(
     modifier: Modifier = Modifier,
     onMoreClick: () -> Unit = {},
     onSeasonClick: (Int) -> Unit = {},
+    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
     onRecommendationClick: (MediaItem) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
@@ -262,7 +247,11 @@ fun MovieDetailsScreen(
                             onWatchedToggle = onWatchedToggle,
                             onRecommendationClick = onRecommendationClick
                         )
-                        1 -> TvShowEpisodesSection(seasons = movie.seasons, onSeasonClick = onSeasonClick)
+                        1 -> TvShowEpisodesSection(
+                            seasons = movie.seasons,
+                            onSeasonClick = onSeasonClick,
+                            onEpisodeWatchedToggle = onEpisodeWatchedToggle
+                        )
                     }
                 } else {
                     // Movie Layout
@@ -323,8 +312,11 @@ fun TvShowAboutSection(
 @Composable
 fun TvShowEpisodesSection(
     seasons: List<Season>,
-    onSeasonClick: (Int) -> Unit
+    onSeasonClick: (Int) -> Unit,
+    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit
 ) {
+    var expandedSeason by remember { mutableIntStateOf(-1) }
+
     Column {
         Text(
             text = "All episodes",
@@ -334,8 +326,21 @@ fun TvShowEpisodesSection(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            seasons.forEach { season ->
-                SeasonCard(season = season, onClick = { onSeasonClick(season.seasonNumber) })
+            seasons.filter { it.seasonNumber > 0 }.forEach { season ->
+                val isExpanded = expandedSeason == season.seasonNumber
+                SeasonCard(
+                    season = season,
+                    isExpanded = isExpanded,
+                    onClick = {
+                        if (isExpanded) {
+                            expandedSeason = -1
+                        } else {
+                            expandedSeason = season.seasonNumber
+                            onSeasonClick(season.seasonNumber)
+                        }
+                    },
+                    onEpisodeWatchedToggle = onEpisodeWatchedToggle
+                )
             }
         }
     }
@@ -344,23 +349,27 @@ fun TvShowEpisodesSection(
 @Composable
 fun SeasonCard(
     season: Season,
-    onClick: () -> Unit
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit
 ) {
     val isCompleted = season.episodeCount > 0 && season.watchedCount == season.episodeCount
-    
-    Box(
+    val rotationState by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "rotation")
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .neumorphicShadow(cornerRadius = 12.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Background)
-            .clickable { onClick() }
-            .padding(16.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(16.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 Text(
@@ -374,7 +383,9 @@ fun SeasonCard(
                     imageVector = Icons.Rounded.ExpandMore,
                     contentDescription = null,
                     tint = TextSecondary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .graphicsLayer { rotationZ = rotationState }
                 )
             }
             
@@ -393,61 +404,32 @@ fun SeasonCard(
                 )
             }
         }
-    }
-}
 
-@Composable
-fun EpisodeListBottomSheet(
-    season: Season,
-    onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit,
-    onDismiss: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxHeight(0.8f)
-            .background(Background)
-    ) {
-        Column {
-            // Header
-            Row(
+        AnimatedVisibility(visible = isExpanded) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = season.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Episodes",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                }
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = TextPrimary)
-                }
-            }
-            
-            HorizontalDivider(color = SurfaceColor, thickness = 1.dp)
-            
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(season.episodes) { episode ->
-                    EpisodeRow(
-                        episode = episode,
-                        onWatchedToggle = { watched ->
-                            onEpisodeWatchedToggle(season.seasonNumber, episode.episodeNumber, watched)
-                        }
-                    )
+                if (season.episodes.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = AccentPrimary, modifier = Modifier.size(24.dp))
+                    }
+                } else {
+                    season.episodes.forEach { episode ->
+                        EpisodeRow(
+                            episode = episode,
+                            onWatchedToggle = { watched ->
+                                onEpisodeWatchedToggle(season.seasonNumber, episode.episodeNumber, watched)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -477,16 +459,15 @@ fun EpisodeRow(
         
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "EP ${episode.episodeNumber}",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
+                text = "S${episode.seasonNumber.toString().padStart(2, '0')} | E${episode.episodeNumber.toString().padStart(2, '0')}",
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextPrimary,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = episode.name,
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -494,20 +475,19 @@ fun EpisodeRow(
         
         Spacer(modifier = Modifier.width(8.dp))
         
-        // Circular Check Button
+        // Circular Solid Check Button
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .neumorphicShadow(cornerRadius = 18.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(if (episode.isWatched) AccentPrimary.copy(alpha = 0.1f) else Background)
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(if (episode.isWatched) WatchedGreen else TextSecondary.copy(alpha = 0.1f))
                 .clickable { onWatchedToggle(!episode.isWatched) },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Rounded.Check,
                 contentDescription = "Mark Watched",
-                tint = if (episode.isWatched) AccentPrimary else TextSecondary.copy(alpha = 0.3f),
+                tint = if (episode.isWatched) Color.White else TextSecondary.copy(alpha = 0.3f),
                 modifier = Modifier.size(18.dp)
             )
         }
