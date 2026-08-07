@@ -75,6 +75,20 @@ fun BackdropHeader(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
+                            Color.Black.copy(alpha = 0.5f),
+                            Color.Transparent
+                        ),
+                        endY = 300f
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
                             Color.Transparent,
                             Background.copy(alpha = 0.3f),
                             Background
@@ -219,7 +233,7 @@ fun ActionButtons(
             label = "watchlistColor"
         )
         val watchlistContent by animateColorAsState(
-            if (isInWatchlist) Color.White else TextSecondary,
+            if (isInWatchlist) Background else TextSecondary,
             label = "watchlistContent"
         )
         val watchedColor by animateColorAsState(
@@ -227,7 +241,7 @@ fun ActionButtons(
             label = "watchedColor"
         )
         val watchedContent by animateColorAsState(
-            if (isWatched) Color.White else TextSecondary,
+            if (isWatched) Background else TextSecondary,
             label = "watchedContent"
         )
 
@@ -296,12 +310,12 @@ fun CollapsibleDescription(description: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(SurfaceColor)
+            .background(SurfaceVariant)
             .clickable(
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 indication = null
             ) { isExpanded = !isExpanded }
-            .padding(12.dp)
+            .padding(16.dp)
             .animateContentSize(animationSpec = tween(300))
     ) {
         Text(
