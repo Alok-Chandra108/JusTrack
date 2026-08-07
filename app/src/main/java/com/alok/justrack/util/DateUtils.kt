@@ -1,0 +1,26 @@
+package com.alok.justrack.util
+
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+
+object DateUtils {
+    private val tmdbDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    /**
+     * Returns the number of days until the given air date.
+     * Returns 0 if it airs today.
+     * Returns a negative value if it aired in the past.
+     * Returns null if the date is invalid or null.
+     */
+    fun getDaysUntil(airDate: String?): Long? {
+        if (airDate.isNullOrBlank()) return null
+        return try {
+            val targetDate = LocalDate.parse(airDate, tmdbDateFormatter)
+            val today = LocalDate.now()
+            ChronoUnit.DAYS.between(today, targetDate)
+        } catch (e: Exception) {
+            null
+        }
+    }
+}

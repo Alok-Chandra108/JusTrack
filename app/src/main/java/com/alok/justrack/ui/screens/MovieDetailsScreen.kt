@@ -496,21 +496,44 @@ fun EpisodeRow(
         
         Spacer(modifier = Modifier.width(8.dp))
         
-        // Circular Solid Check Button - ONLY CLICKABLE PART
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(if (episode.isWatched) WatchedGreen else TextSecondary.copy(alpha = 0.1f))
-                .clickable { onWatchedToggle(!episode.isWatched) },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Check,
-                contentDescription = "Mark Watched",
-                tint = if (episode.isWatched) Color.White else TextSecondary.copy(alpha = 0.3f),
-                modifier = Modifier.size(18.dp)
-            )
+        val daysUntil = com.alok.justrack.util.DateUtils.getDaysUntil(episode.airDate)
+        
+        if (daysUntil != null && daysUntil > 0) {
+            // Countdown Timer for Upcoming Episodes
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(48.dp)
+            ) {
+                Text(
+                    text = daysUntil.toString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = if (daysUntil == 1L) "DAY" else "DAYS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        } else {
+            // Circular Solid Check Button - ONLY CLICKABLE PART
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(if (episode.isWatched) WatchedGreen else TextSecondary.copy(alpha = 0.1f))
+                    .clickable { onWatchedToggle(!episode.isWatched) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = "Mark Watched",
+                    tint = if (episode.isWatched) Color.White else TextSecondary.copy(alpha = 0.3f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
