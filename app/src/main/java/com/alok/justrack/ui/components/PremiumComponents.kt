@@ -1,12 +1,9 @@
 package com.alok.justrack.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.*
 import androidx.compose.animation.core.EaseOutBack
+import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,13 +20,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -222,10 +222,13 @@ fun ActionButtons(
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit
 ) {
-    val isReleased = try {
-        val today = java.time.LocalDate.now()
-        java.time.LocalDate.parse(releaseDate).isBefore(today) || java.time.LocalDate.parse(releaseDate).isEqual(today)
-    } catch (_: Exception) { true }
+    val isReleased = remember(releaseDate) {
+        val date = com.alok.justrack.util.DateUtils.parseDate(releaseDate)
+        if (date == null) true else {
+            val today = java.time.LocalDate.now()
+            !date.isAfter(today)
+        }
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -579,6 +582,150 @@ fun PosterOnlyCard(
                 .clickable { onClick() }
                 .background(SurfaceColor)
         )
+    }
+}
+
+@Composable
+fun WatchlistToolbar(
+    title: String,
+    isGridView: Boolean,
+    onToggleView: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        CapsuleHeader(
+            title = title,
+            modifier = Modifier.align(Alignment.Center)
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .size(26.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(SurfaceVariant)
+                .clickable { onToggleView() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isGridView) Icons.AutoMirrored.Rounded.List else Icons.Rounded.GridView,
+                contentDescription = "Toggle View",
+                tint = TextPrimary,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun PremiumTabScaffold(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    tabTitles: List<String>,
+    content: @Composable (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = Background,
+            contentColor = TextPrimary,
+            indicator = { tabPositions ->
+                if (selectedTab < tabPositions.size) {
+                    TabRowDefaults.SecondaryIndicator(
+                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                        height = 3.dp,
+                        color = AccentPrimary
+                    )
+                }
+            },
+            divider = {}
+        ) {
+            tabTitles.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { onTabSelected(index) },
+                    text = {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                            color = if (selectedTab == index) AccentPrimary else TextSecondary
+                        )
+                    }
+                )
+            }
+        }
+
+        AnimatedContent(
+            targetState = selectedTab,
+            transitionSpec = {
+                if (targetState > initialState) {
+                    (slideInHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { it } +
+                            fadeIn(animationSpec = tween(500))) togetherWith
+                            (slideOutHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { -it } +
+                                    fadeOut(animationSpec = tween(500)))
+                } else {
+                    (slideInHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { -it } +
+                            fadeIn(animationSpec = tween(500))) togetherWith
+                            (slideOutHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { it } +
+                                    fadeOut(animationSpec = tween(500)))
+                }
+            },
+            label = "tab_transition"
+        ) { tab ->
+            content(tab)
+        }
+    }
+}
+
+@Composable
+fun WatchlistBadge(text: String, color: Color) {
+    Surface(
+        color = Background,
+        shape = CircleShape,
+        border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
+    ) {
+        Text(
+            text = text,
+            color = color,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Black,
+            modifier = Modifier.padding(horizontal = 5.dp, vertical = .2.dp)
+        )
+    }
+}
+
+@Composable
+fun CapsuleHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            color = SurfaceVariant.copy(alpha = 0.5f),
+            shape = CircleShape
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                fontWeight = FontWeight.Black,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp)
+            )
+        }
     }
 }
 

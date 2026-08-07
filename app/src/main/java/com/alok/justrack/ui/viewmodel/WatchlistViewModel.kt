@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -351,12 +350,7 @@ class WatchlistViewModel @Inject constructor(
     val groupedUpcomingEpisodes = upcomingEpisodes.map { items ->
         val today = LocalDate.now()
         items.groupBy { item ->
-            val airDateStr = item.episode.airDate ?: return@groupBy "LATER"
-            val airDate = try {
-                LocalDate.parse(airDateStr, DateTimeFormatter.ISO_LOCAL_DATE)
-            } catch (e: Exception) {
-                return@groupBy "LATER"
-            }
+            val airDate = DateUtils.parseDate(item.episode.airDate) ?: return@groupBy "LATER"
             
             val daysAway = ChronoUnit.DAYS.between(today, airDate)
             when {
@@ -377,15 +371,9 @@ class WatchlistViewModel @Inject constructor(
     }
 
     private fun calculateDaysAway(airDateString: String?): Long? {
-        if (airDateString.isNullOrBlank()) return null
-        try {
-            val airDate = LocalDate.parse(airDateString, DateTimeFormatter.ISO_LOCAL_DATE)
-            val today = LocalDate.now()
-            return ChronoUnit.DAYS.between(today, airDate)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return null
-        }
+        val airDate = DateUtils.parseDate(airDateString) ?: return null
+        val today = LocalDate.now()
+        return ChronoUnit.DAYS.between(today, airDate)
     }
 
     sealed class WatchlistUiState {

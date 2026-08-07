@@ -52,66 +52,14 @@ fun MoviesScreen(
     val tabTitles = listOf("WATCHLIST", "UPCOMING")
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
-        // --- Premium Tab Row ---
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = Background,
-            contentColor = TextPrimary,
-            indicator = { tabPositions ->
-                if (selectedTab < tabPositions.size) {
-                    TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        height = 3.dp,
-                        color = AccentPrimary
-                    )
-                }
-            },
-            divider = {}
-        ) {
-            tabTitles.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                            color = if (selectedTab == index) AccentPrimary else TextSecondary
-                        )
-                    }
-                )
-            }
-        }
-
-        // --- Page content with smooth transitions ---
-        AnimatedContent(
-            targetState = selectedTab,
-            transitionSpec = {
-                if (targetState > initialState) {
-                    (slideInHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { it } +
-                            fadeIn(animationSpec = tween(500))) togetherWith
-                            (slideOutHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { -it } +
-                                    fadeOut(animationSpec = tween(500)))
-                } else {
-                    (slideInHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { -it } +
-                            fadeIn(animationSpec = tween(500))) togetherWith
-                            (slideOutHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { it } +
-                                    fadeOut(animationSpec = tween(500)))
-                }
-            },
-            label = "movie_tab_content"
-        ) { tab ->
-            when (tab) {
-                0 -> MovieWatchlistTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
-                1 -> MovieUpcomingTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
-            }
+    PremiumTabScaffold(
+        selectedTab = selectedTab,
+        onTabSelected = { selectedTab = it },
+        tabTitles = tabTitles
+    ) { tab ->
+        when (tab) {
+            0 -> MovieWatchlistTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
+            1 -> MovieUpcomingTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
         }
     }
 }
@@ -128,37 +76,11 @@ private fun MovieWatchlistTabContent(
     } else emptyList()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Toolbar with Grid/List toggle
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            // Centered Header
-            SectionHeader(
-                title = "MY MOVIES",
-                modifier = Modifier.align(Alignment.Center)
-            )
-
-            // Grid/List toggle on the right
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(26.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SurfaceVariant)
-                    .clickable { viewModel.toggleMovieGridView() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (isGridView) Icons.AutoMirrored.Rounded.List else Icons.Rounded.GridView,
-                    contentDescription = "Toggle View",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
+        WatchlistToolbar(
+            title = "MY MOVIES",
+            isGridView = isGridView,
+            onToggleView = { viewModel.toggleMovieGridView() }
+        )
 
         when {
             uiState is WatchlistUiState.Loading -> {
@@ -253,7 +175,7 @@ private fun MovieUpcomingTabContent(
                     val movies = groupedUpcoming[groupName] ?: emptyList()
                     if (movies.isNotEmpty()) {
                         item {
-                            SectionHeader(
+                            CapsuleHeader(
                                 title = groupName
                             )
                         }
@@ -365,7 +287,7 @@ fun UpcomingMovieCard(
         val date = com.alok.justrack.util.DateUtils.parseDate(movie.releaseDate)
         if (date == null) "" else {
             val dayOfWeek = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-            val datePart = date.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.US))
+            val datePart = date.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US))
             "$dayOfWeek, $datePart"
         }
     }

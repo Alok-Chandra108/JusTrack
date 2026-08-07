@@ -496,7 +496,9 @@ fun EpisodeRow(
         
         Spacer(modifier = Modifier.width(8.dp))
         
-        val daysUntil = com.alok.justrack.util.DateUtils.getDaysUntil(episode.airDate)
+        val daysUntil = remember(episode.airDate) {
+            com.alok.justrack.util.DateUtils.getDaysUntil(episode.airDate)
+        }
         
         if (daysUntil != null && daysUntil > 0) {
             // Countdown Timer for Upcoming Episodes

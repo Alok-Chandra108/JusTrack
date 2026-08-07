@@ -28,13 +28,8 @@ object DateUtils {
      * Returns null if the date is invalid or null.
      */
     fun getDaysUntil(airDate: String?): Long? {
-        if (airDate.isNullOrBlank()) return null
-        return try {
-            val targetDate = LocalDate.parse(airDate, tmdbDateFormatter)
-            val today = LocalDate.now()
-            ChronoUnit.DAYS.between(today, targetDate)
-        } catch (e: Exception) {
-            null
-        }
+        val targetDate = parseDate(airDate) ?: return null
+        val today = LocalDate.now()
+        return ChronoUnit.DAYS.between(today, targetDate)
     }
 }

@@ -2,6 +2,8 @@ package com.alok.justrack.data.repository
 
 import com.alok.justrack.data.api.*
 import com.alok.justrack.data.model.*
+import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
+import com.alok.justrack.data.mapper.TmdbMapper.toMovieDetails
 import com.alok.justrack.data.supabase.SupabaseClientProvider
 import com.alok.justrack.data.supabase.SupabaseWatchlistItem
 import io.github.jan.supabase.postgrest.postgrest
@@ -154,85 +156,6 @@ class SupabaseMediaRepository @Inject constructor(
     }
 
     // ---- Mappers ----
-
-    private fun TmdbMediaDto.toMediaItem(fallbackType: MediaType? = null): MediaItem {
-        val detectedType = when {
-            mediaType == "tv" -> MediaType.TV
-            mediaType == "movie" -> MediaType.MOVIE
-            fallbackType != null -> fallbackType
-            name != null && title == null -> MediaType.TV
-            name != null && firstAirDate != null -> MediaType.TV
-            else -> MediaType.MOVIE
-        }
-        val displayTitle = title ?: name ?: "Untitled"
-        val rawDate = releaseDate ?: firstAirDate ?: ""
-        val posterUrl = posterPath?.let {
-            if (it.startsWith("http")) it else "https://image.tmdb.org/t/p/w500$it"
-        }
-        val backdropUrl = backdropPath?.let {
-            if (it.startsWith("http")) it else "https://image.tmdb.org/t/p/w780$it"
-        }
-        return MediaItem(
-            id = id.toString(),
-            title = displayTitle,
-            overview = overview ?: "",
-            posterPath = posterUrl,
-            backdropPath = backdropUrl,
-            rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
-            releaseDate = rawDate,
-            mediaType = detectedType
-        )
-    }
-
-    private fun TmdbMediaDto.toMovieDetails(type: MediaType): MovieDetails {
-        val displayTitle = title ?: name ?: "Untitled"
-        val rawDate = releaseDate ?: firstAirDate ?: ""
-        val posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
-        val backdropUrl = backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" }
-
-        val runtimeStr = when {
-            runtime != null -> "${runtime / 60}h ${runtime % 60}m"
-            episodeRunTime != null && episodeRunTime.isNotEmpty() -> "${episodeRunTime.first()}m"
-            else -> "-"
-        }
-
-        val castMembers = credits?.cast?.map {
-            CastMember(
-                id = it.id.toString(),
-                name = it.name,
-                character = it.character,
-                profilePath = it.profilePath?.let { path -> "https://image.tmdb.org/t/p/w185$path" }
-            )
-        } ?: emptyList()
-
-        val directorNames = when (type) {
-            MediaType.MOVIE -> credits?.crew?.filter { it.job == "Director" }?.map { it.name }?.distinct() ?: emptyList()
-            MediaType.TV -> {
-                val creators = createdBy?.map { it.name }?.distinct()
-                if (!creators.isNullOrEmpty()) creators
-                else credits?.crew?.filter { it.job == "Executive Producer" }?.map { it.name }?.distinct() ?: emptyList()
-            }
-        }.ifEmpty { listOf("-") }
-
-        return MovieDetails(
-            id = id.toString(),
-            title = displayTitle,
-            overview = overview ?: "",
-            posterPath = posterUrl,
-            backdropPath = backdropUrl,
-            rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
-            releaseDate = rawDate,
-            rawReleaseDate = rawDate,
-            runtime = runtimeStr,
-            certification = "-",
-            director = directorNames,
-            cast = castMembers,
-            ratings = listOf(
-                RatingSource("TMDb", String.format("%.1f", voteAverage ?: 0.0))
-            ),
-            recommendations = emptyList()
-        )
-    }
 
     private fun SupabaseWatchlistItem.toMediaItem(): MediaItem = MediaItem(
         id = id,

@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
+import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
 import com.alok.justrack.data.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import com.alok.justrack.util.Constants
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -129,26 +129,7 @@ class ExploreViewModel @Inject constructor(
             _searchState.value = ExploreSearchUiState.Searching
             try {
                 val response = apiService.searchMulti(query)
-                val items = response.results.mapNotNull { dto ->
-                    val mediaType = when {
-                        dto.mediaType == "movie" -> MediaType.MOVIE
-                        dto.mediaType == "tv" -> MediaType.TV
-                        dto.name != null && dto.title == null -> MediaType.TV
-                        dto.name != null && dto.firstAirDate != null -> MediaType.TV
-                        dto.title != null -> MediaType.MOVIE
-                        else -> return@mapNotNull null
-                    }
-                    MediaItem(
-                        id = dto.id.toString(),
-                        title = dto.title ?: dto.name ?: "",
-                        overview = dto.overview ?: "",
-                        posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                        backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                        rating = dto.voteAverage ?: 0.0,
-                        releaseDate = dto.releaseDate ?: dto.firstAirDate ?: "",
-                        mediaType = mediaType
-                    )
-                }
+                val items = response.results.map { it.toMediaItem() }
                 _searchState.value = ExploreSearchUiState.Results(items)
             } catch (e: Exception) {
                 _searchState.value = ExploreSearchUiState.Error(e.message ?: "Search failed")
@@ -169,23 +150,9 @@ class ExploreViewModel @Inject constructor(
                 val items = loadWithCache("genre_${genre.id}") {
                     val movieResults = apiService.discoverMoviesByGenre(genre.id).results
                     val tvResults = apiService.discoverTvByGenre(genre.id).results
-                    (movieResults + tvResults).mapNotNull { dto ->
-                        val mediaType = when (dto.mediaType) {
-                            "movie" -> MediaType.MOVIE
-                            "tv" -> MediaType.TV
-                            else -> return@mapNotNull null
-                        }
-                        MediaItem(
-                            id = dto.id.toString(),
-                            title = dto.title ?: dto.name ?: "",
-                            overview = dto.overview ?: "",
-                            posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                            backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                            rating = dto.voteAverage ?: 0.0,
-                            releaseDate = dto.releaseDate ?: dto.firstAirDate ?: "",
-                            mediaType = mediaType
-                        )
-                    }.sortedByDescending { it.rating }
+                    (movieResults + tvResults)
+                        .map { it.toMediaItem() }
+                        .sortedByDescending { it.rating }
                 }
                 _uiState.value = currentState.copy(genreResults = items, selectedGenre = genre)
             } catch (e: Exception) {
@@ -256,114 +223,30 @@ class ExploreViewModel @Inject constructor(
 
     private suspend fun fetchTrending(): List<MediaItem> {
         val response = apiService.getTrending()
-        return response.results.map { dto ->
-            val mediaType = when {
-                dto.mediaType == "movie" -> MediaType.MOVIE
-                dto.mediaType == "tv" -> MediaType.TV
-                dto.name != null && dto.title == null -> MediaType.TV
-                dto.name != null && dto.firstAirDate != null -> MediaType.TV
-                else -> MediaType.MOVIE
-            }
-            MediaItem(
-                id = dto.id.toString(),
-                title = dto.title ?: dto.name ?: "",
-                overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                rating = dto.voteAverage ?: 0.0,
-                releaseDate = dto.releaseDate ?: dto.firstAirDate ?: "",
-                mediaType = mediaType
-            )
-        }
+        return response.results.map { it.toMediaItem() }
     }
 
     private suspend fun fetchPopularMovies(): List<MediaItem> {
-        return apiService.getPopularMovies().results.map { dto ->
-            MediaItem(
-                id = dto.id.toString(),
-                title = dto.title ?: dto.name ?: "",
-                overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                rating = dto.voteAverage ?: 0.0,
-                releaseDate = dto.releaseDate ?: "",
-                mediaType = MediaType.MOVIE
-            )
-        }
+        return apiService.getPopularMovies().results.map { it.toMediaItem(MediaType.MOVIE) }
     }
 
     private suspend fun fetchPopularTv(): List<MediaItem> {
-        return apiService.getPopularTv().results.map { dto ->
-            MediaItem(
-                id = dto.id.toString(),
-                title = dto.name ?: dto.title ?: "",
-                overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                rating = dto.voteAverage ?: 0.0,
-                releaseDate = dto.firstAirDate ?: "",
-                mediaType = MediaType.TV
-            )
-        }
+        return apiService.getPopularTv().results.map { it.toMediaItem(MediaType.TV) }
     }
 
     private suspend fun fetchTopRatedMovies(): List<MediaItem> {
-        return apiService.getTopRatedMovies().results.map { dto ->
-            MediaItem(
-                id = dto.id.toString(),
-                title = dto.title ?: dto.name ?: "",
-                overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                rating = dto.voteAverage ?: 0.0,
-                releaseDate = dto.releaseDate ?: "",
-                mediaType = MediaType.MOVIE
-            )
-        }
+        return apiService.getTopRatedMovies().results.map { it.toMediaItem(MediaType.MOVIE) }
     }
 
     private suspend fun fetchTopRatedTv(): List<MediaItem> {
-        return apiService.getTopRatedTv().results.map { dto ->
-            MediaItem(
-                id = dto.id.toString(),
-                title = dto.name ?: dto.title ?: "",
-                overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                rating = dto.voteAverage ?: 0.0,
-                releaseDate = dto.firstAirDate ?: "",
-                mediaType = MediaType.TV
-            )
-        }
+        return apiService.getTopRatedTv().results.map { it.toMediaItem(MediaType.TV) }
     }
 
     private suspend fun fetchUpcomingMovies(): List<MediaItem> {
-        return apiService.getUpcomingMovies().results.map { dto ->
-            MediaItem(
-                id = dto.id.toString(),
-                title = dto.title ?: dto.name ?: "",
-                overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                rating = dto.voteAverage ?: 0.0,
-                releaseDate = dto.releaseDate ?: "",
-                mediaType = MediaType.MOVIE
-            )
-        }
+        return apiService.getUpcomingMovies().results.map { it.toMediaItem(MediaType.MOVIE) }
     }
 
     private suspend fun fetchOnTheAirTv(): List<MediaItem> {
-        return apiService.getOnTheAirTv().results.map { dto ->
-            MediaItem(
-                id = dto.id.toString(),
-                title = dto.name ?: dto.title ?: "",
-                overview = dto.overview ?: "",
-                posterPath = dto.posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
-                backdropPath = dto.backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
-                rating = dto.voteAverage ?: 0.0,
-                releaseDate = dto.firstAirDate ?: "",
-                mediaType = MediaType.TV
-            )
-        }
+        return apiService.getOnTheAirTv().results.map { it.toMediaItem(MediaType.TV) }
     }
 }

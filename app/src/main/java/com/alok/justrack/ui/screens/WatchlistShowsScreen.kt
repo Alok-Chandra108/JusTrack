@@ -54,66 +54,14 @@ fun WatchlistShowsScreen(
     val tabTitles = listOf("WATCHLIST", "UPCOMING")
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
-        // --- Premium Tab Row ---
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = Background,
-            contentColor = TextPrimary,
-            indicator = { tabPositions ->
-                if (selectedTab < tabPositions.size) {
-                    SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        height = 3.dp,
-                        color = AccentPrimary
-                    )
-                }
-            },
-            divider = {}
-        ) {
-            tabTitles.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                            color = if (selectedTab == index) AccentPrimary else TextSecondary
-                        )
-                    }
-                )
-            }
-        }
-
-        // --- Page content with smooth transitions ---
-        AnimatedContent(
-            targetState = selectedTab,
-            transitionSpec = {
-                if (targetState > initialState) {
-                    (slideInHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { it } +
-                            fadeIn(animationSpec = tween(500))) togetherWith
-                            (slideOutHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { -it } +
-                                    fadeOut(animationSpec = tween(500)))
-                } else {
-                    (slideInHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { -it } +
-                            fadeIn(animationSpec = tween(500))) togetherWith
-                            (slideOutHorizontally(animationSpec = tween(500, easing = EaseOutExpo)) { it } +
-                                    fadeOut(animationSpec = tween(500)))
-                }
-            },
-            label = "tab_content"
-        ) { tab ->
-            when (tab) {
-                0 -> WatchlistTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
-                1 -> UpcomingTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
-            }
+    PremiumTabScaffold(
+        selectedTab = selectedTab,
+        onTabSelected = { selectedTab = it },
+        tabTitles = tabTitles
+    ) { tab ->
+        when (tab) {
+            0 -> WatchlistTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
+            1 -> UpcomingTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
         }
     }
 }
@@ -128,38 +76,12 @@ private fun WatchlistTabContent(
     val isGridView by viewModel.isGridView.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Toolbar with Grid/List toggle and centered Group Header
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            // Centered Header
-            if (groupedEpisodes.isNotEmpty()) {
-                SectionHeader(
-                    title = groupedEpisodes.keys.first(),
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            // Grid/List toggle on the right
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(26.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SurfaceVariant)
-                    .clickable { viewModel.toggleGridView() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (isGridView) Icons.AutoMirrored.Rounded.List else Icons.Rounded.GridView,
-                    contentDescription = "Toggle View",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+        if (groupedEpisodes.isNotEmpty()) {
+            WatchlistToolbar(
+                title = groupedEpisodes.keys.first(),
+                isGridView = isGridView,
+                onToggleView = { viewModel.toggleGridView() }
+            )
         }
 
         when {
@@ -191,7 +113,7 @@ private fun WatchlistTabContent(
                         groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
                             if (index > 0) {
                                 item {
-                                    SectionHeader(header)
+                                    CapsuleHeader(header)
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
                             }
@@ -238,7 +160,7 @@ private fun WatchlistTabContent(
                                             color = SurfaceVariant
                                         )
                                     }
-                                    SectionHeader(header)
+                                    CapsuleHeader(header)
                                 }
                             }
                             items(items, key = { it.showId }) { progress ->
@@ -255,31 +177,6 @@ private fun WatchlistTabContent(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun SectionHeader(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            color = SurfaceVariant.copy(alpha = 0.5f),
-            shape = CircleShape
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-                fontWeight = FontWeight.Black,
-                fontSize = 10.sp,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp)
-            )
         }
     }
 }
@@ -391,7 +288,7 @@ private fun UpcomingTabContent(
                     val episodes = groupedUpcoming[groupName] ?: emptyList()
                     if (episodes.isNotEmpty()) {
                         item {
-                            SectionHeader(
+                            CapsuleHeader(
                                 title = groupName
                             )
                         }
@@ -607,23 +504,6 @@ fun EpisodeTrackingCard(
 }
 
 @Composable
-fun WatchlistBadge(text: String, color: Color) {
-    Surface(
-        color = Background,
-        shape = CircleShape,
-        border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
-    ) {
-        Text(
-            text = text,
-            color = color,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Black,
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = .2.dp)
-        )
-    }
-}
-
-@Composable
 fun UpcomingEpisodeCard(
     episode: WatchlistViewModel.UpcomingEpisodeItem,
     onClick: () -> Unit,
@@ -641,15 +521,11 @@ fun UpcomingEpisodeCard(
     }
 
     val airDateFormatted = remember(ep.airDate) {
-        if (ep.airDate == null) "" else {
-            try {
-                val date = LocalDate.parse(ep.airDate)
-                val dayOfWeek = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-                val datePart = date.format(DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US))
-                "$dayOfWeek, $datePart"
-            } catch (_: Exception) {
-                ep.airDate
-            }
+        val date = com.alok.justrack.util.DateUtils.parseDate(ep.airDate)
+        if (date == null) "" else {
+            val dayOfWeek = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+            val datePart = date.format(DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US))
+            "$dayOfWeek, $datePart"
         }
     }
 
