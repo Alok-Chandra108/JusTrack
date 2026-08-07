@@ -1,7 +1,9 @@
-# Task: Fix Season Progress & Click Separation
+# Task: Redesign Show Details Page
 
-- [x] Fix `episodeCount` mapping in `TmdbMediaRepository.kt` <!-- id: 0 -->
-- [x] Update `toggleSeasonWatched` logic in `DetailViewModel.kt` to complete partial seasons <!-- id: 1 -->
-- [x] Improve `DetailViewModel` reactive state to preserve detailed season data <!-- id: 2 -->
-- [x] Verify click separation in `MovieDetailsScreen.kt` (only checkmarks trigger watch status) <!-- id: 3 -->
-- [x] Verify reactive UI updates and persistence <!-- id: 4 -->
+- [x] Update `DetailViewModel` for reactive season progress <!-- id: 0 -->
+- [x] Implement `TvShowAboutSection` and `TvShowEpisodesSection` in `MovieDetailsScreen.kt` <!-- id: 1 -->
+- [x] Add `TabRow` logic to `MovieDetailsScreen` for TV Shows <!-- id: 2 -->
+- [x] Redesign `SeasonCard` with progress indicators and checkmarks <!-- id: 3 -->
+- [x] Verify layout on device and ensure Movie pages are unaffected <!-- id: 4 -->
+- [x] Move tabs directly below backdrop for TV Shows <!-- id: 5 -->
+- [x] Move Poster and Action buttons into ABOUT tab for TV Shows <!-- id: 6 -->

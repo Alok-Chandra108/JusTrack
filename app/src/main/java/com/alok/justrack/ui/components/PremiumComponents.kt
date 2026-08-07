@@ -487,7 +487,7 @@ fun PosterCard(
     ) {
         Column(
             modifier = Modifier
-                .width(130.dp)
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .clickable { onClick() }
         ) {
@@ -667,7 +667,11 @@ fun HorizontalSection(
                 state = rememberLazyListState()
             ) {
                 items(items.take(7), key = { it.id }) { item ->
-                    PosterCard(item = item, onClick = { onItemClick(item) })
+                    PosterCard(
+                        item = item, 
+                        onClick = { onItemClick(item) },
+                        modifier = Modifier.width(130.dp)
+                    )
                 }
             }
         }

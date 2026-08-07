@@ -110,9 +110,9 @@ private fun MovieWatchlistContent(uiState: WatchlistUiState, navController: NavC
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     lazyGridItems(movies) { item ->
                         PosterOnlyCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
@@ -147,9 +147,9 @@ private fun MovieUpcomingContent(uiState: WatchlistUiState, navController: NavCo
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     lazyGridItems(upcomingMovies) { item ->
                         PosterCard(item, { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) })
