@@ -7,6 +7,7 @@ import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.model.Season
 import com.alok.justrack.data.repository.MediaRepository
+import com.alok.justrack.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -286,14 +287,30 @@ class DetailViewModel @Inject constructor(
 
     fun toggleSeasonWatched(season: Season) {
         viewModelScope.launch {
-            val allWatched = season.watchedCount == season.episodeCount
             val episodes = if (season.episodes.isNotEmpty()) {
                 season.episodes
             } else {
                 repository.getSeasonDetails(currentId, season.seasonNumber)?.episodes ?: emptyList()
             }
+
+            // Filter episodes that have already aired (daysUntil <= 0)
+            val releasedEpisodes = episodes.filter { 
+                val days = DateUtils.getDaysUntil(it.airDate)
+                days == null || days <= 0 
+            }
+
+            if (releasedEpisodes.isEmpty()) return@launch
+
+            // Check if all released episodes are currently watched
+            val allReleasedWatched = releasedEpisodes.all { it.isWatched }
             
-            repository.markSeasonWatched(currentId, season.seasonNumber, !allWatched, episodes)
+            if (allReleasedWatched) {
+                // If all released are watched, unmark the entire season
+                repository.markSeasonWatched(currentId, season.seasonNumber, false, episodes)
+            } else {
+                // Otherwise, mark only the released episodes as watched
+                repository.markSeasonWatched(currentId, season.seasonNumber, true, releasedEpisodes)
+            }
         }
     }
 }
