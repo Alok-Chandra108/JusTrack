@@ -4,7 +4,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
@@ -154,7 +154,7 @@ private fun WatchlistTabContent(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (isGridView) Icons.Rounded.List else Icons.Rounded.GridView,
+                    imageVector = if (isGridView) Icons.AutoMirrored.Rounded.List else Icons.Rounded.GridView,
                     contentDescription = "Toggle View",
                     tint = TextPrimary,
                     modifier = Modifier.size(16.dp)
@@ -386,7 +386,7 @@ private fun UpcomingTabContent(
                 contentPadding = PaddingValues(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                val order = listOf("THIS WEEK", "NEXT WEEK", "THIS MONTH", "NEXT MONTH", "LATER")
+                val order = listOf("TODAY", "THIS WEEK", "NEXT WEEK", "THIS MONTH", "NEXT MONTH", "LATER")
                 order.forEach { groupName ->
                     val episodes = groupedUpcoming[groupName] ?: emptyList()
                     if (episodes.isNotEmpty()) {
@@ -661,7 +661,7 @@ fun UpcomingEpisodeCard(
     ) {
         Row(
             modifier = Modifier.padding(vertical = 8.dp),
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
             // Vertical Poster on the Left
             AsyncImage(
@@ -669,30 +669,30 @@ fun UpcomingEpisodeCard(
                 contentDescription = showName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(80.dp, 120.dp)
+                    .size(60.dp, 90.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(SurfaceColor)
+                    .background(SurfaceVariant)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Details on the Right
+            // Details in the Middle
             Column(modifier = Modifier.weight(1f)) {
                 // Air Date & Time (Top)
                 Text(
-                    text = airDateFormatted,
+                    text = if (daysAway == 0L) "AIRING TODAY" else airDateFormatted,
                     style = MaterialTheme.typography.labelSmall,
                     color = statusColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
                 // Show Name
                 Text(
                     text = showName,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     color = TextPrimary,
                     fontWeight = FontWeight.Black,
                     maxLines = 1,
@@ -705,39 +705,55 @@ fun UpcomingEpisodeCard(
                         text = "S%02d | E%02d".format(Locale.US, ep.seasonNumber, ep.episodeNumber),
                         style = MaterialTheme.typography.labelMedium,
                         color = TextSecondary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
                     )
                     
                     if (ep.seasonNumber == 1 && ep.episodeNumber == 1) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Badge(containerColor = AccentPrimary.copy(alpha = 0.2f), contentColor = AccentPrimary) {
-                            Text("PREMIERE", fontSize = 8.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(2.dp))
-                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        WatchlistBadge(text = "PREMIERE", color = AccentPrimary)
                     }
                 }
-
-                Spacer(modifier = Modifier.height(2.dp))
 
                 // Episode Name
                 Text(
                     text = ep.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextPrimary.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+            }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Brief Synopsis
-                Text(
-                    text = ep.overview,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary.copy(alpha = 0.7f),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 14.sp
+            // Compact Countdown on the Right
+            if (daysAway != null && daysAway > 0) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(44.dp)
+                ) {
+                    Text(
+                        text = daysAway.toString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (daysAway == 1L) "DAY" else "DAYS",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 9.sp
+                    )
+                }
+            } else if (daysAway == 0L) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Icon(
+                    imageVector = Icons.Rounded.NotificationsActive,
+                    contentDescription = "Airing Today",
+                    tint = AccentPrimary,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

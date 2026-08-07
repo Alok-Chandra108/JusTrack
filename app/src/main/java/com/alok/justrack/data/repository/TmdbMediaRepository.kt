@@ -283,8 +283,14 @@ class TmdbMediaRepository @Inject constructor(
                     .mapValues { it.value.toSet() }
             }
 
-    override suspend fun getNextEpisodeToWatch(showId: String): Episode? {
-        val nextEntity = episodeDao.getNextUnwatchedEpisode(showId)
+    override suspend fun getNextEpisodeToWatch(showId: String, onlyReleased: Boolean): Episode? {
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val nextEntity = if (onlyReleased) {
+            episodeDao.getNextReleasedUnwatchedEpisode(showId, today)
+        } else {
+            episodeDao.getNextUnwatchedEpisode(showId)
+        }
+        
         return nextEntity?.let { entity ->
             Episode(
                 id = "${entity.showId}_${entity.seasonNumber}_${entity.episodeNumber}",

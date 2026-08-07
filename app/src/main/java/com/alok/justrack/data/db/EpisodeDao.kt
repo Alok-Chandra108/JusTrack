@@ -62,6 +62,20 @@ interface EpisodeDao {
     """)
     suspend fun getTotalEpisodeCount(showId: String): Int
 
+    @Query("""
+        SELECT e.* FROM episode_entity e
+        WHERE e.showId = :showId
+          AND e.seasonNumber > 0
+          AND (e.airDate IS NULL OR e.airDate <= :today)
+          AND NOT EXISTS (
+            SELECT 1 FROM watched_episodes we
+            WHERE we.showId = :showId AND we.seasonNumber = e.seasonNumber AND we.episodeNumber = e.episodeNumber
+          )
+        ORDER BY e.seasonNumber, e.episodeNumber
+        LIMIT 1
+    """)
+    suspend fun getNextReleasedUnwatchedEpisode(showId: String, today: String): EpisodeEntity?
+
     @Query("SELECT MAX(episodeNumber) FROM episode_entity WHERE showId = :showId AND seasonNumber = :seasonNumber")
     suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int?
 

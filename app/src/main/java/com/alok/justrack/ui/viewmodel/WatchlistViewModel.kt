@@ -179,8 +179,8 @@ class WatchlistViewModel @Inject constructor(
                 val episodeItems = mutableListOf<WatchlistEpisodeItem>()
                 for (show in tvShows) {
                     try {
-                        // Try to get next episode from cache/DB
-                        val nextEpisode = repository.getNextEpisodeToWatch(show.id)
+                        // Try to get next episode from cache/DB - ONLY RELEASED
+                        val nextEpisode = repository.getNextEpisodeToWatch(show.id, onlyReleased = true)
                         
                         // Filter out season 0 if it somehow leaked through
                         if (nextEpisode != null && nextEpisode.seasonNumber == 0) {
@@ -328,7 +328,8 @@ class WatchlistViewModel @Inject constructor(
             
             val daysAway = ChronoUnit.DAYS.between(today, airDate)
             when {
-                daysAway in 0..6 -> "THIS WEEK"
+                daysAway == 0L -> "TODAY"
+                daysAway in 1..6 -> "THIS WEEK"
                 daysAway in 7..13 -> "NEXT WEEK"
                 airDate.month == today.month && airDate.year == today.year -> "THIS MONTH"
                 airDate.month == today.plusMonths(1).month && airDate.year == today.plusMonths(1).year -> "NEXT MONTH"
