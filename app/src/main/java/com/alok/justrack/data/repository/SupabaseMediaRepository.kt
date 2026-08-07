@@ -222,6 +222,7 @@ class SupabaseMediaRepository @Inject constructor(
             backdropPath = backdropUrl,
             rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
             releaseDate = rawDate,
+            rawReleaseDate = rawDate,
             runtime = runtimeStr,
             certification = "-",
             director = directorNames,

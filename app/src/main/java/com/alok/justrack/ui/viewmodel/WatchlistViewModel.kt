@@ -7,6 +7,7 @@ import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.StatsData
 import com.alok.justrack.data.repository.MediaRepository
+import com.alok.justrack.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -154,9 +155,40 @@ class WatchlistViewModel @Inject constructor(
     private val _isGridView = MutableStateFlow(false)
     val isGridView: StateFlow<Boolean> = _isGridView.asStateFlow()
 
+    private val _isMovieGridView = MutableStateFlow(false)
+    val isMovieGridView: StateFlow<Boolean> = _isMovieGridView.asStateFlow()
+
     fun toggleGridView() {
         _isGridView.value = !_isGridView.value
     }
+
+    fun toggleMovieGridView() {
+        _isMovieGridView.value = !_isMovieGridView.value
+    }
+
+    // Grouped upcoming movies for the UI
+    val groupedUpcomingMovies = explicitWatchlistItems.map { items ->
+        val today = LocalDate.now()
+        val movies = items.filter { it.mediaType == MediaType.MOVIE }
+        
+        movies.mapNotNull { movie ->
+            val releaseDate = DateUtils.parseDate(movie.releaseDate)
+            if (releaseDate != null && !releaseDate.isBefore(today)) {
+                movie to releaseDate
+            } else null
+        }.sortedBy { it.second }
+        .groupBy { (movie, releaseDate) ->
+            val daysAway = ChronoUnit.DAYS.between(today, releaseDate)
+            when {
+                daysAway == 0L -> "TODAY"
+                daysAway in 1..6 -> "THIS WEEK"
+                daysAway in 7..13 -> "NEXT WEEK"
+                releaseDate.month == today.month && releaseDate.year == today.year -> "THIS MONTH"
+                releaseDate.month == today.plusMonths(1).month && releaseDate.year == today.plusMonths(1).year -> "NEXT MONTH"
+                else -> "LATER"
+            }
+        }.mapValues { it.value.map { pair -> pair.first } }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
     data class UpcomingEpisodeItem(
         val showId: String,

@@ -144,7 +144,7 @@ class DetailViewModel @Inject constructor(
                         posterPath = finalItem.posterPath,
                         backdropPath = finalItem.backdropPath,
                         rating = finalItem.rating,
-                        releaseDate = finalItem.releaseDate,
+                        releaseDate = finalItem.rawReleaseDate.ifEmpty { finalItem.releaseDate },
                         mediaType = finalItem.mediaType,
                         isWatched = _isWatched.value,
                         inWatchlist = _isInWatchlist.value,
@@ -172,7 +172,7 @@ class DetailViewModel @Inject constructor(
                     posterPath = movie.posterPath,
                     backdropPath = movie.backdropPath,
                     rating = movie.rating,
-                    releaseDate = movie.releaseDate,
+                    releaseDate = movie.rawReleaseDate.ifEmpty { movie.releaseDate },
                     mediaType = movie.mediaType,
                     inWatchlist = true
                 )

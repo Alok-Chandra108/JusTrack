@@ -267,7 +267,7 @@ fun MovieDetailsScreen(
                     ActionButtons(
                         isInWatchlist = isInWatchlist,
                         isWatched = isWatched,
-                        releaseDate = movie.releaseDate,
+                        releaseDate = movie.rawReleaseDate.ifEmpty { movie.releaseDate },
                         onWatchlistToggle = onWatchlistToggle,
                         onWatchedToggle = onWatchedToggle
                     )
@@ -301,7 +301,7 @@ fun TvShowAboutSection(
         ActionButtons(
             isInWatchlist = isInWatchlist,
             isWatched = isWatched,
-            releaseDate = movie.releaseDate,
+            releaseDate = movie.rawReleaseDate.ifEmpty { movie.releaseDate },
             onWatchlistToggle = onWatchlistToggle,
             onWatchedToggle = onWatchedToggle
         )

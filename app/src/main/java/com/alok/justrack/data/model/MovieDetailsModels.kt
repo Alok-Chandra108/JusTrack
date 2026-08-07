@@ -20,6 +20,7 @@ data class MovieDetails(
     val backdropPath: String?,
     val rating: Double,
     val releaseDate: String,
+    val rawReleaseDate: String = "",
     val runtime: String,
     val certification: String,
     val director: List<String>,

@@ -496,6 +496,7 @@ class TmdbMediaRepository @Inject constructor(
             backdropPath = backdropUrl,
             rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
             releaseDate = formatDate(rawDate),
+            rawReleaseDate = rawDate,
             runtime = runtimeStr,
             certification = cert,
             director = directorNames,
