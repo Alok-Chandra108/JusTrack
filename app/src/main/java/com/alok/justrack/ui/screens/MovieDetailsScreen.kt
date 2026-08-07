@@ -237,7 +237,7 @@ fun MovieDetailsScreen(
 
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 12.dp)
             ) {
                 if (movie.mediaType == MediaType.TV) {
                     Spacer(modifier = Modifier.height(24.dp))

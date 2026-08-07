@@ -137,7 +137,7 @@ fun PosterInfoRow(movie: MovieDetails) {
                 .background(SurfaceColor)
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -157,28 +157,31 @@ fun PosterInfoRow(movie: MovieDetails) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (movie.certification.isNotBlank() && movie.certification != "-") {
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(4.dp),
                         color = Color.Transparent,
-                        border = BorderStroke(1.dp, TextPrimary.copy(alpha = 0.8f))
+                        border = BorderStroke(1.dp, TextPrimary.copy(alpha = 0.5f))
                     ) {
                         Text(
                             text = movie.certification,
-                            style = MaterialTheme.typography.labelMedium.copy(
+                            style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.ExtraBold,
-                                fontSize = 12.sp
+                                fontSize = 11.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             color = TextPrimary
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(
-                    text = "${movie.releaseDate}  •  ${movie.runtime}",
+                    text = "${movie.releaseDate} · ${movie.runtime}",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp
                     ),
-                    color = TextPrimary.copy(alpha = 0.9f)
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
