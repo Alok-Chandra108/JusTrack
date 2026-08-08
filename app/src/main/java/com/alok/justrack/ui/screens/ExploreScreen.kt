@@ -240,7 +240,8 @@ fun ExploreScreen(
                                     items = state.upcomingMovies,
                                     onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
-                                    onLoadMore = { viewModel.loadSection("upcoming_movies") }
+                                    onLoadMore = { viewModel.loadSection("upcoming_movies") },
+                                    showDate = true
                                 )
                             }
 
@@ -453,7 +454,8 @@ private fun ExploreSectionLazy(
     items: List<MediaItem>,
     onItemClick: (MediaItem) -> Unit,
     onItemLongPress: (MediaItem) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    showDate: Boolean = false
 ) {
     LaunchedEffect(Unit) { onLoadMore() }
 
@@ -489,7 +491,8 @@ private fun ExploreSectionLazy(
                     ExplorePosterCard(
                         item = item,
                         onClick = { onItemClick(item) },
-                        onLongPress = { onItemLongPress(item) }
+                        onLongPress = { onItemLongPress(item) },
+                        showDate = showDate
                     )
                 }
             }
@@ -502,7 +505,8 @@ private fun ExploreSectionLazy(
 private fun ExplorePosterCard(
     item: MediaItem,
     onClick: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: () -> Unit,
+    showDate: Boolean = false
 ) {
     Box(
         modifier = Modifier
@@ -523,8 +527,35 @@ private fun ExplorePosterCard(
                 .clip(RoundedCornerShape(12.dp))
                 .background(SurfaceColor)
         )
+        
+        // Date badge (bottom)
+        if (showDate && item.releaseDate.isNotBlank()) {
+            val formattedDate = remember(item.releaseDate) {
+                val date = com.alok.justrack.util.DateUtils.parseDate(item.releaseDate)
+                date?.format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.US)) ?: ""
+            }
+            
+            if (formattedDate.isNotEmpty()) {
+                Surface(
+                    color = AccentPrimary,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                ) {
+                    Text(
+                        text = formattedDate.uppercase(),
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        }
+
         // Rating badge
-        if (item.rating > 0) {
+        if (item.rating > 0 && !showDate) {
             Surface(
                 color = Color.Black.copy(alpha = 0.7f),
                 modifier = Modifier

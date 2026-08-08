@@ -7,11 +7,13 @@ import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
 import com.alok.justrack.data.repository.MediaRepository
+import com.alok.justrack.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 sealed class ExploreUiState {
@@ -243,7 +245,14 @@ class ExploreViewModel @Inject constructor(
     }
 
     private suspend fun fetchUpcomingMovies(): List<MediaItem> {
-        return apiService.getUpcomingMovies().results.map { it.toMediaItem(MediaType.MOVIE) }
+        val today = LocalDate.now()
+        return apiService.getUpcomingMovies().results
+            .map { it.toMediaItem(MediaType.MOVIE) }
+            .filter { item ->
+                val releaseDate = DateUtils.parseDate(item.releaseDate)
+                releaseDate != null && releaseDate.isAfter(today)
+            }
+            .sortedBy { DateUtils.parseDate(it.releaseDate) }
     }
 
     private suspend fun fetchOnTheAirTv(): List<MediaItem> {
