@@ -84,6 +84,9 @@ class DetailViewModel @Inject constructor(
     private val _backdropImages = MutableStateFlow<List<String>>(emptyList())
     val backdropImages: StateFlow<List<String>> = _backdropImages
 
+    private val _episodeMarkConfirmation = MutableStateFlow<EpisodeMarkConfirmation?>(null)
+    val episodeMarkConfirmation: StateFlow<EpisodeMarkConfirmation?> = _episodeMarkConfirmation
+
     private val _selectedSeason = MutableStateFlow<com.alok.justrack.data.model.Season?>(null)
     val selectedSeason: StateFlow<com.alok.justrack.data.model.Season?> = combine(_selectedSeason, _watchedEpisodes) { season, watchedEps ->
         season?.copy(
@@ -280,9 +283,39 @@ class DetailViewModel @Inject constructor(
 
     fun markEpisodeWatched(seasonNumber: Int, episodeNumber: Int, watched: Boolean) {
         viewModelScope.launch {
+            if (watched) {
+                val season = _selectedSeason.value
+                if (season != null && season.seasonNumber == seasonNumber) {
+                    val previousUnwatched = season.episodes
+                        .filter { it.episodeNumber < episodeNumber && !it.isWatched }
+                        .map { it.episodeNumber }
+
+                    if (previousUnwatched.isNotEmpty()) {
+                        _episodeMarkConfirmation.value = EpisodeMarkConfirmation(
+                            seasonNumber = seasonNumber,
+                            episodeNumber = episodeNumber,
+                            previousEpisodes = previousUnwatched
+                        )
+                        return@launch
+                    }
+                }
+            }
+            
             repository.markEpisodeWatched(currentId, seasonNumber, episodeNumber, watched)
-            // No manual reload needed as _watchedEpisodes flow is reactive
         }
+    }
+
+    fun confirmMarkPreviousWatched() {
+        val confirmation = _episodeMarkConfirmation.value ?: return
+        viewModelScope.launch {
+            val allEpisodes = confirmation.previousEpisodes + confirmation.episodeNumber
+            repository.markEpisodesWatched(currentId, confirmation.seasonNumber, allEpisodes, true)
+            _episodeMarkConfirmation.value = null
+        }
+    }
+
+    fun dismissMarkPreviousConfirmation() {
+        _episodeMarkConfirmation.value = null
     }
 
     fun toggleSeasonWatched(season: Season) {
@@ -320,3 +353,9 @@ sealed class DetailUiState {
     data class Success(val item: MovieDetails) : DetailUiState()
     data class Error(val message: String) : DetailUiState()
 }
+
+data class EpisodeMarkConfirmation(
+    val seasonNumber: Int,
+    val episodeNumber: Int,
+    val previousEpisodes: List<Int>
+)

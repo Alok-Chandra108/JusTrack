@@ -58,6 +58,7 @@ fun DetailScreen(
     val mediaLists by viewModel.mediaLists.collectAsState()
     val posterImages by viewModel.posterImages.collectAsState()
     val backdropImages by viewModel.backdropImages.collectAsState()
+    val episodeConfirmation by viewModel.episodeMarkConfirmation.collectAsState()
 
     var showMoreSheet by remember { mutableStateOf(false) }
     var showListPicker by remember { mutableStateOf(false) }
@@ -156,6 +157,33 @@ fun DetailScreen(
                     images = backdropImages,
                     onDismiss = { showBackdropPicker = false },
                     onImageSelected = { url -> viewModel.changeBackdrop(url) }
+                )
+            }
+
+            episodeConfirmation?.let { confirmation ->
+                AlertDialog(
+                    onDismissRequest = { viewModel.dismissMarkPreviousConfirmation() },
+                    title = { Text("Mark previous as watched?") },
+                    text = { 
+                        Text("Marking episode ${confirmation.episodeNumber} as watched will also mark all previous unwatched episodes in this season as watched.")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = { viewModel.confirmMarkPreviousWatched() }
+                        ) {
+                            Text("Confirm", color = AccentPrimary)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { viewModel.dismissMarkPreviousConfirmation() }
+                        ) {
+                            Text("Cancel", color = TextSecondary)
+                        }
+                    },
+                    containerColor = SurfaceColor,
+                    titleContentColor = TextPrimary,
+                    textContentColor = TextSecondary
                 )
             }
         }

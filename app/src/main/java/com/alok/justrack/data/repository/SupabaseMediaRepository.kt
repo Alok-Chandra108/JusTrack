@@ -240,6 +240,7 @@ class SupabaseMediaRepository @Inject constructor(
     override suspend fun syncEpisodes(showId: String) {}
     override suspend fun getSeasonDetails(tvId: String, seasonNumber: Int): Season? = null
     override suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean) {}
+    override suspend fun markEpisodesWatched(showId: String, seasonNumber: Int, episodeNumbers: List<Int>, watched: Boolean) {}
     override suspend fun markSeasonWatched(showId: String, seasonNumber: Int, watched: Boolean, episodes: List<Episode>) {}
     override fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> = flow { emit(emptyList()) }
     override fun getAllWatchedEpisodesFlow(): Flow<Map<String, Set<String>>> = flow { emit(emptyMap()) }

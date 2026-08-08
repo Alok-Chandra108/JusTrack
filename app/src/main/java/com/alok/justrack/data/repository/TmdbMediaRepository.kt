@@ -263,6 +263,20 @@ class TmdbMediaRepository @Inject constructor(
         }
     }
 
+    override suspend fun markEpisodesWatched(showId: String, seasonNumber: Int, episodeNumbers: List<Int>, watched: Boolean) {
+        if (watched) {
+            val entities = episodeNumbers.map {
+                WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = it)
+            }
+            watchedEpisodeDao.insertAll(entities)
+        } else {
+            // Not typically used for multi-unmark but implemented for completeness
+            episodeNumbers.forEach { 
+                watchedEpisodeDao.delete(showId, seasonNumber, it)
+            }
+        }
+    }
+
     override suspend fun markSeasonWatched(showId: String, seasonNumber: Int, watched: Boolean, episodes: List<Episode>) {
         if (watched) {
             val entities = episodes.map { 
