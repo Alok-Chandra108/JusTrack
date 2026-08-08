@@ -245,14 +245,23 @@ class ExploreViewModel @Inject constructor(
     }
 
     private suspend fun fetchUpcomingMovies(): List<MediaItem> {
-        val today = LocalDate.now()
-        return apiService.getUpcomingMovies().results
-            .map { it.toMediaItem(MediaType.MOVIE) }
-            .filter { item ->
-                val releaseDate = DateUtils.parseDate(item.releaseDate)
-                releaseDate != null && releaseDate.isAfter(today)
-            }
-            .sortedBy { DateUtils.parseDate(it.releaseDate) }
+        val tomorrow = LocalDate.now().plusDays(1).toString()
+        return try {
+            apiService.discoverMovies(
+                sortBy = "primary_release_date.asc",
+                releaseDateGte = tomorrow,
+                includeAdult = false
+            ).results.map { it.toMediaItem(MediaType.MOVIE) }
+        } catch (e: Exception) {
+            // Fallback to standard upcoming if discover fails
+            apiService.getUpcomingMovies().results
+                .map { it.toMediaItem(MediaType.MOVIE) }
+                .filter { item ->
+                    val releaseDate = DateUtils.parseDate(item.releaseDate)
+                    releaseDate != null && releaseDate.isAfter(LocalDate.now())
+                }
+                .sortedBy { DateUtils.parseDate(it.releaseDate) }
+        }
     }
 
     private suspend fun fetchOnTheAirTv(): List<MediaItem> {

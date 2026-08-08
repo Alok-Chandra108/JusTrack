@@ -63,6 +63,15 @@ interface TmdbApiService {
     suspend fun getOnTheAirTv(): TmdbPaginatedResponse<TmdbMediaDto>
 
     @GET("3/discover/movie")
+    suspend fun discoverMovies(
+        @Query("sort_by") sortBy: String = "primary_release_date.asc",
+        @Query("primary_release_date.gte") releaseDateGte: String? = null,
+        @Query("primary_release_date.lte") releaseDateLte: String? = null,
+        @Query("with_release_type") releaseType: String? = null,
+        @Query("include_adult") includeAdult: Boolean = false
+    ): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/discover/movie")
     suspend fun discoverMoviesByGenre(
         @Query("with_genres") genreId: Int
     ): TmdbPaginatedResponse<TmdbMediaDto>
