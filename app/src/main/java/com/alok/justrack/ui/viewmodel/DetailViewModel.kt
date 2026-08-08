@@ -285,9 +285,13 @@ class DetailViewModel @Inject constructor(
         viewModelScope.launch {
             if (watched) {
                 val season = _selectedSeason.value
+                val watchedSet = _watchedEpisodes.value
                 if (season != null && season.seasonNumber == seasonNumber) {
                     val previousUnwatched = season.episodes
-                        .filter { it.episodeNumber < episodeNumber && !it.isWatched }
+                        .filter { ep -> 
+                            ep.episodeNumber < episodeNumber && 
+                            !watchedSet.contains("S${ep.seasonNumber}E${ep.episodeNumber}")
+                        }
                         .map { it.episodeNumber }
 
                     if (previousUnwatched.isNotEmpty()) {
