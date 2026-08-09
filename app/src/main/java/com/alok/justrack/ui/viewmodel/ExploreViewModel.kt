@@ -144,12 +144,50 @@ class ExploreViewModel @Inject constructor(
         _searchQuery.value = newQuery
     }
 
-    private suspend fun performSearch(query: String) {
+    private suspend fun performSearch(query: String) = coroutineScope {
         _searchState.value = ExploreSearchUiState.Searching
+        
+        // 1. Extract potential year (e.g., "Welcome 2007" -> "Welcome", 2007)
+        val yearRegex = Regex("\\b(19|20)\\d{2}\\b")
+        val yearMatch = yearRegex.find(query)
+        val year = yearMatch?.value?.toIntOrNull()
+        val cleanQuery = if (year != null) query.replace(yearMatch.value, "").trim() else query
+
         try {
-            val response = apiService.searchMulti(query)
-            val items = response.results.map { it.toMediaItem() }
-            _searchState.value = ExploreSearchUiState.Results(items)
+            // 2. Parallel Targeted Searching
+            val multiGlobal = async { 
+                apiService.searchMulti(query = query, includeAdult = false).results 
+            }
+            
+            val multiIndia = async { 
+                apiService.searchMulti(query = query, includeAdult = false, region = "IN").results 
+            }
+
+            val movieYear = if (year != null && cleanQuery.isNotBlank()) async {
+                apiService.searchMovie(query = cleanQuery, year = year, includeAdult = false).results
+            } else null
+
+            val tvYear = if (year != null && cleanQuery.isNotBlank()) async {
+                apiService.searchTv(query = cleanQuery, year = year, includeAdult = false).results
+            } else null
+
+            // 3. Collect Results
+            val results = mutableListOf<MediaItem>()
+            
+            // Prioritize year matches if searched with year
+            movieYear?.await()?.let { results.addAll(it.map { dto -> dto.toMediaItem(MediaType.MOVIE) }) }
+            tvYear?.await()?.let { results.addAll(it.map { dto -> dto.toMediaItem(MediaType.TV) }) }
+            
+            // Add India targeted and Global results
+            results.addAll(multiIndia.await().map { it.toMediaItem() })
+            results.addAll(multiGlobal.await().map { it.toMediaItem() })
+
+            // 4. Smart Deduplication & Ranking
+            val finalItems = results
+                .distinctBy { it.id + it.mediaType.name }
+                .take(40)
+
+            _searchState.value = ExploreSearchUiState.Results(finalItems)
         } catch (e: Exception) {
             _searchState.value = ExploreSearchUiState.Error(e.message ?: "Search failed")
         }

@@ -11,7 +11,27 @@ interface TmdbApiService {
 
     @GET("3/search/multi")
     suspend fun searchMulti(
-        @Query("query") query: String
+        @Query("query") query: String,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String? = null,
+        @Query("region") region: String? = null
+    ): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/search/movie")
+    suspend fun searchMovie(
+        @Query("query") query: String,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String? = null,
+        @Query("region") region: String? = null,
+        @Query("primary_release_year") year: Int? = null
+    ): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/search/tv")
+    suspend fun searchTv(
+        @Query("query") query: String,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String? = null,
+        @Query("first_air_date_year") year: Int? = null
     ): TmdbPaginatedResponse<TmdbMediaDto>
 
     @GET("3/movie/{movie_id}")
