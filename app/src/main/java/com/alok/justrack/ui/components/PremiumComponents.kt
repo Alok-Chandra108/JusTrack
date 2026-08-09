@@ -51,6 +51,8 @@ import com.alok.justrack.data.model.CastMember
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.ui.theme.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import java.util.Locale
 
 @Composable
@@ -196,13 +198,18 @@ fun PosterInfoRow(movie: MovieDetails, onPersonClick: (com.alok.justrack.data.mo
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RichDirectorText(
     label: String, 
     people: List<com.alok.justrack.data.model.Person>,
     onPersonClick: (com.alok.justrack.data.model.Person) -> Unit
 ) {
-    Row(modifier = Modifier.fillMaxWidth()) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalArrangement = Arrangement.Center
+    ) {
         Text(
             text = "$label ",
             style = MaterialTheme.typography.bodyMedium,
