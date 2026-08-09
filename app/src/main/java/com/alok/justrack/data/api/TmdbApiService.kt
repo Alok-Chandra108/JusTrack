@@ -64,11 +64,13 @@ interface TmdbApiService {
 
     @GET("3/discover/movie")
     suspend fun discoverMovies(
-        @Query("sort_by") sortBy: String = "primary_release_date.asc",
+        @Query("sort_by") sortBy: String = "popularity.desc",
         @Query("primary_release_date.gte") releaseDateGte: String? = null,
         @Query("primary_release_date.lte") releaseDateLte: String? = null,
         @Query("with_release_type") releaseType: String? = null,
-        @Query("include_adult") includeAdult: Boolean = false
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("region") region: String? = null,
+        @Query("with_original_language") originalLanguage: String? = null
     ): TmdbPaginatedResponse<TmdbMediaDto>
 
     @GET("3/discover/movie")

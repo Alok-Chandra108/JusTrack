@@ -9,6 +9,7 @@ import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -244,21 +245,49 @@ class ExploreViewModel @Inject constructor(
         return apiService.getTopRatedTv().results.map { it.toMediaItem(MediaType.TV) }
     }
 
-    private suspend fun fetchUpcomingMovies(): List<MediaItem> {
+    private suspend fun fetchUpcomingMovies(): List<MediaItem> = coroutineScope {
         val tomorrow = LocalDate.now().plusDays(1).toString()
-        return try {
-            apiService.discoverMovies(
-                sortBy = "primary_release_date.asc",
-                releaseDateGte = tomorrow,
-                includeAdult = false
-            ).results.map { it.toMediaItem(MediaType.MOVIE) }
+        val today = LocalDate.now()
+
+        try {
+            // Fetch Global Hyped/Buzzing Upcoming
+            val globalDeferred = async {
+                apiService.discoverMovies(
+                    sortBy = "popularity.desc",
+                    releaseDateGte = tomorrow,
+                    includeAdult = false
+                ).results.map { it.toMediaItem(MediaType.MOVIE) }
+            }
+
+            // Fetch Indian Hyped/Buzzing Upcoming
+            val indianLanguages = "hi|te|ta|ml|kn"
+            val indianDeferred = async {
+                apiService.discoverMovies(
+                    sortBy = "popularity.desc",
+                    releaseDateGte = tomorrow,
+                    includeAdult = false,
+                    region = "IN",
+                    originalLanguage = indianLanguages
+                ).results.map { it.toMediaItem(MediaType.MOVIE) }
+            }
+
+            val globalResults = try { globalDeferred.await() } catch (e: Exception) { emptyList() }
+            val indianResults = try { indianDeferred.await() } catch (e: Exception) { emptyList() }
+
+            (globalResults + indianResults)
+                .distinctBy { it.id }
+                .filter { item ->
+                    val releaseDate = DateUtils.parseDate(item.releaseDate)
+                    releaseDate != null && releaseDate.isAfter(today)
+                }
+                .sortedBy { DateUtils.parseDate(it.releaseDate) }
         } catch (e: Exception) {
             // Fallback to standard upcoming if discover fails
             apiService.getUpcomingMovies().results
                 .map { it.toMediaItem(MediaType.MOVIE) }
                 .filter { item ->
                     val releaseDate = DateUtils.parseDate(item.releaseDate)
-                    releaseDate != null && releaseDate.isAfter(LocalDate.now())
+                    releaseDate != null && releaseDate.isAfter(today)
                 }
                 .sortedBy { DateUtils.parseDate(it.releaseDate) }
         }
