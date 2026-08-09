@@ -23,20 +23,33 @@ class DetailViewModel @Inject constructor(
     private val _watchedEpisodes = MutableStateFlow<Set<String>>(emptySet())
     private var watchedEpisodesJob: Job? = null
     
+    private val _recommendationSeed = MutableStateFlow(System.currentTimeMillis().toInt())
+
     // Watchlist flow to track watched IDs for filtering recommendations
     private val _watchedIds = repository.getWatchlistFlow()
         .map { list -> list.filter { it.isWatched }.map { it.id }.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
+    private val _watchlistIds = repository.getWatchlistFlow()
+        .map { list -> list.filter { it.inWatchlist }.map { it.id }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     // Reactive UI state that filters recommendations based on watched status
-    val uiState: StateFlow<DetailUiState> = combine(_rawDetails, _watchedIds, _watchedEpisodes) { state, watched, watchedEps ->
+    val uiState: StateFlow<DetailUiState> = combine(_rawDetails, _watchedIds, _watchlistIds, _watchedEpisodes, _recommendationSeed) { state, watched, inWatchlistIds, watchedEps, seed ->
         if (state is DetailUiState.Success) {
             val filteredRecs = state.item.recommendations.filter { it.id !in watched }
             
+            // Process recommendations (Shuffle and map watchlist status)
+            val processedRecs = if (filteredRecs.isNotEmpty()) {
+                filteredRecs.shuffled(java.util.Random(seed.toLong())).map { 
+                    it.copy(inWatchlist = it.id in inWatchlistIds) 
+                }
+            } else emptyList()
+
             // For TV shows, ensure episodes in seasons reflect latest watched status and update counts
             val finalItem = if (state.item.mediaType == MediaType.TV) {
                 state.item.copy(
-                    recommendations = filteredRecs,
+                    recommendations = processedRecs,
                     seasons = state.item.seasons.map { season ->
                         val seasonWatchedEps = watchedEps.filter { it.startsWith("S${season.seasonNumber}E") }
                         val episodesWithWatchedStatus = season.episodes.map { ep ->
@@ -53,7 +66,7 @@ class DetailViewModel @Inject constructor(
                     }
                 )
             } else {
-                state.item.copy(recommendations = filteredRecs)
+                state.item.copy(recommendations = processedRecs)
             }
             
             state.copy(item = finalItem)
@@ -220,6 +233,31 @@ class DetailViewModel @Inject constructor(
             repository.removeFromList(listId, currentId, currentMediaType)
             _mediaLists.value = repository.getListsForMedia(currentId, currentMediaType)
         }
+    }
+
+    fun toggleWatchlistForRecommendation(movie: MediaItem) {
+        viewModelScope.launch {
+            if (movie.id in _watchlistIds.value) {
+                repository.removeFromWatchlist(movie.id)
+            } else {
+                val item = MediaItem(
+                    id = movie.id,
+                    title = movie.title,
+                    overview = movie.overview,
+                    posterPath = movie.posterPath,
+                    backdropPath = movie.backdropPath,
+                    rating = movie.rating,
+                    releaseDate = movie.releaseDate,
+                    mediaType = movie.mediaType,
+                    inWatchlist = true
+                )
+                repository.addToWatchlist(item)
+            }
+        }
+    }
+
+    fun refreshRecommendations() {
+        _recommendationSeed.value = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
     }
 
     fun createList(name: String) {

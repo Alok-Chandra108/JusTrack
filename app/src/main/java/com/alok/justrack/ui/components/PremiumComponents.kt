@@ -28,6 +28,9 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -423,15 +426,37 @@ fun CastItem(member: CastMember) {
 }
 
 @Composable
-fun RecommendationsSection(recommendations: List<MediaItem>, onRecommendationClick: (MediaItem) -> Unit = {}) {
+fun RecommendationsSection(
+    recommendations: List<MediaItem>,
+    onRecommendationClick: (MediaItem) -> Unit = {},
+    onWatchlistToggle: (MediaItem) -> Unit = {},
+    onRefreshClick: () -> Unit = {}
+) {
     Column {
-        Text(
-            text = "Recommendations",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = TextPrimary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Recommendations",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = TextPrimary
+            )
+
+            if (recommendations.size > 5) {
+                IconButton(onClick = onRefreshClick) {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = "Shuffle",
+                        tint = AccentPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -439,30 +464,62 @@ fun RecommendationsSection(recommendations: List<MediaItem>, onRecommendationCli
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = PaddingValues(end = 10.dp)
         ) {
-            items(recommendations) { item ->
-                RecommendationItem(item, onClick = { onRecommendationClick(item) })
+            items(recommendations, key = { it.id }) { item ->
+                RecommendationItem(
+                    item = item,
+                    onClick = { onRecommendationClick(item) },
+                    onWatchlistClick = { onWatchlistToggle(item) }
+                )
             }
         }
     }
 }
 
 @Composable
-fun RecommendationItem(item: MediaItem, onClick: () -> Unit = {}) {
+fun RecommendationItem(
+    item: MediaItem,
+    onClick: () -> Unit = {},
+    onWatchlistClick: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .width(100.dp)
             .clickable { onClick() }
     ) {
-        AsyncImage(
-            model = item.posterPath,
-            contentDescription = item.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(SurfaceColor)
-        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            AsyncImage(
+                model = item.posterPath,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(SurfaceColor)
+            )
+
+            // Quick Add Button
+            Surface(
+                onClick = onWatchlistClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .size(24.dp),
+                shape = CircleShape,
+                color = if (item.inWatchlist) WatchedGreen else Color.Black.copy(alpha = 0.6f),
+                tonalElevation = 4.dp
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = if (item.inWatchlist) Icons.Rounded.Check else Icons.Rounded.Add,
+                        contentDescription = if (item.inWatchlist) "In Watchlist" else "Add to Watchlist",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+        
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = item.title,

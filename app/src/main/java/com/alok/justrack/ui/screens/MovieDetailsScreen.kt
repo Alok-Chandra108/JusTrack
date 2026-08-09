@@ -97,6 +97,12 @@ fun DetailScreen(
                 },
                 onRecommendationClick = { item ->
                     navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
+                },
+                onRecommendationWatchlistToggle = { item ->
+                    viewModel.toggleWatchlistForRecommendation(item)
+                },
+                onRecommendationRefresh = {
+                    viewModel.refreshRecommendations()
                 }
             )
 
@@ -208,7 +214,9 @@ fun MovieDetailsScreen(
     onSeasonClick: (Int) -> Unit = {},
     onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
     onSeasonWatchedToggle: (Season) -> Unit = {},
-    onRecommendationClick: (MediaItem) -> Unit = {}
+    onRecommendationClick: (MediaItem) -> Unit = {},
+    onRecommendationWatchlistToggle: (MediaItem) -> Unit = {},
+    onRecommendationRefresh: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -277,7 +285,9 @@ fun MovieDetailsScreen(
                             isWatched = isWatched,
                             onWatchlistToggle = onWatchlistToggle,
                             onWatchedToggle = onWatchedToggle,
-                            onRecommendationClick = onRecommendationClick
+                            onRecommendationClick = onRecommendationClick,
+                            onRecommendationWatchlistToggle = onRecommendationWatchlistToggle,
+                            onRecommendationRefresh = onRecommendationRefresh
                         )
                         1 -> TvShowEpisodesSection(
                             seasons = movie.seasons,
@@ -305,7 +315,12 @@ fun MovieDetailsScreen(
                     Spacer(modifier = Modifier.height(20.dp))
                     CastSection(cast = movie.cast)
                     Spacer(modifier = Modifier.height(20.dp))
-                    RecommendationsSection(recommendations = movie.recommendations, onRecommendationClick = onRecommendationClick)
+                    RecommendationsSection(
+                        recommendations = movie.recommendations, 
+                        onRecommendationClick = onRecommendationClick,
+                        onWatchlistToggle = onRecommendationWatchlistToggle,
+                        onRefreshClick = onRecommendationRefresh
+                    )
                 }
                 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -321,7 +336,9 @@ fun TvShowAboutSection(
     isWatched: Boolean,
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit,
-    onRecommendationClick: (MediaItem) -> Unit
+    onRecommendationClick: (MediaItem) -> Unit,
+    onRecommendationWatchlistToggle: (MediaItem) -> Unit,
+    onRecommendationRefresh: () -> Unit
 ) {
     Column {
         PosterInfoRow(movie = movie)
@@ -338,7 +355,12 @@ fun TvShowAboutSection(
         Spacer(modifier = Modifier.height(20.dp))
         CastSection(cast = movie.cast)
         Spacer(modifier = Modifier.height(20.dp))
-        RecommendationsSection(recommendations = movie.recommendations, onRecommendationClick = onRecommendationClick)
+        RecommendationsSection(
+            recommendations = movie.recommendations, 
+            onRecommendationClick = onRecommendationClick,
+            onWatchlistToggle = onRecommendationWatchlistToggle,
+            onRefreshClick = onRecommendationRefresh
+        )
     }
 }
 
