@@ -10,10 +10,7 @@ import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -51,6 +48,9 @@ class ExploreViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ExploreUiState>(ExploreUiState.Loading)
     val uiState: StateFlow<ExploreUiState> = _uiState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private val _searchState = MutableStateFlow<ExploreSearchUiState>(ExploreSearchUiState.Idle)
     val searchState: StateFlow<ExploreSearchUiState> = _searchState.asStateFlow()
 
@@ -60,6 +60,23 @@ class ExploreViewModel @Inject constructor(
 
     init {
         loadInitialData()
+        setupSearchDebounce()
+    }
+
+    private fun setupSearchDebounce() {
+        viewModelScope.launch {
+            @OptIn(kotlinx.coroutines.FlowPreview::class)
+            _searchQuery
+                .debounce(300)
+                .distinctUntilChanged()
+                .collect { query ->
+                    if (query.length >= 2) {
+                        performSearch(query)
+                    } else if (query.isEmpty()) {
+                        clearSearch()
+                    }
+                }
+        }
     }
 
     private fun loadInitialData() {
@@ -123,24 +140,27 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    fun search(query: String) {
-        if (query.isBlank()) {
-            _searchState.value = ExploreSearchUiState.Idle
-            return
-        }
-        viewModelScope.launch {
-            _searchState.value = ExploreSearchUiState.Searching
-            try {
-                val response = apiService.searchMulti(query)
-                val items = response.results.map { it.toMediaItem() }
-                _searchState.value = ExploreSearchUiState.Results(items)
-            } catch (e: Exception) {
-                _searchState.value = ExploreSearchUiState.Error(e.message ?: "Search failed")
-            }
+    fun onSearchQueryChange(newQuery: String) {
+        _searchQuery.value = newQuery
+    }
+
+    private suspend fun performSearch(query: String) {
+        _searchState.value = ExploreSearchUiState.Searching
+        try {
+            val response = apiService.searchMulti(query)
+            val items = response.results.map { it.toMediaItem() }
+            _searchState.value = ExploreSearchUiState.Results(items)
+        } catch (e: Exception) {
+            _searchState.value = ExploreSearchUiState.Error(e.message ?: "Search failed")
         }
     }
 
+    fun search(query: String) {
+        _searchQuery.value = query
+    }
+
     fun clearSearch() {
+        _searchQuery.value = ""
         _searchState.value = ExploreSearchUiState.Idle
     }
 

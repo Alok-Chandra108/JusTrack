@@ -51,18 +51,9 @@ fun ExploreScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
-    var searchText by remember { mutableStateOf("") }
+    val searchQuery by viewModel.searchQuery.collectAsState()
     var showLongPressSheet by remember { mutableStateOf(false) }
     var longPressItem by remember { mutableStateOf<MediaItem?>(null) }
-
-    LaunchedEffect(searchText) {
-        if (searchText.length >= 2) {
-            delay(300)
-            viewModel.search(searchText)
-        } else {
-            viewModel.clearSearch()
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -72,8 +63,8 @@ fun ExploreScreen(
     ) {
         // Sticky Search Bar
         TextField(
-            value = searchText,
-            onValueChange = { searchText = it },
+            value = searchQuery,
+            onValueChange = { viewModel.onSearchQueryChange(it) },
             placeholder = { Text("Search movies, shows...", color = TextSecondary) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,8 +84,8 @@ fun ExploreScreen(
             singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = TextSecondary) },
             trailingIcon = {
-                if (searchText.isNotEmpty()) {
-                    IconButton(onClick = { searchText = ""; viewModel.clearSearch() }) {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.clearSearch() }) {
                         Icon(Icons.Rounded.Close, contentDescription = null, tint = TextSecondary)
                     }
                 }
