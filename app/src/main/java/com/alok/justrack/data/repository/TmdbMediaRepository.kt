@@ -8,6 +8,7 @@ import com.alok.justrack.data.mapper.TmdbMapper.toMovieDetails
 import com.alok.justrack.data.mapper.TmdbMapper.toSeason
 import com.alok.justrack.data.mapper.TmdbMapper.toEpisode
 import com.alok.justrack.data.mapper.TmdbMapper.toEntity
+import com.alok.justrack.data.mapper.TmdbMapper.toPersonDetails
 import com.alok.justrack.util.Constants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -356,6 +357,15 @@ class TmdbMediaRepository @Inject constructor(
                 voteAverage = entity.voteAverage ?: 0.0,
                 isWatched = false
             )
+        }
+    }
+
+    override suspend fun getPersonDetails(id: String): PersonDetails? {
+        return try {
+            apiService.getPersonDetails(id).toPersonDetails()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 

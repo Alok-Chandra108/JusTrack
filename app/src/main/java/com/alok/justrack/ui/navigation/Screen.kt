@@ -11,4 +11,7 @@ sealed class Screen(val route: String, val label: String) {
     object ViewAll : Screen("view_all/{title}/{type}", "View All") {
         fun createRoute(title: String, type: String) = "view_all/$title/$type"
     }
+    object Person : Screen("person/{id}", "Person") {
+        fun createRoute(id: String) = "person/$id"
+    }
 }

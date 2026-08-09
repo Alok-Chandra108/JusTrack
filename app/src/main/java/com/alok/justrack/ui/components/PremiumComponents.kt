@@ -125,7 +125,7 @@ fun BackdropHeader(
 }
 
 @Composable
-fun PosterInfoRow(movie: MovieDetails) {
+fun PosterInfoRow(movie: MovieDetails, onPersonClick: (com.alok.justrack.data.model.Person) -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
@@ -191,29 +191,34 @@ fun PosterInfoRow(movie: MovieDetails) {
             Spacer(modifier = Modifier.height(8.dp))
 
             val directedLabel = if (movie.mediaType == com.alok.justrack.data.model.MediaType.TV) "Created by" else "Directed by"
-            RichDirectorText(label = directedLabel, names = movie.director)
+            RichDirectorText(label = directedLabel, people = movie.director, onPersonClick = onPersonClick)
         }
     }
 }
 
 @Composable
-private fun RichDirectorText(label: String, names: List<String>) {
-    val joinedNames = names.joinToString(" & ")
+private fun RichDirectorText(
+    label: String, 
+    people: List<com.alok.justrack.data.model.Person>,
+    onPersonClick: (com.alok.justrack.data.model.Person) -> Unit
+) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "$label ",
             style = MaterialTheme.typography.bodyMedium,
             color = TextSecondary
         )
-        Text(
-            text = joinedNames,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = TextPrimary,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
+        
+        people.forEachIndexed { index, person ->
+            Text(
+                text = person.name + (if (index < people.size - 1) ", " else ""),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = TextPrimary,
+                modifier = Modifier.clickable { onPersonClick(person) }
+            )
+        }
     }
 }
 
@@ -352,7 +357,7 @@ fun CollapsibleDescription(description: String) {
 }
 
 @Composable
-fun CastSection(cast: List<CastMember>) {
+fun CastSection(cast: List<CastMember>, onCastClick: (CastMember) -> Unit = {}) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -382,17 +387,19 @@ fun CastSection(cast: List<CastMember>) {
             contentPadding = PaddingValues(end = 14.dp)
         ) {
             items(cast) { member ->
-                CastItem(member)
+                CastItem(member, onClick = { onCastClick(member) })
             }
         }
     }
 }
 
 @Composable
-fun CastItem(member: CastMember) {
+fun CastItem(member: CastMember, onClick: () -> Unit = {}) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(72.dp)
+        modifier = Modifier
+            .width(72.dp)
+            .clickable { onClick() }
     ) {
         AsyncImage(
             model = member.profilePath,

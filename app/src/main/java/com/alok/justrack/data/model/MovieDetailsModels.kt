@@ -12,6 +12,11 @@ data class RatingSource(
     val value: String
 )
 
+data class Person(
+    val id: String,
+    val name: String
+)
+
 data class MovieDetails(
     val id: String,
     val title: String,
@@ -23,7 +28,7 @@ data class MovieDetails(
     val rawReleaseDate: String = "",
     val runtime: String,
     val certification: String,
-    val director: List<String>,
+    val director: List<Person>,
     val originalLanguage: String = "",
     val mediaType: MediaType = MediaType.MOVIE,
     val cast: List<CastMember>,

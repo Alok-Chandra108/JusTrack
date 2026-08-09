@@ -2,6 +2,7 @@ package com.alok.justrack.data.repository
 
 import com.alok.justrack.data.api.*
 import com.alok.justrack.data.model.*
+import com.alok.justrack.data.model.PersonDetails
 import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
 import com.alok.justrack.data.mapper.TmdbMapper.toMovieDetails
 import com.alok.justrack.data.supabase.SupabaseClientProvider
@@ -250,4 +251,6 @@ class SupabaseMediaRepository @Inject constructor(
     override suspend fun getTotalEpisodeCount(showId: String): Int = 0
     override suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int? = null
     override suspend fun getFutureEpisodes(showId: String): List<Episode> = emptyList()
+
+    override suspend fun getPersonDetails(id: String): PersonDetails? = null
 }

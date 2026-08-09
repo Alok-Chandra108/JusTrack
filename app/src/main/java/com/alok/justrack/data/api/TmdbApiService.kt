@@ -114,4 +114,10 @@ interface TmdbApiService {
     suspend fun discoverTvByGenre(
         @Query("with_genres") genreId: Int
     ): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/person/{person_id}")
+    suspend fun getPersonDetails(
+        @Path("person_id") id: String,
+        @Query("append_to_response") appendToResponse: String = "movie_credits,tv_credits"
+    ): TmdbPersonDto
 }

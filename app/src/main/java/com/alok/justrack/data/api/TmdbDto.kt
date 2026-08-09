@@ -118,3 +118,20 @@ data class TmdbGenreDto(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String
 )
+
+data class TmdbPersonDto(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String,
+    @SerializedName("biography") val biography: String?,
+    @SerializedName("birthday") val birthday: String?,
+    @SerializedName("place_of_birth") val placeOfBirth: String?,
+    @SerializedName("profile_path") val profilePath: String?,
+    @SerializedName("known_for_department") val knownForDepartment: String?,
+    @SerializedName("movie_credits") val movieCredits: TmdbPersonCreditsDto?,
+    @SerializedName("tv_credits") val tvCredits: TmdbPersonCreditsDto?
+)
+
+data class TmdbPersonCreditsDto(
+    @SerializedName("cast") val cast: List<TmdbMediaDto>?,
+    @SerializedName("crew") val crew: List<TmdbMediaDto>?
+)

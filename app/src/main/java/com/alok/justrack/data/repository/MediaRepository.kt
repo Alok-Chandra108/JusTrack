@@ -5,6 +5,7 @@ import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.model.Season
 import com.alok.justrack.data.model.Episode
+import com.alok.justrack.data.model.PersonDetails
 import kotlinx.coroutines.flow.Flow
 
 interface MediaRepository {
@@ -62,4 +63,7 @@ interface MediaRepository {
     suspend fun getTotalEpisodeCount(showId: String): Int
     suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int?
     suspend fun getFutureEpisodes(showId: String): List<Episode>
+
+    // Person
+    suspend fun getPersonDetails(id: String): PersonDetails?
 }

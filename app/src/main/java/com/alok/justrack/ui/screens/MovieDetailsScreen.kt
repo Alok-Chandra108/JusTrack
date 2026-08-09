@@ -103,6 +103,9 @@ fun DetailScreen(
                 },
                 onRecommendationRefresh = {
                     viewModel.refreshRecommendations()
+                },
+                onPersonClick = { person ->
+                    navController.navigate(com.alok.justrack.ui.navigation.Screen.Person.createRoute(person.id))
                 }
             )
 
@@ -216,7 +219,8 @@ fun MovieDetailsScreen(
     onSeasonWatchedToggle: (Season) -> Unit = {},
     onRecommendationClick: (MediaItem) -> Unit = {},
     onRecommendationWatchlistToggle: (MediaItem) -> Unit = {},
-    onRecommendationRefresh: () -> Unit = {}
+    onRecommendationRefresh: () -> Unit = {},
+    onPersonClick: (com.alok.justrack.data.model.Person) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -287,7 +291,8 @@ fun MovieDetailsScreen(
                             onWatchedToggle = onWatchedToggle,
                             onRecommendationClick = onRecommendationClick,
                             onRecommendationWatchlistToggle = onRecommendationWatchlistToggle,
-                            onRecommendationRefresh = onRecommendationRefresh
+                            onRecommendationRefresh = onRecommendationRefresh,
+                            onPersonClick = onPersonClick
                         )
                         1 -> TvShowEpisodesSection(
                             seasons = movie.seasons,
@@ -299,7 +304,7 @@ fun MovieDetailsScreen(
                 } else {
                     // Movie Layout
                     Spacer(modifier = Modifier.height(12.dp))
-                    PosterInfoRow(movie = movie)
+                    PosterInfoRow(movie = movie, onPersonClick = onPersonClick)
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     ActionButtons(
@@ -313,7 +318,9 @@ fun MovieDetailsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     CollapsibleDescription(description = movie.overview)
                     Spacer(modifier = Modifier.height(20.dp))
-                    CastSection(cast = movie.cast)
+                    CastSection(cast = movie.cast, onCastClick = { castMember -> 
+                        onPersonClick(com.alok.justrack.data.model.Person(castMember.id, castMember.name)) 
+                    })
                     Spacer(modifier = Modifier.height(20.dp))
                     RecommendationsSection(
                         recommendations = movie.recommendations, 
@@ -338,10 +345,11 @@ fun TvShowAboutSection(
     onWatchedToggle: () -> Unit,
     onRecommendationClick: (MediaItem) -> Unit,
     onRecommendationWatchlistToggle: (MediaItem) -> Unit,
-    onRecommendationRefresh: () -> Unit
+    onRecommendationRefresh: () -> Unit,
+    onPersonClick: (com.alok.justrack.data.model.Person) -> Unit
 ) {
     Column {
-        PosterInfoRow(movie = movie)
+        PosterInfoRow(movie = movie, onPersonClick = onPersonClick)
         Spacer(modifier = Modifier.height(16.dp))
         ActionButtons(
             isInWatchlist = isInWatchlist,
@@ -353,7 +361,9 @@ fun TvShowAboutSection(
         Spacer(modifier = Modifier.height(16.dp))
         CollapsibleDescription(description = movie.overview)
         Spacer(modifier = Modifier.height(20.dp))
-        CastSection(cast = movie.cast)
+        CastSection(cast = movie.cast, onCastClick = { castMember -> 
+            onPersonClick(com.alok.justrack.data.model.Person(castMember.id, castMember.name)) 
+        })
         Spacer(modifier = Modifier.height(20.dp))
         RecommendationsSection(
             recommendations = movie.recommendations, 

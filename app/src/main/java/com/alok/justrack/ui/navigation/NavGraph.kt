@@ -27,5 +27,9 @@ fun NavGraph(navController: NavHostController) {
             val type = backStackEntry.arguments?.getString("type") ?: ""
             ViewAllScreen(navController, title, type)
         }
+        composable(Screen.Person.route) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            PersonDetailScreen(navController, id)
+        }
     }
 }

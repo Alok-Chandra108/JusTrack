@@ -3,6 +3,7 @@ package com.alok.justrack.data.mapper
 import com.alok.justrack.data.api.TmdbMediaDto
 import com.alok.justrack.data.api.TmdbEpisodeDto
 import com.alok.justrack.data.api.TmdbSeasonDto
+import com.alok.justrack.data.api.TmdbPersonDto
 import com.alok.justrack.data.model.*
 import com.alok.justrack.util.Constants
 import java.time.format.DateTimeFormatter
@@ -68,14 +69,14 @@ object TmdbMapper {
             )
         } ?: emptyList()
 
-        val directorNames = when (detectedType) {
-            MediaType.MOVIE -> credits?.crew?.filter { it.job == "Director" }?.map { it.name }?.distinct() ?: emptyList()
+        val directorPeople = when (detectedType) {
+            MediaType.MOVIE -> credits?.crew?.filter { it.job == "Director" }?.map { Person(it.id.toString(), it.name) }?.distinctBy { it.id } ?: emptyList()
             MediaType.TV -> {
-                val creators = createdBy?.map { it.name }?.distinct()
+                val creators = createdBy?.map { Person(it.id.toString(), it.name) }?.distinctBy { it.id }
                 if (!creators.isNullOrEmpty()) creators
-                else credits?.crew?.filter { it.job == "Executive Producer" }?.map { it.name }?.distinct() ?: emptyList()
+                else credits?.crew?.filter { it.job == "Executive Producer" }?.map { Person(it.id.toString(), it.name) }?.distinctBy { it.id } ?: emptyList()
             }
-        }.ifEmpty { listOf("-") }
+        }.ifEmpty { listOf(Person("-1", "-")) }
 
         val cert = when (detectedType) {
             MediaType.MOVIE -> {
@@ -103,7 +104,7 @@ object TmdbMapper {
             rawReleaseDate = rawDate,
             runtime = runtimeStr,
             certification = cert,
-            director = directorNames,
+            director = directorPeople,
             originalLanguage = originalLanguage ?: "en",
             mediaType = detectedType,
             cast = castMembers,
@@ -153,6 +154,23 @@ object TmdbMapper {
             airDate = airDate,
             stillPath = stillPath,
             voteAverage = voteAverage
+        )
+    }
+
+    fun TmdbPersonDto.toPersonDetails(): PersonDetails {
+        val movies = (movieCredits?.cast ?: emptyList()) + (movieCredits?.crew ?: emptyList())
+        val tv = (tvCredits?.cast ?: emptyList()) + (tvCredits?.crew ?: emptyList())
+        
+        return PersonDetails(
+            id = id.toString(),
+            name = name,
+            biography = biography ?: "",
+            birthday = birthday,
+            placeOfBirth = placeOfBirth,
+            profilePath = profilePath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+            knownForDepartment = knownForDepartment ?: "",
+            movieCredits = movies.distinctBy { it.id }.map { it.toMediaItem(MediaType.MOVIE) },
+            tvCredits = tv.distinctBy { it.id }.map { it.toMediaItem(MediaType.TV) }
         )
     }
 
