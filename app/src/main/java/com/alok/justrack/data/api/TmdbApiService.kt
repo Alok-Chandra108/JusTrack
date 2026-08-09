@@ -90,7 +90,19 @@ interface TmdbApiService {
         @Query("with_release_type") releaseType: String? = null,
         @Query("include_adult") includeAdult: Boolean = false,
         @Query("region") region: String? = null,
-        @Query("with_original_language") originalLanguage: String? = null
+        @Query("with_original_language") originalLanguage: String? = null,
+        @Query("with_cast") withCast: String? = null,
+        @Query("with_genres") withGenres: String? = null
+    ): TmdbPaginatedResponse<TmdbMediaDto>
+
+    @GET("3/discover/tv")
+    suspend fun discoverTv(
+        @Query("sort_by") sortBy: String = "popularity.desc",
+        @Query("first_air_date.gte") airDateGte: String? = null,
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("with_original_language") originalLanguage: String? = null,
+        @Query("with_cast") withCast: String? = null,
+        @Query("with_genres") withGenres: String? = null
     ): TmdbPaginatedResponse<TmdbMediaDto>
 
     @GET("3/discover/movie")

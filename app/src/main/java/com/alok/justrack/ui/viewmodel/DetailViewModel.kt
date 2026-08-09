@@ -8,14 +8,19 @@ import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.model.Season
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.util.DateUtils
+import com.alok.justrack.data.api.TmdbApiService
+import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
+    private val apiService: TmdbApiService,
     private val repository: MediaRepository
 ) : ViewModel() {
 
@@ -139,9 +144,16 @@ class DetailViewModel @Inject constructor(
                     val customPoster = repository.getCustomPoster(id)
                     val customBackdrop = repository.getCustomBackdrop(id)
 
+                    // --- Smart Recommendations Blending ---
+                    val smartRecommendations = fetchSmartRecommendations(item)
+                    val blendedRecs = (item.recommendations + smartRecommendations)
+                        .distinctBy { it.id }
+                        .filter { it.id != item.id }
+
                     val finalItem = item.copy(
                         posterPath = customPoster ?: item.posterPath,
-                        backdropPath = customBackdrop ?: item.backdropPath
+                        backdropPath = customBackdrop ?: item.backdropPath,
+                        recommendations = blendedRecs
                     )
 
                     _rawDetails.value = DetailUiState.Success(finalItem)
@@ -173,6 +185,40 @@ class DetailViewModel @Inject constructor(
                 _rawDetails.value = DetailUiState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    private suspend fun fetchSmartRecommendations(item: MovieDetails): List<MediaItem> = coroutineScope {
+        val actorIds = item.cast.take(2).map { it.id }
+        val lang = item.originalLanguage
+        
+        val actorRequests = actorIds.map { actorId ->
+            async {
+                try {
+                    if (item.mediaType == MediaType.MOVIE) {
+                        apiService.discoverMovies(withCast = actorId, includeAdult = false).results
+                    } else {
+                        apiService.discoverTv(withCast = actorId, includeAdult = false).results
+                    }
+                } catch (e: Exception) { emptyList() }
+            }
+        }
+
+        val regionalRequest = async {
+            try {
+                if (item.mediaType == MediaType.MOVIE) {
+                    apiService.discoverMovies(originalLanguage = lang, includeAdult = false, sortBy = "popularity.desc").results
+                } else {
+                    apiService.discoverTv(originalLanguage = lang, includeAdult = false, sortBy = "popularity.desc").results
+                }
+            } catch (e: Exception) { emptyList() }
+        }
+
+        val actorResults = actorRequests.flatMap { it.await() }
+        val regionalResults = regionalRequest.await()
+
+        (actorResults + regionalResults)
+            .map { it.toMediaItem(item.mediaType) }
+            .distinctBy { it.id }
     }
 
     fun toggleWatchlist(movie: MovieDetails) {

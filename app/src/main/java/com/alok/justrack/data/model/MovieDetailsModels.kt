@@ -24,6 +24,7 @@ data class MovieDetails(
     val runtime: String,
     val certification: String,
     val director: List<String>,
+    val originalLanguage: String = "",
     val mediaType: MediaType = MediaType.MOVIE,
     val cast: List<CastMember>,
     val ratings: List<RatingSource>,

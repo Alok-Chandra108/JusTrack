@@ -104,6 +104,7 @@ object TmdbMapper {
             runtime = runtimeStr,
             certification = cert,
             director = directorNames,
+            originalLanguage = originalLanguage ?: "en",
             mediaType = detectedType,
             cast = castMembers,
             ratings = listOf(

@@ -20,6 +20,7 @@ data class TmdbMediaDto(
     @SerializedName("release_date") val releaseDate: String?,
     @SerializedName("first_air_date") val firstAirDate: String?,
     @SerializedName("media_type") val mediaType: String?,
+    @SerializedName("original_language") val originalLanguage: String?,
     @SerializedName("runtime") val runtime: Int?,
     @SerializedName("episode_run_time") val episodeRunTime: List<Int>?,
     @SerializedName("credits") val credits: TmdbCreditsDto?,
