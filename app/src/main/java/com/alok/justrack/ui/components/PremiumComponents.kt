@@ -582,17 +582,16 @@ fun RecommendationItem(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .size(26.dp),
+                    .size(24.dp),
                 shape = CircleShape,
-                color = if (item.inWatchlist) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f) else Color.Black.copy(alpha = 0.4f),
-                border = if (item.inWatchlist) BorderStroke(1.dp, MaterialTheme.colorScheme.secondary) else null,
-                tonalElevation = 0.dp
+                color = if (item.inWatchlist) MaterialTheme.colorScheme.secondary else Color.Black.copy(alpha = 0.6f),
+                tonalElevation = 4.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = if (item.inWatchlist) Icons.Rounded.Check else Icons.Rounded.Add,
                         contentDescription = if (item.inWatchlist) "In Watchlist" else "Add to Watchlist",
-                        tint = if (item.inWatchlist) MaterialTheme.colorScheme.secondary else Color.White,
+                        tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -1179,18 +1178,15 @@ fun PremiumEmptyState(
             onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth(0.55f)
-                .height(44.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                contentColor = MaterialTheme.colorScheme.primary
-            ),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                .height(42.dp),
+            shape = RoundedCornerShape(21.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(
                 text = buttonLabel,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
     }
