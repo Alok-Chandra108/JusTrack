@@ -125,23 +125,23 @@ private fun WatchlistTabContent(
                 if (isGridView) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp)
+                        contentPadding = PaddingValues(8.dp)
                     ) {
                         groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
                             if (index > 0) {
                                 item {
                                     CapsuleHeader(header)
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
                                 }
                             }
                             item {
                                 // Nested Grid-like layout in LazyColumn to support headers
                                 val chunkedItems = items.chunked(3)
-                                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                     chunkedItems.forEach { rowItems ->
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             rowItems.forEach { progress ->
                                                 EpisodeGridItem(
@@ -159,7 +159,7 @@ private fun WatchlistTabContent(
                                         }
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(24.dp))
+                                Spacer(modifier = Modifier.height(20.dp))
                             }
                         }
                     }

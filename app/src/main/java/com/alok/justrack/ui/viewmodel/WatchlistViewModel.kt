@@ -154,7 +154,7 @@ class WatchlistViewModel @Inject constructor(
     private val _isGridView = MutableStateFlow(false)
     val isGridView: StateFlow<Boolean> = _isGridView.asStateFlow()
 
-    private val _isMovieGridView = MutableStateFlow(false)
+    private val _isMovieGridView = MutableStateFlow(true)
     val isMovieGridView: StateFlow<Boolean> = _isMovieGridView.asStateFlow()
 
     fun toggleGridView() {
