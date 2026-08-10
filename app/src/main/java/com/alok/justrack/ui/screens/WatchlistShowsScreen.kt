@@ -44,10 +44,12 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 // ── TABBED WATCHLIST (SHOWS) SCREEN ──
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun WatchlistShowsScreen(
     navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: WatchlistViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -60,17 +62,32 @@ fun WatchlistShowsScreen(
         tabTitles = tabTitles
     ) { tab ->
         when (tab) {
-            0 -> WatchlistTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
-            1 -> UpcomingTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
+            0 -> WatchlistTabContent(
+                uiState = uiState, 
+                viewModel = viewModel, 
+                navController = navController,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+            1 -> UpcomingTabContent(
+                uiState = uiState, 
+                viewModel = viewModel, 
+                navController = navController,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope
+            )
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun WatchlistTabContent(
     uiState: WatchlistViewModel.WatchlistUiState,
     viewModel: WatchlistViewModel,
-    navController: NavController
+    navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val groupedEpisodes by viewModel.groupedWatchlistEpisodes.collectAsState()
     val isGridView by viewModel.isGridView.collectAsState()
@@ -129,6 +146,8 @@ private fun WatchlistTabContent(
                                             rowItems.forEach { progress ->
                                                 EpisodeGridItem(
                                                     progress = progress,
+                                                    sharedTransitionScope = sharedTransitionScope,
+                                                    animatedVisibilityScope = animatedVisibilityScope,
                                                     modifier = Modifier.weight(1f),
                                                     onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name)) }
                                                 )
@@ -157,7 +176,7 @@ private fun WatchlistTabContent(
                                         HorizontalDivider(
                                             modifier = Modifier.padding(vertical = 12.dp),
                                             thickness = 2.dp,
-                                            color = SurfaceVariant
+                                            color = MaterialTheme.colorScheme.surfaceVariant
                                         )
                                     }
                                     CapsuleHeader(header)
@@ -166,6 +185,8 @@ private fun WatchlistTabContent(
                             items(items, key = { it.showId }) { progress ->
                                 EpisodeTrackingCard(
                                     progress = progress,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     onMarkWatched = {
                                         val ep = progress.episode
                                         viewModel.markEpisodeWatched(progress.showId, ep.seasonNumber, ep.episodeNumber)
@@ -181,74 +202,86 @@ private fun WatchlistTabContent(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun EpisodeGridItem(
     progress: WatchlistViewModel.WatchlistEpisodeItem,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-    ) {
-        Box {
-            AsyncImage(
-                model = progress.showPosterPath,
-                contentDescription = progress.showName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .aspectRatio(2f / 3f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(SurfaceVariant)
-            )
+    with(sharedTransitionScope) {
+        Column(
+            modifier = modifier
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onClick() }
+        ) {
+            Box {
+                AsyncImage(
+                    model = progress.showPosterPath,
+                    contentDescription = progress.showName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .sharedElement(
+                            rememberSharedContentState(key = "poster-${progress.showId}"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .aspectRatio(2f / 3f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
 
-            if (progress.isNew) {
-                Box(modifier = Modifier.padding(4.dp)) {
-                    WatchlistBadge(text = "NEW", color = AccentPrimary)
+                if (progress.isNew) {
+                    Box(modifier = Modifier.padding(4.dp)) {
+                        WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
+                    }
                 }
-            }
-            
-            if (progress.isSyncing) {
+                
+                if (progress.isSyncing) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Color.Black.copy(alpha = 0.4f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+                
+                // Progress Bar at the bottom
+                val progressPercent = if (progress.totalCount > 0) progress.watchedCount.toFloat() / progress.totalCount else 0f
                 Box(
                     modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.4f)),
-                    contentAlignment = Alignment.Center
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .background(Color.Black.copy(alpha = 0.5f))
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = AccentPrimary,
-                        strokeWidth = 2.dp
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progressPercent)
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.primary)
                     )
                 }
-            }
-            
-            // Progress Bar at the bottom
-            val progressPercent = if (progress.totalCount > 0) progress.watchedCount.toFloat() / progress.totalCount else 0f
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .background(Color.Black.copy(alpha = 0.5f))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(progressPercent)
-                        .fillMaxHeight()
-                        .background(AccentPrimary)
-                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun UpcomingTabContent(
     uiState: WatchlistViewModel.WatchlistUiState,
     viewModel: WatchlistViewModel,
-    navController: NavController
+    navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val groupedUpcoming by viewModel.groupedUpcomingEpisodes.collectAsState()
 
@@ -295,6 +328,8 @@ private fun UpcomingTabContent(
                         items(episodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }) { episode ->
                             UpcomingEpisodeCard(
                                 episode = episode,
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
                                 modifier = Modifier.padding(horizontal = 16.dp),
                                 onClick = { navController.navigate(Screen.Detail.createRoute(episode.showId, MediaType.TV.name)) }
                             )
@@ -306,9 +341,12 @@ private fun UpcomingTabContent(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun EpisodeTrackingCard(
     progress: WatchlistViewModel.WatchlistEpisodeItem,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onMarkWatched: () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -327,7 +365,7 @@ fun EpisodeTrackingCard(
     )
     
     val buttonColor by animateColorAsState(
-        targetValue = if (isClicked) WatchedGreen else SurfaceVariant.copy(alpha = 0.4f),
+        targetValue = if (isClicked) WatchedGreen else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
         animationSpec = tween(200),
         label = "button_color"
     )
@@ -344,9 +382,9 @@ fun EpisodeTrackingCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        color = Background,
+        color = MaterialTheme.colorScheme.background,
         shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, SurfaceVariant)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -354,15 +392,21 @@ fun EpisodeTrackingCard(
                 modifier = Modifier.padding(8.dp)
             ) {
                 // Image on the left (Poster) - Restored Size
-                AsyncImage(
-                    model = showPosterPath,
-                    contentDescription = showName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(68.dp, 98.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(SurfaceColor)
-                )
+                with(sharedTransitionScope) {
+                    AsyncImage(
+                        model = showPosterPath,
+                        contentDescription = showName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .sharedElement(
+                                rememberSharedContentState(key = "poster-${progress.showId}"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                            .size(68.dp, 98.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
@@ -375,9 +419,9 @@ fun EpisodeTrackingCard(
                 ) {
                     // Show title Capsule at TOP
                     Surface(
-                        color = Background,
+                        color = MaterialTheme.colorScheme.background,
                         shape = CircleShape,
-                        border = BorderStroke(1.dp, SurfaceVariant),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
                         modifier = Modifier.clickable { onClick() }
                     ) {
                         Row(
@@ -387,7 +431,7 @@ fun EpisodeTrackingCard(
                             Text(
                                 text = showName.uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextPrimary,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Black,
                                 maxLines = 1,
@@ -397,7 +441,7 @@ fun EpisodeTrackingCard(
                             Icon(
                                 imageVector = Icons.Rounded.ChevronRight,
                                 contentDescription = null,
-                                tint = TextSecondary,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(10.dp)
                             )
                         }
@@ -409,7 +453,7 @@ fun EpisodeTrackingCard(
                             Text(
                                 text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = TextPrimary,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
@@ -417,7 +461,7 @@ fun EpisodeTrackingCard(
                                 Text(
                                     text = " +${progress.remainingCount}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 11.sp
                                 )
@@ -426,11 +470,11 @@ fun EpisodeTrackingCard(
                             // Badges
                             Row(modifier = Modifier.padding(start = 4.dp)) {
                                 if (progress.isNew) {
-                                    WatchlistBadge(text = "NEW", color = AccentPrimary)
+                                    WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
                                 } else if (progress.isPremiere) {
                                     WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
                                 } else if (progress.isFinale) {
-                                    WatchlistBadge(text = "FINALE", color = GoldAccent)
+                                    WatchlistBadge(text = "FINALE", color = MaterialTheme.colorScheme.tertiary)
                                 }
                             }
                         }
@@ -438,7 +482,7 @@ fun EpisodeTrackingCard(
                         Text(
                             text = if (progress.isSyncing) "Fetching data..." else episode.name,
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Light,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
@@ -464,14 +508,14 @@ fun EpisodeTrackingCard(
                     if (progress.isSyncing) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
-                            color = AccentPrimary,
+                            color = MaterialTheme.colorScheme.primary,
                             strokeWidth = 2.dp
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.Check,
                             contentDescription = "Mark Watched",
-                            tint = if (isClicked) Color.White else TextSecondary,
+                            tint = if (isClicked) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -503,9 +547,12 @@ fun EpisodeTrackingCard(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun UpcomingEpisodeCard(
     episode: WatchlistViewModel.UpcomingEpisodeItem,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -515,9 +562,9 @@ fun UpcomingEpisodeCard(
     val daysAway = episode.daysAway
 
     val statusColor = when {
-        daysAway == 0L -> AccentPrimary
+        daysAway == 0L -> MaterialTheme.colorScheme.primary
         daysAway == 1L -> Color(0xFFFFA500) // Orange
-        else -> TextSecondary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     val airDateFormatted = remember(ep.airDate) {
@@ -540,15 +587,21 @@ fun UpcomingEpisodeCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Vertical Poster on the Left
-            AsyncImage(
-                model = showPosterPath,
-                contentDescription = showName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(60.dp, 90.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(SurfaceVariant)
-            )
+            with(sharedTransitionScope) {
+                AsyncImage(
+                    model = showPosterPath,
+                    contentDescription = showName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .sharedElement(
+                            rememberSharedContentState(key = "poster-${episode.showId}"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .size(60.dp, 90.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -569,7 +622,7 @@ fun UpcomingEpisodeCard(
                 Text(
                     text = showName,
                     style = MaterialTheme.typography.titleSmall,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -580,14 +633,14 @@ fun UpcomingEpisodeCard(
                     Text(
                         text = "S%02d | E%02d".format(Locale.US, ep.seasonNumber, ep.episodeNumber),
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
                     )
                     
                     if (ep.seasonNumber == 1 && ep.episodeNumber == 1) {
                         Spacer(modifier = Modifier.width(6.dp))
-                        WatchlistBadge(text = "PREMIERE", color = AccentPrimary)
+                        WatchlistBadge(text = "PREMIERE", color = MaterialTheme.colorScheme.primary)
                     }
                 }
 
@@ -595,7 +648,7 @@ fun UpcomingEpisodeCard(
                 Text(
                     text = ep.name,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextPrimary.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -612,13 +665,13 @@ fun UpcomingEpisodeCard(
                     Text(
                         text = daysAway.toString(),
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (daysAway == 1L) "DAY" else "DAYS",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
                         fontSize = 9.sp
                     )
@@ -628,7 +681,7 @@ fun UpcomingEpisodeCard(
                 Icon(
                     imageVector = Icons.Rounded.NotificationsActive,
                     contentDescription = "Airing Today",
-                    tint = AccentPrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }

@@ -43,10 +43,12 @@ import com.alok.justrack.ui.viewmodel.Genre
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ExploreScreen(
     navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: ExploreViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -58,35 +60,35 @@ fun ExploreScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Sticky Search Bar
         TextField(
             value = searchQuery,
             onValueChange = { viewModel.onSearchQueryChange(it) },
-            placeholder = { Text("Search movies, shows...", color = TextSecondary) },
+            placeholder = { Text("Search movies, shows...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
             modifier = Modifier
+                .statusBarsPadding()
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
                 .height(52.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = SurfaceColor,
-                unfocusedContainerColor = SurfaceColor,
-                disabledContainerColor = SurfaceColor,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = AccentPrimary,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
             ),
             shape = RoundedCornerShape(26.dp),
             singleLine = true,
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = TextSecondary) },
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { viewModel.clearSearch() }) {
-                        Icon(Icons.Rounded.Close, contentDescription = null, tint = TextSecondary)
+                        Icon(Icons.Rounded.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -95,12 +97,12 @@ fun ExploreScreen(
         when (val state = uiState) {
             is ExploreUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AccentPrimary)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
             is ExploreUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Error: ${state.message}", color = HeartRed)
+                    Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
                 }
             }
             is ExploreUiState.Success -> {
@@ -108,13 +110,13 @@ fun ExploreScreen(
                 when (val search = searchState) {
                     is ExploreSearchUiState.Searching -> {
                         Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = AccentPrimary, modifier = Modifier.size(32.dp))
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                         }
                     }
                     is ExploreSearchUiState.Results -> {
                         if (search.items.isEmpty()) {
                             Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                                Text("No results found", color = TextSecondary, fontSize = 15.sp)
+                                Text("No results found", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
                             }
                         } else {
                             LazyColumn(
@@ -161,6 +163,8 @@ fun ExploreScreen(
                                     ExploreSection(
                                         title = "${state.selectedGenre.name} Picks",
                                         items = state.genreResults,
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
                                         onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                         onItemLongPress = { longPressItem = it; showLongPressSheet = true }
                                     )
@@ -173,6 +177,8 @@ fun ExploreScreen(
                                     ExploreSection(
                                         title = "Trending Now",
                                         items = state.trending,
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
                                         onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                         onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                         onLoadMore = { }
@@ -185,6 +191,8 @@ fun ExploreScreen(
                                 ExploreSectionLazy(
                                     title = "Popular Movies",
                                     items = state.popularMovies,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("popular_movies") }
@@ -196,6 +204,8 @@ fun ExploreScreen(
                                 ExploreSectionLazy(
                                     title = "Popular TV Shows",
                                     items = state.popularTv,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("popular_tv") }
@@ -207,6 +217,8 @@ fun ExploreScreen(
                                 ExploreSectionLazy(
                                     title = "Top Rated Movies",
                                     items = state.topRatedMovies,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("top_rated_movies") }
@@ -218,6 +230,8 @@ fun ExploreScreen(
                                 ExploreSectionLazy(
                                     title = "Top Rated TV Shows",
                                     items = state.topRatedTv,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("top_rated_tv") }
@@ -229,6 +243,8 @@ fun ExploreScreen(
                                 ExploreSectionLazy(
                                     title = "Upcoming Movies",
                                     items = state.upcomingMovies,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("upcoming_movies") },
@@ -241,6 +257,8 @@ fun ExploreScreen(
                                 ExploreSectionLazy(
                                     title = "Currently Airing TV",
                                     items = state.onTheAirTv,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("on_the_air_tv") }
@@ -334,7 +352,7 @@ private fun FeaturedBanner(
                         Icon(
                             Icons.Rounded.Star,
                             contentDescription = null,
-                            tint = AccentPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -347,7 +365,7 @@ private fun FeaturedBanner(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = item.mediaType.name,
-                            color = TextSecondary,
+                            color = Color.White.copy(alpha = 0.7f),
                             fontSize = 12.sp
                         )
                     }
@@ -366,7 +384,7 @@ private fun FeaturedBanner(
                     modifier = Modifier
                         .size(if (pagerState.currentPage == index) 8.dp else 6.dp)
                         .clip(CircleShape)
-                        .background(if (pagerState.currentPage == index) AccentPrimary else TextSecondary.copy(alpha = 0.4f))
+                        .background(if (pagerState.currentPage == index) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f))
                 )
             }
         }
@@ -392,12 +410,12 @@ private fun GenreChips(
                     if (isSelected) onGenreCleared() else onGenreSelected(genre)
                 },
                 shape = RoundedCornerShape(20.dp),
-                color = if (isSelected) AccentPrimary else SurfaceColor,
-                border = BorderStroke(1.dp, if (isSelected) AccentPrimary else TextSecondary.copy(alpha = 0.3f))
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
             ) {
                 Text(
                     text = genre.name,
-                    color = if (isSelected) Color.White else TextSecondary,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -407,10 +425,13 @@ private fun GenreChips(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExploreSection(
     title: String,
     items: List<MediaItem>,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onItemClick: (MediaItem) -> Unit,
     onItemLongPress: (MediaItem) -> Unit,
     onLoadMore: () -> Unit = {}
@@ -418,7 +439,7 @@ private fun ExploreSection(
     Column(modifier = Modifier.padding(top = 16.dp)) {
         Text(
             text = title,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -431,6 +452,8 @@ private fun ExploreSection(
             items(items, key = { it.id }) { item ->
                 ExplorePosterCard(
                     item = item,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onClick = { onItemClick(item) },
                     onLongPress = { onItemLongPress(item) }
                 )
@@ -439,10 +462,13 @@ private fun ExploreSection(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExploreSectionLazy(
     title: String,
     items: List<MediaItem>,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onItemClick: (MediaItem) -> Unit,
     onItemLongPress: (MediaItem) -> Unit,
     onLoadMore: () -> Unit,
@@ -453,7 +479,7 @@ private fun ExploreSectionLazy(
     Column(modifier = Modifier.padding(top = 16.dp)) {
         Text(
             text = title,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -481,6 +507,8 @@ private fun ExploreSectionLazy(
                 items(items, key = { it.id }) { item ->
                     ExplorePosterCard(
                         item = item,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onClick = { onItemClick(item) },
                         onLongPress = { onItemLongPress(item) },
                         showDate = showDate
@@ -491,86 +519,94 @@ private fun ExploreSectionLazy(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExplorePosterCard(
     item: MediaItem,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
     onLongPress: () -> Unit,
     showDate: Boolean = false
 ) {
-    Box(
-        modifier = Modifier
-            .width(120.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = { onLongPress() }
-            )
-    ) {
-        AsyncImage(
-            model = item.posterPath,
-            contentDescription = item.title,
-            contentScale = ContentScale.Crop,
+    with(sharedTransitionScope) {
+        Box(
             modifier = Modifier
-                .height(180.dp)
-                .fillMaxWidth()
+                .width(120.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(SurfaceColor)
-        )
-        
-        // Date badge (bottom)
-        if (showDate && item.releaseDate.isNotBlank()) {
-            val formattedDate = remember(item.releaseDate) {
-                val date = com.alok.justrack.util.DateUtils.parseDate(item.releaseDate)
-                date?.format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.US)) ?: ""
-            }
-            
-            if (formattedDate.isNotEmpty()) {
-                Surface(
-                    color = AccentPrimary,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(4.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                ) {
-                    Text(
-                        text = formattedDate.uppercase(),
-                        color = Color.White,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = { onLongPress() }
+                )
+        ) {
+            AsyncImage(
+                model = item.posterPath,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .sharedElement(
+                        rememberSharedContentState(key = "poster-${item.id}"),
+                        animatedVisibilityScope = animatedVisibilityScope
                     )
+                    .height(180.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            
+            // Date badge (bottom)
+            if (showDate && item.releaseDate.isNotBlank()) {
+                val formattedDate = remember(item.releaseDate) {
+                    val date = com.alok.justrack.util.DateUtils.parseDate(item.releaseDate)
+                    date?.format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.US)) ?: ""
+                }
+                
+                if (formattedDate.isNotEmpty()) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    ) {
+                        Text(
+                            text = formattedDate.uppercase(),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
-        }
 
-        // Rating badge
-        if (item.rating > 0 && !showDate) {
-            Surface(
-                color = Color.Black.copy(alpha = 0.7f),
-                modifier = Modifier
-                    .padding(6.dp)
-                    .align(Alignment.TopStart)
-                    .clip(RoundedCornerShape(4.dp))
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+            // Rating badge
+            if (item.rating > 0 && !showDate) {
+                Surface(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .align(Alignment.TopStart)
+                        .clip(RoundedCornerShape(4.dp))
                 ) {
-                    Icon(
-                        Icons.Rounded.Star,
-                        contentDescription = null,
-                        tint = AccentPrimary,
-                        modifier = Modifier.size(10.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(
-                        text = String.format("%.1f", item.rating),
-                        color = Color.White,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(10.dp)
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            text = String.format("%.1f", item.rating),
+                            color = Color.White,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -588,7 +624,7 @@ private fun ExploreMediaCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(SurfaceColor)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = { onLongPress(item) }
@@ -604,13 +640,13 @@ private fun ExploreMediaCard(
                 .width(60.dp)
                 .height(90.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(SurfaceColor)
+                .background(MaterialTheme.colorScheme.surface)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.title,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
@@ -621,19 +657,19 @@ private fun ExploreMediaCard(
                 Icon(
                     Icons.Rounded.Star,
                     contentDescription = null,
-                    tint = AccentPrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = String.format("%.1f", item.rating),
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = item.mediaType.name,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             }
@@ -663,7 +699,7 @@ private fun ExploreLongPressSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
     ) {
         Column(
@@ -685,13 +721,13 @@ private fun ExploreLongPressSheet(
                         .width(50.dp)
                         .height(75.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Background)
+                        .background(MaterialTheme.colorScheme.background)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = item.title,
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
@@ -700,7 +736,7 @@ private fun ExploreLongPressSheet(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = item.mediaType.name,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
                     )
                 }
@@ -712,7 +748,7 @@ private fun ExploreLongPressSheet(
             BottomSheetOption(
                 icon = if (isInWatchlist) Icons.Rounded.BookmarkRemove else Icons.Rounded.BookmarkAdd,
                 label = if (isInWatchlist) "Remove from Watchlist" else "Add to Watchlist",
-                iconTint = if (isInWatchlist) HeartRed else AccentPrimary,
+                iconTint = if (isInWatchlist) Color.Red else MaterialTheme.colorScheme.primary,
                 onClick = {
                     scope.launch {
                         if (isInWatchlist) viewModel.removeFromWatchlist(item.id) else viewModel.addToWatchlist(item)
@@ -730,7 +766,7 @@ private fun ExploreLongPressSheet(
             BottomSheetOption(
                 icon = if (isItemWatched.value) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
                 label = if (isItemWatched.value) "Watched" else "Mark as Watched",
-                iconTint = AccentSecondary,
+                iconTint = MaterialTheme.colorScheme.secondary,
                 onClick = {
                     scope.launch {
                         viewModel.toggleWatched(item)
@@ -745,7 +781,7 @@ private fun ExploreLongPressSheet(
             BottomSheetOption(
                 icon = if (isFavourite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                 label = if (isFavourite) "Remove from Favourites" else "Add to Favourites",
-                iconTint = if (isFavourite) HeartRed else TextSecondary,
+                iconTint = if (isFavourite) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
                 onClick = {
                     scope.launch {
                         viewModel.toggleFavourite(item)
@@ -758,7 +794,7 @@ private fun ExploreLongPressSheet(
             BottomSheetOption(
                 icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
                 label = "Add to List",
-                iconTint = WatchlistBlue,
+                iconTint = MaterialTheme.colorScheme.primary,
                 onClick = { showCreateList = true }
             )
 
@@ -766,7 +802,7 @@ private fun ExploreLongPressSheet(
             BottomSheetOption(
                 icon = Icons.Rounded.Info,
                 label = "View Details",
-                iconTint = TextSecondary,
+                iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                 onClick = {
                     onDismiss()
                     onNavigateToDetail(item)
@@ -779,8 +815,8 @@ private fun ExploreLongPressSheet(
     if (showCreateList) {
         AlertDialog(
             onDismissRequest = { showCreateList = false },
-            containerColor = SurfaceColor,
-            title = { Text("Add to List", color = TextPrimary) },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Add to List", color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 Column {
                     lists.forEach { (listId, listName) ->
@@ -794,7 +830,7 @@ private fun ExploreLongPressSheet(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(listName, color = TextPrimary, fontSize = 15.sp)
+                            Text(listName, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -803,13 +839,11 @@ private fun ExploreLongPressSheet(
                         onValueChange = { newListName = it },
                         label = { Text("Create new list") },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Background,
-                            unfocusedContainerColor = Background,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedLabelColor = TextSecondary,
-                            unfocusedLabelColor = TextSecondary
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -826,12 +860,12 @@ private fun ExploreLongPressSheet(
                         }
                     }
                 ) {
-                    Text("Create", color = AccentPrimary)
+                    Text("Create", color = MaterialTheme.colorScheme.primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateList = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -861,7 +895,7 @@ private fun BottomSheetOption(
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = label,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium
         )

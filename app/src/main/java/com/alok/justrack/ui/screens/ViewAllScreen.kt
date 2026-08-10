@@ -1,5 +1,6 @@
 package com.alok.justrack.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,11 +24,14 @@ import com.alok.justrack.ui.theme.Background
 import com.alok.justrack.ui.theme.TextPrimary
 import com.alok.justrack.ui.viewmodel.WatchlistViewModel
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ViewAllScreen(
     navController: NavController,
     title: String,
     type: String,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: WatchlistViewModel = hiltViewModel()
 ) {
     val watchlistItems by viewModel.watchlistItems.collectAsState()
@@ -50,12 +54,12 @@ fun ViewAllScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
-            .statusBarsPadding()
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // --- Header ---
         Row(
             modifier = Modifier
+                .statusBarsPadding()
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -64,7 +68,7 @@ fun ViewAllScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Back",
-                    tint = TextPrimary
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -72,20 +76,20 @@ fun ViewAllScreen(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
         if (filteredItems.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("No items found in $title", color = TextPrimary.copy(alpha = 0.6f))
+                    Text("No items found in $title", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(8.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
@@ -93,6 +97,8 @@ fun ViewAllScreen(
                 items(filteredItems, key = { it.id + it.mediaType.name }) { item ->
                     PosterCard(
                         item = item,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) }
                     )
                 }

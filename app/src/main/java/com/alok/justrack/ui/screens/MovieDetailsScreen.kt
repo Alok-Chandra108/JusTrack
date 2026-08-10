@@ -42,12 +42,14 @@ import com.alok.justrack.ui.theme.*
 import com.alok.justrack.ui.viewmodel.DetailUiState
 import com.alok.justrack.ui.viewmodel.DetailViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun DetailScreen(
     navController: NavController,
     id: String,
     mediaType: String = "MOVIE",
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: DetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -73,8 +75,8 @@ fun DetailScreen(
 
     when (val state = uiState) {
         is DetailUiState.Loading -> {
-            Box(modifier = Modifier.fillMaxSize().background(Background), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = AccentPrimary)
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
         is DetailUiState.Success -> {
@@ -82,6 +84,8 @@ fun DetailScreen(
                 movie = state.item,
                 isInWatchlist = isInWatchlist,
                 isWatched = isWatched,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
                 onBackClick = { navController.popBackStack() },
                 onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
                 onWatchedToggle = { viewModel.toggleWatched(state.item.id) },
@@ -113,7 +117,7 @@ fun DetailScreen(
                 ModalBottomSheet(
                     onDismissRequest = { showMoreSheet = false },
                     sheetState = sheetState,
-                    containerColor = Background,
+                    containerColor = MaterialTheme.colorScheme.background,
                     dragHandle = null
                 ) {
                     MoreOptionsBottomSheet(
@@ -180,35 +184,38 @@ fun DetailScreen(
                         TextButton(
                             onClick = { viewModel.confirmMarkPreviousWatched() }
                         ) {
-                            Text("Confirm", color = AccentPrimary)
+                            Text("Confirm", color = MaterialTheme.colorScheme.primary)
                         }
                     },
                     dismissButton = {
                         TextButton(
                             onClick = { viewModel.dismissMarkPreviousConfirmation() }
                         ) {
-                            Text("Cancel", color = TextSecondary)
+                            Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     },
-                    containerColor = SurfaceColor,
-                    titleContentColor = TextPrimary,
-                    textContentColor = TextSecondary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
         is DetailUiState.Error -> {
-            Box(modifier = Modifier.fillMaxSize().background(Background), contentAlignment = Alignment.Center) {
-                Text("Error: ${state.message}", color = HeartRed)
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+                Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
             }
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MovieDetailsScreen(
     movie: MovieDetails,
     isInWatchlist: Boolean,
     isWatched: Boolean,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onBackClick: () -> Unit,
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit,
@@ -229,7 +236,7 @@ fun MovieDetailsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -238,6 +245,9 @@ fun MovieDetailsScreen(
         ) {
             BackdropHeader(
                 backdropUrl = movie.backdropPath,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                id = movie.id,
                 onBackClick = onBackClick,
                 onShareClick = {},
                 onMoreClick = onMoreClick
@@ -247,15 +257,15 @@ fun MovieDetailsScreen(
                 TabRow(
                     selectedTabIndex = selectedTab,
                     containerColor = Color.Transparent,
-                    contentColor = AccentPrimary,
+                    contentColor = MaterialTheme.colorScheme.primary,
                     indicator = { tabPositions ->
                         TabRowDefaults.SecondaryIndicator(
                             Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     },
                     divider = {
-                        HorizontalDivider(color = SurfaceVariant, thickness = 1.dp)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 1.dp)
                     }
                 ) {
                     tabs.forEachIndexed { index, title ->
@@ -267,7 +277,7 @@ fun MovieDetailsScreen(
                                     text = title,
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (selectedTab == index) TextPrimary else TextSecondary
+                                    color = if (selectedTab == index) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         )
@@ -287,6 +297,8 @@ fun MovieDetailsScreen(
                             movie = movie,
                             isInWatchlist = isInWatchlist,
                             isWatched = isWatched,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                             onWatchlistToggle = onWatchlistToggle,
                             onWatchedToggle = onWatchedToggle,
                             onRecommendationClick = onRecommendationClick,
@@ -304,7 +316,12 @@ fun MovieDetailsScreen(
                 } else {
                     // Movie Layout
                     Spacer(modifier = Modifier.height(12.dp))
-                    PosterInfoRow(movie = movie, onPersonClick = onPersonClick)
+                    PosterInfoRow(
+                        movie = movie, 
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        onPersonClick = onPersonClick
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     ActionButtons(
@@ -324,6 +341,8 @@ fun MovieDetailsScreen(
                     Spacer(modifier = Modifier.height(20.dp))
                     RecommendationsSection(
                         recommendations = movie.recommendations, 
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onRecommendationClick = onRecommendationClick,
                         onWatchlistToggle = onRecommendationWatchlistToggle,
                         onRefreshClick = onRecommendationRefresh
@@ -336,11 +355,14 @@ fun MovieDetailsScreen(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TvShowAboutSection(
     movie: MovieDetails,
     isInWatchlist: Boolean,
     isWatched: Boolean,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit,
     onRecommendationClick: (MediaItem) -> Unit,
@@ -349,7 +371,12 @@ fun TvShowAboutSection(
     onPersonClick: (com.alok.justrack.data.model.Person) -> Unit
 ) {
     Column {
-        PosterInfoRow(movie = movie, onPersonClick = onPersonClick)
+        PosterInfoRow(
+            movie = movie, 
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
+            onPersonClick = onPersonClick
+        )
         Spacer(modifier = Modifier.height(16.dp))
         ActionButtons(
             isInWatchlist = isInWatchlist,
@@ -367,6 +394,8 @@ fun TvShowAboutSection(
         Spacer(modifier = Modifier.height(20.dp))
         RecommendationsSection(
             recommendations = movie.recommendations, 
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
             onRecommendationClick = onRecommendationClick,
             onWatchlistToggle = onRecommendationWatchlistToggle,
             onRefreshClick = onRecommendationRefresh
@@ -387,7 +416,7 @@ fun TvShowEpisodesSection(
         Text(
             text = "All episodes",
             style = MaterialTheme.typography.titleMedium,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -429,7 +458,7 @@ fun SeasonCard(
             .fillMaxWidth()
             .neumorphicShadow(cornerRadius = 12.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -443,14 +472,14 @@ fun SeasonCard(
                 Text(
                     text = season.name,
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     imageVector = Icons.Rounded.ExpandMore,
                     contentDescription = null,
-                    tint = TextSecondary,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .size(24.dp)
                         .graphicsLayer { rotationZ = rotationState }
@@ -461,7 +490,7 @@ fun SeasonCard(
                 Text(
                     text = "${season.watchedCount}/${season.episodeCount}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 
@@ -470,14 +499,14 @@ fun SeasonCard(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(if (isCompleted) WatchedGreen else TextSecondary.copy(alpha = 0.1f))
+                        .background(if (isCompleted) WatchedGreen else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
                         .clickable { onSeasonWatchedToggle(season) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Check,
                         contentDescription = if (isCompleted) "Completed" else "Mark all watched",
-                        tint = if (isCompleted) Color.White else TextSecondary.copy(alpha = 0.3f),
+                        tint = if (isCompleted) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -498,7 +527,7 @@ fun SeasonCard(
                             .padding(vertical = 20.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = AccentPrimary, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                     }
                 } else {
                     season.episodes.forEach { episode ->
@@ -532,7 +561,7 @@ fun EpisodeRow(
             modifier = Modifier
                 .size(100.dp, 60.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(SurfaceColor)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         )
         
         Spacer(modifier = Modifier.width(16.dp))
@@ -542,13 +571,13 @@ fun EpisodeRow(
             Text(
                 text = "S${episode.seasonNumber.toString().padStart(2, '0')} | E${episode.episodeNumber.toString().padStart(2, '0')}",
                 style = MaterialTheme.typography.bodyLarge,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = episode.name,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -569,13 +598,13 @@ fun EpisodeRow(
                 Text(
                     text = daysUntil.toString(),
                     style = MaterialTheme.typography.titleLarge,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = if (daysUntil == 1L) "DAY" else "DAYS",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -585,14 +614,14 @@ fun EpisodeRow(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(if (episode.isWatched) WatchedGreen else TextSecondary.copy(alpha = 0.1f))
+                    .background(if (episode.isWatched) WatchedGreen else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
                     .clickable { onWatchedToggle(!episode.isWatched) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = "Mark Watched",
-                    tint = if (episode.isWatched) Color.White else TextSecondary.copy(alpha = 0.3f),
+                    tint = if (episode.isWatched) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                     modifier = Modifier.size(18.dp)
                 )
             }

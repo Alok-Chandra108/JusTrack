@@ -9,14 +9,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.items as lazyGridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,10 +40,12 @@ import java.util.Locale
 // ─────────────────────────────────────────────
 // MOVIES SCREEN
 // ─────────────────────────────────────────────
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun MoviesScreen(
     navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: WatchlistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -58,17 +58,32 @@ fun MoviesScreen(
         tabTitles = tabTitles
     ) { tab ->
         when (tab) {
-            0 -> MovieWatchlistTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
-            1 -> MovieUpcomingTabContent(uiState = uiState, viewModel = viewModel, navController = navController)
+            0 -> MovieWatchlistTabContent(
+                uiState = uiState, 
+                viewModel = viewModel, 
+                navController = navController,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+            1 -> MovieUpcomingTabContent(
+                uiState = uiState, 
+                viewModel = viewModel, 
+                navController = navController,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope
+            )
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MovieWatchlistTabContent(
     uiState: WatchlistUiState,
     viewModel: WatchlistViewModel,
-    navController: NavController
+    navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val isGridView by viewModel.isMovieGridView.collectAsState()
     val movies = if (uiState is WatchlistUiState.Success) {
@@ -113,6 +128,8 @@ private fun MovieWatchlistTabContent(
                         items(movies, key = { it.id }) { movie ->
                             PosterOnlyCard(
                                 item = movie,
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
                                 onClick = { navController.navigate(Screen.Detail.createRoute(movie.id, movie.mediaType.name)) }
                             )
                         }
@@ -126,6 +143,8 @@ private fun MovieWatchlistTabContent(
                         items(movies, key = { it.id }) { movie ->
                             MovieWatchlistCard(
                                 movie = movie,
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
                                 onClick = { navController.navigate(Screen.Detail.createRoute(movie.id, movie.mediaType.name)) }
                             )
                         }
@@ -136,11 +155,14 @@ private fun MovieWatchlistTabContent(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MovieUpcomingTabContent(
     uiState: WatchlistUiState,
     viewModel: WatchlistViewModel,
-    navController: NavController
+    navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val groupedUpcoming by viewModel.groupedUpcomingMovies.collectAsState()
 
@@ -182,6 +204,8 @@ private fun MovieUpcomingTabContent(
                         items(movies, key = { it.id }) { movie ->
                             UpcomingMovieCard(
                                 movie = movie,
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
                                 modifier = Modifier.padding(horizontal = 16.dp),
                                 onClick = { navController.navigate(Screen.Detail.createRoute(movie.id, movie.mediaType.name)) }
                             )
@@ -193,9 +217,12 @@ private fun MovieUpcomingTabContent(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MovieWatchlistCard(
     movie: MediaItem,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -203,23 +230,29 @@ fun MovieWatchlistCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        color = Background,
+        color = MaterialTheme.colorScheme.background,
         shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, SurfaceVariant)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(8.dp)
         ) {
-            AsyncImage(
-                model = movie.posterPath,
-                contentDescription = movie.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(68.dp, 98.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SurfaceColor)
-            )
+            with(sharedTransitionScope) {
+                AsyncImage(
+                    model = movie.posterPath,
+                    contentDescription = movie.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .sharedElement(
+                            rememberSharedContentState(key = "poster-${movie.id}"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .size(68.dp, 98.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -234,7 +267,7 @@ fun MovieWatchlistCard(
                     Text(
                         text = movie.title,
                         style = MaterialTheme.typography.titleSmall,
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Black,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
@@ -245,7 +278,7 @@ fun MovieWatchlistCard(
                     Text(
                         text = movie.releaseDate.split("-").firstOrNull() ?: "-",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -254,14 +287,14 @@ fun MovieWatchlistCard(
                     Icon(
                         imageVector = Icons.Rounded.Star,
                         contentDescription = null,
-                        tint = AccentPrimary,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = String.format(Locale.US, "%.1f", movie.rating),
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -270,16 +303,19 @@ fun MovieWatchlistCard(
             Icon(
                 imageVector = Icons.Rounded.ChevronRight,
                 contentDescription = null,
-                tint = TextSecondary,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun UpcomingMovieCard(
     movie: MediaItem,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -300,9 +336,9 @@ fun UpcomingMovieCard(
     }
 
     val statusColor = when {
-        daysAway == 0L -> AccentPrimary
+        daysAway == 0L -> MaterialTheme.colorScheme.primary
         daysAway == 1L -> Color(0xFFFFA500) // Orange
-        else -> TextSecondary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
@@ -315,15 +351,21 @@ fun UpcomingMovieCard(
             modifier = Modifier.padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = movie.posterPath,
-                contentDescription = movie.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(60.dp, 90.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(SurfaceVariant)
-            )
+            with(sharedTransitionScope) {
+                AsyncImage(
+                    model = movie.posterPath,
+                    contentDescription = movie.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .sharedElement(
+                            rememberSharedContentState(key = "poster-${movie.id}"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .size(60.dp, 90.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -341,7 +383,7 @@ fun UpcomingMovieCard(
                 Text(
                     text = movie.title,
                     style = MaterialTheme.typography.titleSmall,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -352,7 +394,7 @@ fun UpcomingMovieCard(
                 Text(
                     text = movie.overview,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 14.sp
@@ -368,13 +410,13 @@ fun UpcomingMovieCard(
                     Text(
                         text = daysAway.toString(),
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (daysAway == 1L) "DAY" else "DAYS",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
                         fontSize = 9.sp
                     )
@@ -384,7 +426,7 @@ fun UpcomingMovieCard(
                 Icon(
                     imageVector = Icons.Rounded.Celebration,
                     contentDescription = "Released Today",
-                    tint = AccentPrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -395,9 +437,12 @@ fun UpcomingMovieCard(
 // ─────────────────────────────────────────────
 // PROFILE SCREEN
 // ─────────────────────────────────────────────
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileScreen(
     navController: NavController,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     viewModel: WatchlistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -411,7 +456,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
     ) {
         // --- Top Bar ---
@@ -425,13 +470,13 @@ fun ProfileScreen(
             Icon(
                 imageVector = Icons.Rounded.Notifications,
                 contentDescription = null,
-                tint = AccentPrimary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
             Icon(
                 imageVector = Icons.Rounded.MoreHoriz,
                 contentDescription = null,
-                tint = TextPrimary,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -486,6 +531,8 @@ fun ProfileScreen(
                         HorizontalSection(
                             title = listName,
                             items = items,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                             onItemClick = { item ->
                                 navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
                             },
@@ -501,6 +548,8 @@ fun ProfileScreen(
                     HorizontalSection(
                         title = "Shows",
                         items = watchedShows,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onItemClick = { item ->
                             navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
                         },
@@ -515,6 +564,8 @@ fun ProfileScreen(
                     HorizontalSection(
                         title = "Favorite shows",
                         items = favoriteShows,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onItemClick = { item ->
                             navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
                         },
@@ -522,7 +573,7 @@ fun ProfileScreen(
                             navController.navigate(Screen.ViewAll.createRoute("Favorite Shows", "favorite_tv"))
                         },
                         icon = Icons.Rounded.Favorite,
-                        iconTint = HeartRed,
+                        iconTint = MaterialTheme.colorScheme.error,
                         emptyMessage = "No favorite shows yet"
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -531,6 +582,8 @@ fun ProfileScreen(
                     HorizontalSection(
                         title = "Movies",
                         items = watchedMovies,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onItemClick = { item ->
                             navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
                         },
@@ -545,6 +598,8 @@ fun ProfileScreen(
                     HorizontalSection(
                         title = "Favorite movies",
                         items = favoriteMovies,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onItemClick = { item ->
                             navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
                         },
@@ -552,7 +607,7 @@ fun ProfileScreen(
                             navController.navigate(Screen.ViewAll.createRoute("Favorite Movies", "favorite_movie"))
                         },
                         icon = Icons.Rounded.Favorite,
-                        iconTint = HeartRed,
+                        iconTint = MaterialTheme.colorScheme.error,
                         emptyMessage = "No favorite movies yet"
                     )
                 }

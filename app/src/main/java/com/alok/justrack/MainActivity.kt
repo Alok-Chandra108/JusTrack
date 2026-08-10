@@ -51,15 +51,17 @@ fun MainScaffold() {
     )
 
     Scaffold(
-        containerColor = Background,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             val isDetail = currentDestination?.route?.startsWith("detail") == true
             val isViewAll = currentDestination?.route?.startsWith("view_all") == true
+            val isPerson = currentDestination?.route?.startsWith("person") == true
             
-            if (!isDetail && !isViewAll) {
+            if (!isDetail && !isViewAll && !isPerson) {
                 NavigationBar(
-                    containerColor = Background.copy(alpha = 0.95f),
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                     tonalElevation = 8.dp,
+                    windowInsets = WindowInsets.navigationBars,
                     modifier = Modifier.height(80.dp)
                 ) {
                     items.forEach { item ->
@@ -90,23 +92,26 @@ fun MainScaffold() {
                                 }
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = AccentPrimary,
-                                unselectedIconColor = TextSecondary,
-                                selectedTextColor = AccentPrimary,
-                                unselectedTextColor = TextSecondary,
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 indicatorColor = Color.Transparent
                             )
                         )
                     }
                 }
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         Box(
             modifier = Modifier
-                .padding(bottom = innerPadding.calculateBottomPadding())
+                .padding(bottom = if (currentDestination?.route?.startsWith("detail") == true || 
+                    currentDestination?.route?.startsWith("view_all") == true ||
+                    currentDestination?.route?.startsWith("person") == true) 0.dp else innerPadding.calculateBottomPadding())
                 .fillMaxSize()
-                .background(Background)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             NavGraph(navController = navController)
         }

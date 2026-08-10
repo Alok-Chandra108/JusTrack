@@ -55,9 +55,13 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import java.util.Locale
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BackdropHeader(
     backdropUrl: String?,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    id: String? = null,
     onBackClick: () -> Unit,
     onShareClick: () -> Unit,
     onMoreClick: () -> Unit
@@ -67,11 +71,20 @@ fun BackdropHeader(
             .fillMaxWidth()
             .height(240.dp)
     ) {
+        val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null && id != null) {
+            with(sharedTransitionScope) {
+                Modifier.sharedElement(
+                    rememberSharedContentState(key = "poster-$id"),
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+            }
+        } else Modifier
+
         AsyncImage(
             model = backdropUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().then(sharedModifier)
         )
 
         Box(
@@ -95,8 +108,8 @@ fun BackdropHeader(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Background.copy(alpha = 0.3f),
-                            Background
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.3f),
+                            MaterialTheme.colorScheme.background
                         ),
                         startY = 150f
                     )
@@ -112,34 +125,50 @@ fun BackdropHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
             }
             Row {
                 IconButton(onClick = onShareClick) {
-                    Icon(Icons.Outlined.Share, contentDescription = "Share", tint = TextPrimary)
+                    Icon(Icons.Outlined.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface)
                 }
                 IconButton(onClick = onMoreClick) {
-                    Icon(Icons.Outlined.MoreVert, contentDescription = "More", tint = TextPrimary)
+                    Icon(Icons.Outlined.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun PosterInfoRow(movie: MovieDetails, onPersonClick: (com.alok.justrack.data.model.Person) -> Unit = {}) {
+fun PosterInfoRow(
+    movie: MovieDetails, 
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    onPersonClick: (com.alok.justrack.data.model.Person) -> Unit = {}
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
     ) {
+        val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+            with(sharedTransitionScope) {
+                Modifier.sharedElement(
+                    rememberSharedContentState(key = "poster-${movie.id}"),
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+            }
+        } else Modifier
+
         AsyncImage(
             model = movie.posterPath,
             contentDescription = movie.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
+                .then(sharedModifier)
                 .size(width = 120.dp, height = 175.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(SurfaceColor)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         )
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -152,7 +181,7 @@ fun PosterInfoRow(movie: MovieDetails, onPersonClick: (com.alok.justrack.data.mo
                     fontSize = 22.sp,
                     lineHeight = 28.sp
                 ),
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
@@ -164,7 +193,7 @@ fun PosterInfoRow(movie: MovieDetails, onPersonClick: (com.alok.justrack.data.mo
                     Surface(
                         shape = RoundedCornerShape(4.dp),
                         color = Color.Transparent,
-                        border = BorderStroke(1.dp, TextPrimary.copy(alpha = 0.5f))
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     ) {
                         Text(
                             text = movie.certification,
@@ -173,7 +202,7 @@ fun PosterInfoRow(movie: MovieDetails, onPersonClick: (com.alok.justrack.data.mo
                                 fontSize = 11.sp
                             ),
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -184,7 +213,7 @@ fun PosterInfoRow(movie: MovieDetails, onPersonClick: (com.alok.justrack.data.mo
                         fontWeight = FontWeight.Medium,
                         fontSize = 13.sp
                     ),
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -213,7 +242,7 @@ private fun RichDirectorText(
         Text(
             text = "$label ",
             style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         
         people.forEachIndexed { index, person ->
@@ -222,7 +251,7 @@ private fun RichDirectorText(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.clickable { onPersonClick(person) }
             )
         }
@@ -249,20 +278,29 @@ fun ActionButtons(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        val watchlistColor by animateColorAsState(
-            if (isInWatchlist) AccentPrimary else Color.Transparent,
-            label = "watchlistColor"
+        val watchlistBg by animateColorAsState(
+            if (isInWatchlist) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else Color.Transparent,
+            label = "watchlistBg"
+        )
+        val watchlistBorder by animateColorAsState(
+            if (isInWatchlist) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+            label = "watchlistBorder"
         )
         val watchlistContent by animateColorAsState(
-            if (isInWatchlist) Background else TextSecondary,
+            if (isInWatchlist) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             label = "watchlistContent"
         )
-        val watchedColor by animateColorAsState(
-            if (isWatched) AccentSecondary else Color.Transparent,
-            label = "watchedColor"
+
+        val watchedBg by animateColorAsState(
+            if (isWatched) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else Color.Transparent,
+            label = "watchedBg"
+        )
+        val watchedBorder by animateColorAsState(
+            if (isWatched) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+            label = "watchedBorder"
         )
         val watchedContent by animateColorAsState(
-            if (isWatched) Background else TextSecondary,
+            if (isWatched) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
             label = "watchedContent"
         )
 
@@ -270,24 +308,26 @@ fun ActionButtons(
             onClick = onWatchlistToggle,
             modifier = Modifier
                 .weight(1f)
-                .height(42.dp),
-            shape = RoundedCornerShape(21.dp),
+                .height(44.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = watchlistColor,
+                containerColor = watchlistBg,
                 contentColor = watchlistContent
             ),
-            border = if (isInWatchlist) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
+            border = BorderStroke(1.dp, watchlistBorder),
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
                 if (isInWatchlist) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
+                tint = watchlistContent
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 if (isInWatchlist) "In Watchlist" else "Watchlist",
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp
             )
         }
@@ -297,26 +337,32 @@ fun ActionButtons(
             enabled = isReleased,
             modifier = Modifier
                 .weight(1f)
-                .height(42.dp),
-            shape = RoundedCornerShape(21.dp),
+                .height(44.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isReleased) watchedColor else SurfaceColor,
-                contentColor = if (isReleased) watchedContent else TextSecondary.copy(alpha = 0.5f),
-                disabledContainerColor = SurfaceColor,
-                disabledContentColor = TextSecondary.copy(alpha = 0.5f)
+                containerColor = if (isReleased) watchedBg else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                contentColor = if (isReleased) watchedContent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             ),
-            border = if (isWatched) null else BorderStroke(1.dp, TextSecondary.copy(alpha = 0.4f)),
+            border = BorderStroke(
+                1.dp, 
+                if (!isReleased) MaterialTheme.colorScheme.outline.copy(alpha = 0.1f) 
+                else watchedBorder
+            ),
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
                 if (isWatched) Icons.Filled.CheckCircle else Icons.Outlined.Visibility,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
+                tint = if (isReleased) watchedContent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 if (!isReleased) "Upcoming" else if (isWatched) "Watched" else "Mark Watched",
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp
             )
         }
@@ -331,7 +377,7 @@ fun CollapsibleDescription(description: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(SurfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable(
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 indication = null
@@ -343,7 +389,7 @@ fun CollapsibleDescription(description: String) {
             text = description,
             style = MaterialTheme.typography.bodyMedium.copy(
                 lineHeight = 20.sp,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             maxLines = if (isExpanded) Int.MAX_VALUE else 3,
             overflow = TextOverflow.Ellipsis
@@ -354,7 +400,7 @@ fun CollapsibleDescription(description: String) {
 
             Text(
                 text = if (isExpanded) "Show less" else "Read more",
-                color = AccentPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.align(Alignment.End)
@@ -376,12 +422,12 @@ fun CastSection(cast: List<CastMember>, onCastClick: (CastMember) -> Unit = {}) 
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "See all",
                 style = MaterialTheme.typography.bodySmall,
-                color = AccentPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.clickable { }
             )
@@ -415,7 +461,7 @@ fun CastItem(member: CastMember, onClick: () -> Unit = {}) {
             modifier = Modifier
                 .size(56.dp)
                 .clip(CircleShape)
-                .background(SurfaceColor)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
@@ -423,7 +469,7 @@ fun CastItem(member: CastMember, onClick: () -> Unit = {}) {
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Medium
             ),
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             textAlign = TextAlign.Center,
             lineHeight = 16.sp
@@ -431,7 +477,7 @@ fun CastItem(member: CastMember, onClick: () -> Unit = {}) {
         Text(
             text = member.character,
             style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
@@ -439,9 +485,12 @@ fun CastItem(member: CastMember, onClick: () -> Unit = {}) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun RecommendationsSection(
     recommendations: List<MediaItem>,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onRecommendationClick: (MediaItem) -> Unit = {},
     onWatchlistToggle: (MediaItem) -> Unit = {},
     onRefreshClick: () -> Unit = {}
@@ -457,7 +506,7 @@ fun RecommendationsSection(
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             if (recommendations.size > 5) {
@@ -465,7 +514,7 @@ fun RecommendationsSection(
                     Icon(
                         imageVector = Icons.Rounded.Refresh,
                         contentDescription = "Shuffle",
-                        tint = AccentPrimary,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -481,6 +530,8 @@ fun RecommendationsSection(
             items(recommendations, key = { it.id }) { item ->
                 RecommendationItem(
                     item = item,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onClick = { onRecommendationClick(item) },
                     onWatchlistClick = { onWatchlistToggle(item) }
                 )
@@ -489,9 +540,12 @@ fun RecommendationsSection(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun RecommendationItem(
     item: MediaItem,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit = {},
     onWatchlistClick: () -> Unit = {}
 ) {
@@ -500,16 +554,26 @@ fun RecommendationItem(
             .width(100.dp)
             .clickable { onClick() }
     ) {
+        val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+            with(sharedTransitionScope) {
+                Modifier.sharedElement(
+                    rememberSharedContentState(key = "poster-${item.id}"),
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+            }
+        } else Modifier
+
         Box(modifier = Modifier.fillMaxWidth()) {
             AsyncImage(
                 model = item.posterPath,
                 contentDescription = item.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
+                    .then(sharedModifier)
                     .fillMaxWidth()
                     .height(150.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(SurfaceColor)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             )
 
             // Quick Add Button
@@ -518,16 +582,17 @@ fun RecommendationItem(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .size(24.dp),
+                    .size(26.dp),
                 shape = CircleShape,
-                color = if (item.inWatchlist) WatchedGreen else Color.Black.copy(alpha = 0.6f),
-                tonalElevation = 4.dp
+                color = if (item.inWatchlist) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f) else Color.Black.copy(alpha = 0.4f),
+                border = if (item.inWatchlist) BorderStroke(1.dp, MaterialTheme.colorScheme.secondary) else null,
+                tonalElevation = 0.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = if (item.inWatchlist) Icons.Rounded.Check else Icons.Rounded.Add,
                         contentDescription = if (item.inWatchlist) "In Watchlist" else "Add to Watchlist",
-                        tint = Color.White,
+                        tint = if (item.inWatchlist) MaterialTheme.colorScheme.secondary else Color.White,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -538,21 +603,33 @@ fun RecommendationItem(
         Text(
             text = item.title,
             style = MaterialTheme.typography.labelSmall,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PosterCard(
     item: MediaItem,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
+
+    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+        with(sharedTransitionScope) {
+            Modifier.sharedElement(
+                rememberSharedContentState(key = "poster-${item.id}"),
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+        }
+    } else Modifier
 
     AnimatedVisibility(
         visible = isVisible,
@@ -571,10 +648,11 @@ fun PosterCard(
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
+                        .then(sharedModifier)
                         .height(190.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(SurfaceColor)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 )
                 
                 // Rating Badge
@@ -593,13 +671,13 @@ fun PosterCard(
                             Icon(
                                 imageVector = Icons.Rounded.Star,
                                 contentDescription = null,
-                                tint = AccentPrimary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(10.dp)
                             )
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
                                 text = String.format(Locale.getDefault(), "%.1f", item.rating),
-                                color = TextPrimary,
+                                color = Color.White,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -613,7 +691,7 @@ fun PosterCard(
             Text(
                 text = item.title,
                 style = MaterialTheme.typography.labelMedium,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.SemiBold
@@ -621,21 +699,33 @@ fun PosterCard(
             Text(
                 text = item.releaseDate.split("-").firstOrNull() ?: "",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 10.sp
             )
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PosterOnlyCard(
     item: MediaItem,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
+
+    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+        with(sharedTransitionScope) {
+            Modifier.sharedElement(
+                rememberSharedContentState(key = "poster-${item.id}"),
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+        }
+    } else Modifier
 
     AnimatedVisibility(
         visible = isVisible,
@@ -647,11 +737,12 @@ fun PosterOnlyCard(
             contentDescription = item.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
+                .then(sharedModifier)
                 .aspectRatio(2f / 3f)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .clickable { onClick() }
-                .background(SurfaceColor)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         )
     }
 }
@@ -678,14 +769,14 @@ fun WatchlistToolbar(
                 .align(Alignment.CenterEnd)
                 .size(26.dp)
                 .clip(RoundedCornerShape(6.dp))
-                .background(SurfaceVariant)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { onToggleView() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = if (isGridView) Icons.AutoMirrored.Rounded.List else Icons.Rounded.GridView,
                 contentDescription = "Toggle View",
-                tint = TextPrimary,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -706,14 +797,14 @@ fun PremiumTabScaffold(
     ) {
         TabRow(
             selectedTabIndex = selectedTab,
-            containerColor = Background,
-            contentColor = TextPrimary,
+            containerColor = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onSurface,
             indicator = { tabPositions ->
                 if (selectedTab < tabPositions.size) {
                     TabRowDefaults.SecondaryIndicator(
                         modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
                         height = 3.dp,
-                        color = AccentPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             },
@@ -729,7 +820,7 @@ fun PremiumTabScaffold(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp,
-                            color = if (selectedTab == index) AccentPrimary else TextSecondary
+                            color = if (selectedTab == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 )
@@ -761,7 +852,7 @@ fun PremiumTabScaffold(
 @Composable
 fun WatchlistBadge(text: String, color: Color) {
     Surface(
-        color = Background,
+        color = MaterialTheme.colorScheme.background,
         shape = CircleShape,
         border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
     ) {
@@ -785,13 +876,13 @@ fun CapsuleHeader(
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            color = SurfaceVariant.copy(alpha = 0.5f),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             shape = CircleShape
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Black,
                 fontSize = 10.sp,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp)
@@ -806,7 +897,7 @@ fun SectionHeader(
     onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    iconTint: Color = TextPrimary
+    iconTint: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Row(
         modifier = modifier
@@ -830,18 +921,19 @@ fun SectionHeader(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         Icon(
             imageVector = Icons.Rounded.ChevronRight,
             contentDescription = "View All",
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(20.dp)
         )
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HorizontalSection(
     title: String,
@@ -849,8 +941,10 @@ fun HorizontalSection(
     onItemClick: (MediaItem) -> Unit,
     onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     icon: ImageVector? = null,
-    iconTint: Color = TextPrimary,
+    iconTint: Color? = null,
     emptyMessage: String = "No data yet"
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -859,7 +953,7 @@ fun HorizontalSection(
             onViewAllClick = onViewAllClick,
             modifier = Modifier.padding(horizontal = 16.dp),
             icon = icon,
-            iconTint = iconTint
+            iconTint = iconTint ?: MaterialTheme.colorScheme.onSurface
         )
         
         if (items.isEmpty()) {
@@ -869,13 +963,13 @@ fun HorizontalSection(
                     .padding(horizontal = 16.dp)
                     .height(100.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(SurfaceColor),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = emptyMessage,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
         } else {
@@ -887,6 +981,8 @@ fun HorizontalSection(
                 items(items.take(7), key = { it.id }) { item ->
                     PosterCard(
                         item = item, 
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
                         onClick = { onItemClick(item) },
                         modifier = Modifier.width(130.dp)
                     )
@@ -915,15 +1011,15 @@ fun ProfileHeader(
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .border(2.dp, AccentPrimary, CircleShape)
-                .background(SurfaceColor)
+                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = userName,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -964,7 +1060,7 @@ private fun StatCard(
 ) {
     Surface(
         modifier = modifier,
-        color = SurfaceColor,
+        color = MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
@@ -974,7 +1070,7 @@ private fun StatCard(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = AccentPrimary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -982,12 +1078,12 @@ private fun StatCard(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -1009,9 +1105,9 @@ fun SocialStatsRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         SocialStatItem(label = "following", value = following)
-        VerticalDivider(color = TextSecondary.copy(alpha = 0.2f), modifier = Modifier.fillMaxHeight().width(1.dp))
+        VerticalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), modifier = Modifier.fillMaxHeight().width(1.dp))
         SocialStatItem(label = "followers", value = followers)
-        VerticalDivider(color = TextSecondary.copy(alpha = 0.2f), modifier = Modifier.fillMaxHeight().width(1.dp))
+        VerticalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), modifier = Modifier.fillMaxHeight().width(1.dp))
         SocialStatItem(label = "comments", value = comments)
     }
 }
@@ -1023,12 +1119,12 @@ private fun SocialStatItem(label: String, value: Int) {
             text = if (value > 0) value.toString() else "...",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -1057,7 +1153,7 @@ fun PremiumEmptyState(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(56.dp),
-                tint = AccentPrimary.copy(alpha = 0.7f)
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
         }
 
@@ -1068,14 +1164,14 @@ fun PremiumEmptyState(
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -1083,15 +1179,18 @@ fun PremiumEmptyState(
             onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth(0.55f)
-                .height(42.dp),
-            shape = RoundedCornerShape(21.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AccentPrimary)
+                .height(44.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                contentColor = MaterialTheme.colorScheme.primary
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
         ) {
             Text(
                 text = buttonLabel,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
+                fontWeight = FontWeight.Bold
             )
         }
     }
@@ -1106,7 +1205,7 @@ fun SkeletonSection(modifier: Modifier = Modifier) {
                 .width(120.dp)
                 .height(24.dp)
                 .clip(RoundedCornerShape(4.dp))
-                .background(SurfaceColor)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         )
         Spacer(modifier = Modifier.height(16.dp))
         LazyRow(
@@ -1119,7 +1218,7 @@ fun SkeletonSection(modifier: Modifier = Modifier) {
                         .width(130.dp)
                         .height(190.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(SurfaceColor)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 )
             }
         }
@@ -1138,7 +1237,7 @@ fun MoreOptionsBottomSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Background, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+            .background(MaterialTheme.colorScheme.background, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             .padding(horizontal = 24.dp, vertical = 20.dp)
     ) {
         Box(
@@ -1146,7 +1245,7 @@ fun MoreOptionsBottomSheet(
                 .width(40.dp)
                 .height(4.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(TextSecondary.copy(alpha = 0.3f))
+                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
                 .align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(20.dp))
@@ -1154,7 +1253,7 @@ fun MoreOptionsBottomSheet(
         Text(
             text = "Options",
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -1166,7 +1265,7 @@ fun MoreOptionsBottomSheet(
                     onFavouriteClick()
                     onDismiss()
                 },
-            color = SurfaceColor,
+            color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(14.dp)
         ) {
             Row(
@@ -1177,13 +1276,13 @@ fun MoreOptionsBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (isFavourite) HeartRed.copy(alpha = 0.15f) else SurfaceColor),
+                        .background(if (isFavourite) Color.Red.copy(alpha = 0.15f) else MaterialTheme.colorScheme.background),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Rounded.Favorite,
                         contentDescription = null,
-                        tint = if (isFavourite) HeartRed else TextSecondary,
+                        tint = if (isFavourite) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -1191,12 +1290,12 @@ fun MoreOptionsBottomSheet(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (isFavourite) "Remove from Favourite" else "Add to Favourite",
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 15.sp
                     )
                     Text(
                         text = if (isFavourite) "Remove this from your favourites" else "Mark as your favourite",
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
                 }
@@ -1212,7 +1311,7 @@ fun MoreOptionsBottomSheet(
                     onChangePosterClick()
                     onDismiss()
                 },
-            color = SurfaceColor,
+            color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(14.dp)
         ) {
             Row(
@@ -1223,15 +1322,15 @@ fun MoreOptionsBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(AccentPrimary.copy(alpha = 0.12f)),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Outlined.Image, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Outlined.Image, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Change Poster", color = TextPrimary, fontSize = 15.sp)
-                    Text("Choose from available posters", color = TextSecondary, fontSize = 12.sp)
+                    Text("Change Poster", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
+                    Text("Choose from available posters", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }
@@ -1245,7 +1344,7 @@ fun MoreOptionsBottomSheet(
                     onChangeBackdropClick()
                     onDismiss()
                 },
-            color = SurfaceColor,
+            color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(14.dp)
         ) {
             Row(
@@ -1256,15 +1355,15 @@ fun MoreOptionsBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(AccentSecondary.copy(alpha = 0.12f)),
+                        .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Outlined.WbSunny, contentDescription = null, tint = AccentSecondary, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Outlined.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(22.dp))
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Change Backdrop", color = TextPrimary, fontSize = 15.sp)
-                    Text("Choose from available backdrops", color = TextSecondary, fontSize = 12.sp)
+                    Text("Change Backdrop", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
+                    Text("Choose from available backdrops", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }
@@ -1278,7 +1377,7 @@ fun MoreOptionsBottomSheet(
                     onAddToListClick()
                     onDismiss()
                 },
-            color = SurfaceColor,
+            color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(14.dp)
         ) {
             Row(
@@ -1289,15 +1388,15 @@ fun MoreOptionsBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(WatchlistBlue.copy(alpha = 0.12f)),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, contentDescription = null, tint = WatchlistBlue, modifier = Modifier.size(22.dp))
+                    Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Add to List", color = TextPrimary, fontSize = 15.sp)
-                    Text("Add to a custom list", color = TextSecondary, fontSize = 12.sp)
+                    Text("Add to List", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
+                    Text("Add to a custom list", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }
@@ -1318,8 +1417,8 @@ fun ListPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
-        title = { Text("Add to List", color = TextPrimary) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("Add to List", color = MaterialTheme.colorScheme.onSurface) },
         text = {
             Column {
                 lists.forEach { (id, name) ->
@@ -1328,11 +1427,7 @@ fun ListPickerDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                if (isInList) {
-                                    onListSelected(id)
-                                } else {
-                                    onListSelected(id)
-                                }
+                                onListSelected(id)
                             }
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -1340,11 +1435,11 @@ fun ListPickerDialog(
                         Icon(
                             imageVector = if (isInList) Icons.Filled.CheckCircle else Icons.Outlined.AddCircle,
                             contentDescription = null,
-                            tint = if (isInList) AccentPrimary else TextSecondary,
+                            tint = if (isInList) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(name, color = TextPrimary, fontSize = 16.sp)
+                        Text(name, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
                     }
                 }
                 if (lists.isEmpty() || showCreateInput) {
@@ -1356,10 +1451,10 @@ fun ListPickerDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedBorderColor = AccentPrimary,
-                            unfocusedBorderColor = TextSecondary
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -1371,9 +1466,9 @@ fun ListPickerDialog(
                                 showCreateInput = false
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("Create", color = TextPrimary)
+                        Text("Create", color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
                 if (!showCreateInput) {
@@ -1385,9 +1480,9 @@ fun ListPickerDialog(
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Outlined.Add, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Outlined.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Create new list", color = AccentPrimary, fontSize = 16.sp)
+                        Text("Create new list", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
                     }
                 }
             }
@@ -1395,7 +1490,7 @@ fun ListPickerDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )
@@ -1413,7 +1508,7 @@ fun FullScreenImagePicker(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top bar
@@ -1426,12 +1521,12 @@ fun FullScreenImagePicker(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
                 }
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(48.dp))
             }
@@ -1454,7 +1549,7 @@ fun FullScreenImagePicker(
                             .clip(RoundedCornerShape(10.dp))
                             .border(
                                 width = if (isSelected) 3.dp else 0.dp,
-                                color = if (isSelected) AccentPrimary else Color.Transparent,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                                 shape = RoundedCornerShape(10.dp)
                             )
                             .clickable { selectedUrl = url }
@@ -1469,13 +1564,13 @@ fun FullScreenImagePicker(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(AccentPrimary.copy(alpha = 0.15f)),
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     Icons.Filled.CheckCircle,
                                     contentDescription = "Selected",
-                                    tint = AccentPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(36.dp)
                                 )
                             }
@@ -1493,7 +1588,7 @@ fun FullScreenImagePicker(
                     .align(Alignment.BottomCenter)
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Background),
+                            colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
                             startY = 0f,
                             endY = 80f
                         )
@@ -1507,12 +1602,12 @@ fun FullScreenImagePicker(
                         onDismiss()
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentPrimary),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(
                         "Apply",
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(vertical = 4.dp),
                         fontSize = 16.sp
                     )
