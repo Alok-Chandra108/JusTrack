@@ -245,9 +245,6 @@ fun MovieDetailsScreen(
         ) {
             BackdropHeader(
                 backdropUrl = movie.backdropPath,
-                sharedTransitionScope = sharedTransitionScope,
-                animatedVisibilityScope = animatedVisibilityScope,
-                id = movie.id,
                 onBackClick = onBackClick,
                 onShareClick = {},
                 onMoreClick = onMoreClick

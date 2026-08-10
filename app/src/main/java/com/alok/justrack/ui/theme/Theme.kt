@@ -12,10 +12,12 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = GoldAccent,
     background = Background,
     surface = Background,
+    surfaceVariant = SurfaceVariant, // Restores subtle contrast for cards
     onPrimary = TextPrimary,
     onSecondary = TextPrimary,
     onBackground = TextPrimary,
     onSurface = TextPrimary,
+    onSurfaceVariant = TextSecondary // Matches your original text colors
 )
 
 private val LightColorScheme = lightColorScheme(

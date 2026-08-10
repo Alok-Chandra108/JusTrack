@@ -55,13 +55,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import java.util.Locale
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BackdropHeader(
     backdropUrl: String?,
-    sharedTransitionScope: SharedTransitionScope? = null,
-    animatedVisibilityScope: AnimatedVisibilityScope? = null,
-    id: String? = null,
     onBackClick: () -> Unit,
     onShareClick: () -> Unit,
     onMoreClick: () -> Unit
@@ -71,20 +67,11 @@ fun BackdropHeader(
             .fillMaxWidth()
             .height(240.dp)
     ) {
-        val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null && id != null) {
-            with(sharedTransitionScope) {
-                Modifier.sharedElement(
-                    rememberSharedContentState(key = "poster-$id"),
-                    animatedVisibilityScope = animatedVisibilityScope
-                )
-            }
-        } else Modifier
-
         AsyncImage(
             model = backdropUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize().then(sharedModifier)
+            modifier = Modifier.fillMaxSize()
         )
 
         Box(
