@@ -238,6 +238,7 @@ class DetailViewModel @Inject constructor(
                     rating = movie.rating,
                     releaseDate = movie.rawReleaseDate.ifEmpty { movie.releaseDate },
                     mediaType = movie.mediaType,
+                    isWatched = _isWatched.value,
                     inWatchlist = true
                 )
                 repository.addToWatchlist(item)
@@ -288,17 +289,7 @@ class DetailViewModel @Inject constructor(
             if (movie.id in _watchlistIds.value) {
                 repository.removeFromWatchlist(movie.id)
             } else {
-                val item = MediaItem(
-                    id = movie.id,
-                    title = movie.title,
-                    overview = movie.overview,
-                    posterPath = movie.posterPath,
-                    backdropPath = movie.backdropPath,
-                    rating = movie.rating,
-                    releaseDate = movie.releaseDate,
-                    mediaType = movie.mediaType,
-                    inWatchlist = true
-                )
+                val item = movie.copy(inWatchlist = true)
                 repository.addToWatchlist(item)
             }
         }

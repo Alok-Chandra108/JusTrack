@@ -80,17 +80,21 @@ class WatchlistViewModel @Inject constructor(
     val watchedShows: StateFlow<List<MediaItem>> = combine(
         watchlistItems,
         repository.episodesUpdateEvents.onStart { emit(Unit) }
-    ) { items, _ ->
-        val tvShows = items.filter { it.mediaType == MediaType.TV }
-        tvShows.mapNotNull { show ->
-            val watchedCount = repository.getWatchedEpisodeCount(show.id)
-            if (show.isWatched || watchedCount > 0) {
-                val latestActivity = repository.getLatestWatchActivity(show.id) ?: show.addedAt
-                show to latestActivity
-            } else null
-        }.sortedByDescending { it.second }
-        .map { it.first }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    ) { items, _ -> items }
+        .flatMapLatest { items ->
+            val tvShows = items.filter { it.mediaType == MediaType.TV }
+            flow {
+                val result = tvShows.mapNotNull { show ->
+                    val watchedCount = repository.getWatchedEpisodeCount(show.id)
+                    if (show.isWatched || watchedCount > 0) {
+                        val latestActivity = repository.getLatestWatchActivity(show.id) ?: show.addedAt
+                        show to latestActivity
+                    } else null
+                }.sortedByDescending { it.second }
+                .map { it.first }
+                emit(result)
+            }
+        }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Favorites by type
     val favoriteMovies: StateFlow<List<MediaItem>> = favorites.map { items ->

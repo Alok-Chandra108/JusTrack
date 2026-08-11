@@ -95,7 +95,16 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     override suspend fun removeFromWatchlist(id: String) {
-        watchlistDao.deleteById(id)
+        val existing = watchlistDao.getEntityById(id)
+        if (existing != null) {
+            if (existing.isWatched) {
+                // If already watched, just remove from watchlist but keep the watched status
+                watchlistDao.insert(existing.copy(inWatchlist = false))
+            } else {
+                // If not watched, delete entirely
+                watchlistDao.deleteById(id)
+            }
+        }
     }
 
     override suspend fun isInWatchlist(id: String): Boolean {
@@ -105,8 +114,25 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun setWatched(item: MediaItem, watched: Boolean) {
         if (watched) {
             // Marking as watched: Ensure in DB with isWatched=true, inWatchlist=false
-            val entity = item.toWatchlistEntity(inWatchlist = false).copy(isWatched = true, addedAt = System.currentTimeMillis())
+            val existing = watchlistDao.getEntityById(item.id)
+            val addedAt = existing?.addedAt ?: System.currentTimeMillis()
+            val entity = item.toWatchlistEntity(inWatchlist = false).copy(
+                isWatched = true, 
+                addedAt = addedAt
+            )
             watchlistDao.insert(entity)
+
+            // Special case for TV shows: If marking the whole show as watched, mark all episodes as watched too
+            if (item.mediaType == MediaType.TV) {
+                syncEpisodes(item.id) // Ensure we have the episodes
+                val episodes = episodeDao.getEpisodesForShowOnce(item.id)
+                if (episodes.isNotEmpty()) {
+                    val entities = episodes.map {
+                        WatchedEpisodeEntity(showId = item.id, seasonNumber = it.seasonNumber, episodeNumber = it.episodeNumber)
+                    }
+                    watchedEpisodeDao.insertAll(entities)
+                }
+            }
         } else {
             // Unmarking as watched: If also not in wishlist, delete entirely
             val existing = watchlistDao.getEntityById(item.id)
@@ -116,6 +142,10 @@ class TmdbMediaRepository @Inject constructor(
                 } else {
                     watchlistDao.deleteById(item.id)
                 }
+
+                // If unmarking a show, we don't necessarily unmark episodes 
+                // as that might be destructive to specific progress. 
+                // But checkShowCompletion will handle the show state if episodes change.
             }
         }
     }
@@ -262,6 +292,24 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean) {
         if (watched) {
             watchedEpisodeDao.insert(WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = episodeNumber))
+            
+            // Ensure the show exists in the watchlist table so it can be tracked/displayed
+            val existing = watchlistDao.getEntityById(showId)
+            if (existing == null) {
+                // If it doesn't exist, we need to fetch details to create a placeholder
+                try {
+                    val details = apiService.getTvDetails(showId)
+                    val mediaItem = details.toMediaItem(MediaType.TV)
+                    val entity = mediaItem.toWatchlistEntity(inWatchlist = false).copy(
+                        isWatched = false,
+                        addedAt = System.currentTimeMillis()
+                    )
+                    watchlistDao.insert(entity)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            
             checkShowCompletion(showId)
         } else {
             watchedEpisodeDao.delete(showId, seasonNumber, episodeNumber)
