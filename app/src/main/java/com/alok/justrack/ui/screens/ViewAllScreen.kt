@@ -34,18 +34,21 @@ fun ViewAllScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: WatchlistViewModel = hiltViewModel()
 ) {
-    val watchlistItems by viewModel.watchlistItems.collectAsState()
-    val favorites by viewModel.favorites.collectAsState()
+    val watchedMovies by viewModel.watchedMovies.collectAsState()
+    val watchedShows by viewModel.watchedShows.collectAsState()
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
+    val favoriteShows by viewModel.favoriteShows.collectAsState()
+    val explicitWatchlistItems by viewModel.explicitWatchlistItems.collectAsState()
     val listsWithPreviews by viewModel.listsWithPreviews.collectAsState()
 
-    val filteredItems = remember(type, title, watchlistItems, favorites, listsWithPreviews) {
+    val filteredItems = remember(type, title, watchedMovies, watchedShows, favoriteMovies, favoriteShows, explicitWatchlistItems, listsWithPreviews) {
         when (type) {
-            "movie" -> watchlistItems.filter { it.mediaType == MediaType.MOVIE && it.isWatched }
-            "tv" -> watchlistItems.filter { it.mediaType == MediaType.TV && it.isWatched }
-            "watchlist_movie" -> watchlistItems.filter { it.mediaType == MediaType.MOVIE && it.inWatchlist }
-            "watchlist_tv" -> watchlistItems.filter { it.mediaType == MediaType.TV && it.inWatchlist }
-            "favorite_movie" -> favorites.filter { it.mediaType == MediaType.MOVIE }
-            "favorite_tv" -> favorites.filter { it.mediaType == MediaType.TV }
+            "movie" -> watchedMovies
+            "tv" -> watchedShows
+            "watchlist_movie" -> explicitWatchlistItems.filter { it.mediaType == MediaType.MOVIE }
+            "watchlist_tv" -> explicitWatchlistItems.filter { it.mediaType == MediaType.TV }
+            "favorite_movie" -> favoriteMovies
+            "favorite_tv" -> favoriteShows
             "list" -> listsWithPreviews.find { it.first == title }?.second ?: emptyList()
             else -> emptyList()
         }
