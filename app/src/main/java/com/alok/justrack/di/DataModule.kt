@@ -83,7 +83,7 @@ abstract class DataModule {
                 chain.proceed(originalRequest.newBuilder().url(newUrl).build())
             }
             val loggingInterceptor = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BASIC
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
             }
             return OkHttpClient.Builder()
                 .addInterceptor(authInterceptor)
