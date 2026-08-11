@@ -544,7 +544,7 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    // 4. Shows (Watched only)
+                    // 4. Shows (Watched & In Progress)
                     HorizontalSection(
                         title = "Shows",
                         items = watchedShows,
@@ -554,9 +554,9 @@ fun ProfileScreen(
                             navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
                         },
                         onViewAllClick = {
-                            navController.navigate(Screen.ViewAll.createRoute("Watched Shows", "tv"))
+                            navController.navigate(Screen.ViewAll.createRoute("Shows", "tv"))
                         },
-                        emptyMessage = "No watched shows yet"
+                        emptyMessage = "No shows in progress or watched"
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 

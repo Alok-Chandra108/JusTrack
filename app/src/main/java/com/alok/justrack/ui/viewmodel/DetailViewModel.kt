@@ -28,6 +28,8 @@ class DetailViewModel @Inject constructor(
     private val _watchedEpisodes = MutableStateFlow<Set<String>>(emptySet())
     private var watchedEpisodesJob: Job? = null
     
+    val showCompletionEvents: Flow<String> = repository.showCompletionEvents
+
     private val _recommendationSeed = MutableStateFlow(System.currentTimeMillis().toInt())
 
     // Watchlist flow to track watched IDs for filtering recommendations

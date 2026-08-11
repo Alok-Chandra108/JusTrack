@@ -23,6 +23,8 @@ class WatchlistViewModel @Inject constructor(
     private val repository: MediaRepository
 ) : ViewModel() {
 
+    val showCompletionEvents: Flow<String> = repository.showCompletionEvents
+
     // Existing UI state for backward compatibility (used by MoviesScreen etc.)
     val uiState: StateFlow<WatchlistUiState> = repository
         .getWatchlistFlow()
@@ -74,9 +76,20 @@ class WatchlistViewModel @Inject constructor(
             .sortedByDescending { it.addedAt }
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val watchedShows: StateFlow<List<MediaItem>> = watchlistItems.map { items ->
-        items.filter { it.mediaType == MediaType.TV && it.isWatched }
-            .sortedByDescending { it.addedAt }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val watchedShows: StateFlow<List<MediaItem>> = combine(
+        watchlistItems,
+        repository.episodesUpdateEvents.onStart { emit(Unit) }
+    ) { items, _ ->
+        val tvShows = items.filter { it.mediaType == MediaType.TV }
+        tvShows.mapNotNull { show ->
+            val watchedCount = repository.getWatchedEpisodeCount(show.id)
+            if (show.isWatched || watchedCount > 0) {
+                val latestActivity = repository.getLatestWatchActivity(show.id) ?: show.addedAt
+                show to latestActivity
+            } else null
+        }.sortedByDescending { it.second }
+        .map { it.first }
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Favorites by type

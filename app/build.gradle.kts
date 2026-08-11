@@ -97,6 +97,9 @@ dependencies {
     implementation(libs.supabase.realtime)
     implementation(libs.ktor.okhttp)
 
+    // Konfetti
+    implementation(libs.konfetti.compose)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

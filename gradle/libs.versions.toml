@@ -20,6 +20,7 @@ okhttp = "4.12.0"
 supabase = "3.0.3"
 ktor = "3.0.1"
 desugar_jdk_libs = "2.1.5"
+konfetti = "2.0.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -55,6 +56,7 @@ supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt", ve
 supabase-realtime = { group = "io.github.jan-tennert.supabase", name = "realtime-kt", version.ref = "supabase" }
 ktor-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+konfetti-compose = { group = "nl.dionsegijn", name = "konfetti-compose", version.ref = "konfetti" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

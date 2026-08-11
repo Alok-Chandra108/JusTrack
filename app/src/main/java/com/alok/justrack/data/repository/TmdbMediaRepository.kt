@@ -33,6 +33,9 @@ class TmdbMediaRepository @Inject constructor(
     private val _episodesUpdateEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override val episodesUpdateEvents: Flow<Unit> = _episodesUpdateEvents.asSharedFlow()
 
+    private val _showCompletionEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    override val showCompletionEvents: Flow<String> = _showCompletionEvents.asSharedFlow()
+
     override suspend fun getTrending(): List<MediaItem> {
         return try {
             val response = apiService.getTrending()
@@ -259,6 +262,7 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean) {
         if (watched) {
             watchedEpisodeDao.insert(WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = episodeNumber))
+            checkShowCompletion(showId)
         } else {
             watchedEpisodeDao.delete(showId, seasonNumber, episodeNumber)
         }
@@ -270,6 +274,7 @@ class TmdbMediaRepository @Inject constructor(
                 WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = it)
             }
             watchedEpisodeDao.insertAll(entities)
+            checkShowCompletion(showId)
         } else {
             // Not typically used for multi-unmark but implemented for completeness
             episodeNumbers.forEach { 
@@ -284,6 +289,7 @@ class TmdbMediaRepository @Inject constructor(
                 WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = it.episodeNumber) 
             }
             watchedEpisodeDao.insertAll(entities)
+            checkShowCompletion(showId)
         } else {
             watchedEpisodeDao.deleteSeason(showId, seasonNumber)
         }
@@ -357,6 +363,29 @@ class TmdbMediaRepository @Inject constructor(
                 voteAverage = entity.voteAverage ?: 0.0,
                 isWatched = false
             )
+        }
+    }
+
+    override suspend fun getLatestWatchActivity(showId: String): Long? {
+        return watchedEpisodeDao.getLatestWatchActivityForShow(showId)
+    }
+
+    private suspend fun checkShowCompletion(showId: String) {
+        val total = episodeDao.getTotalEpisodeCount(showId)
+        val watched = episodeDao.getWatchedEpisodeCount(showId)
+        
+        if (total > 0 && watched == total) {
+            // Automatically mark as watched and remove from watchlist
+            val existing = watchlistDao.getEntityById(showId)
+            if (existing != null && !existing.isWatched) {
+                val updated = existing.copy(
+                    isWatched = true,
+                    inWatchlist = false,
+                    addedAt = System.currentTimeMillis() // Update timestamp for sorting in Profile
+                )
+                watchlistDao.insert(updated)
+                _showCompletionEvents.emit(showId)
+            }
         }
     }
 

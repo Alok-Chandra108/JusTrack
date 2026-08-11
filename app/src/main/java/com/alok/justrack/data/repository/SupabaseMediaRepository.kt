@@ -27,6 +27,9 @@ class SupabaseMediaRepository @Inject constructor(
     private val _episodesUpdateEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override val episodesUpdateEvents: Flow<Unit> = _episodesUpdateEvents.asSharedFlow()
 
+    private val _showCompletionEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    override val showCompletionEvents: Flow<String> = _showCompletionEvents.asSharedFlow()
+
     override suspend fun getTrending(): List<MediaItem> {
         return try {
             val response = apiService.getTrending()
@@ -251,6 +254,7 @@ class SupabaseMediaRepository @Inject constructor(
     override suspend fun getTotalEpisodeCount(showId: String): Int = 0
     override suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int? = null
     override suspend fun getFutureEpisodes(showId: String): List<Episode> = emptyList()
+    override suspend fun getLatestWatchActivity(showId: String): Long? = null
 
     override suspend fun getPersonDetails(id: String): PersonDetails? = null
 }

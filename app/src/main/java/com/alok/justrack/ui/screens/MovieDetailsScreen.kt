@@ -41,6 +41,11 @@ import com.alok.justrack.ui.components.*
 import com.alok.justrack.ui.theme.*
 import com.alok.justrack.ui.viewmodel.DetailUiState
 import com.alok.justrack.ui.viewmodel.DetailViewModel
+import com.alok.justrack.util.ConfettiManager
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.PartySystem
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -66,11 +71,21 @@ fun DetailScreen(
     var showListPicker by remember { mutableStateOf(false) }
     var showPosterPicker by remember { mutableStateOf(false) }
     var showBackdropPicker by remember { mutableStateOf(false) }
+    
+    var confettiParties by remember { mutableStateOf<List<Party>>(emptyList()) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     LaunchedEffect(id, mediaType) {
         viewModel.loadDetail(id, mediaType)
+    }
+    
+    LaunchedEffect(Unit) {
+        viewModel.showCompletionEvents.collect { showId ->
+            if (showId == id) {
+                confettiParties = ConfettiManager.getCelebrationParty()
+            }
+        }
     }
 
     when (val state = uiState) {
@@ -80,38 +95,54 @@ fun DetailScreen(
             }
         }
         is DetailUiState.Success -> {
-            MovieDetailsScreen(
-                movie = state.item,
-                isInWatchlist = isInWatchlist,
-                isWatched = isWatched,
-                sharedTransitionScope = sharedTransitionScope,
-                animatedVisibilityScope = animatedVisibilityScope,
-                onBackClick = { navController.popBackStack() },
-                onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
-                onWatchedToggle = { viewModel.toggleWatched(state.item.id) },
-                onMoreClick = { showMoreSheet = true },
-                onSeasonClick = { seasonNumber ->
-                    viewModel.loadSeason(seasonNumber)
-                },
-                onEpisodeWatchedToggle = { seasonNum, epNum, watched ->
-                    viewModel.markEpisodeWatched(seasonNum, epNum, watched)
-                },
-                onSeasonWatchedToggle = { season ->
-                    viewModel.toggleSeasonWatched(season)
-                },
-                onRecommendationClick = { item ->
-                    navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
-                },
-                onRecommendationWatchlistToggle = { item ->
-                    viewModel.toggleWatchlistForRecommendation(item)
-                },
-                onRecommendationRefresh = {
-                    viewModel.refreshRecommendations()
-                },
-                onPersonClick = { person ->
-                    navController.navigate(com.alok.justrack.ui.navigation.Screen.Person.createRoute(person.id))
+            Box(modifier = Modifier.fillMaxSize()) {
+                MovieDetailsScreen(
+                    movie = state.item,
+                    isInWatchlist = isInWatchlist,
+                    isWatched = isWatched,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    onBackClick = { navController.popBackStack() },
+                    onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
+                    onWatchedToggle = { viewModel.toggleWatched(state.item.id) },
+                    onMoreClick = { showMoreSheet = true },
+                    onSeasonClick = { seasonNumber ->
+                        viewModel.loadSeason(seasonNumber)
+                    },
+                    onEpisodeWatchedToggle = { seasonNum, epNum, watched ->
+                        viewModel.markEpisodeWatched(seasonNum, epNum, watched)
+                    },
+                    onSeasonWatchedToggle = { season ->
+                        viewModel.toggleSeasonWatched(season)
+                    },
+                    onRecommendationClick = { item ->
+                        navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
+                    },
+                    onRecommendationWatchlistToggle = { item ->
+                        viewModel.toggleWatchlistForRecommendation(item)
+                    },
+                    onRecommendationRefresh = {
+                        viewModel.refreshRecommendations()
+                    },
+                    onPersonClick = { person ->
+                        navController.navigate(com.alok.justrack.ui.navigation.Screen.Person.createRoute(person.id))
+                    }
+                )
+
+                if (confettiParties.isNotEmpty()) {
+                    KonfettiView(
+                        modifier = Modifier.fillMaxSize(),
+                        parties = confettiParties,
+                        updateListener = object : OnParticleSystemUpdateListener {
+                            override fun onParticleSystemEnded(system: PartySystem, activeSystems: Int) {
+                                if (activeSystems == 0) {
+                                    confettiParties = emptyList()
+                                }
+                            }
+                        }
+                    )
                 }
-            )
+            }
 
             if (showMoreSheet) {
                 ModalBottomSheet(

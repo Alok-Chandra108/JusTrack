@@ -50,6 +50,7 @@ interface MediaRepository {
 
     // Episode Tracking
     val episodesUpdateEvents: Flow<Unit>
+    val showCompletionEvents: Flow<String> // Emits showId when a show is automatically marked as watched
     suspend fun syncEpisodes(showId: String)
     suspend fun getSeasonDetails(tvId: String, seasonNumber: Int): Season?
     suspend fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int, watched: Boolean)
@@ -63,6 +64,7 @@ interface MediaRepository {
     suspend fun getTotalEpisodeCount(showId: String): Int
     suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int?
     suspend fun getFutureEpisodes(showId: String): List<Episode>
+    suspend fun getLatestWatchActivity(showId: String): Long?
 
     // Person
     suspend fun getPersonDetails(id: String): PersonDetails?
