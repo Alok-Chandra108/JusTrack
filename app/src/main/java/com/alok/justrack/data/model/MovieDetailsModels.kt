@@ -30,6 +30,8 @@ data class MovieDetails(
     val certification: String,
     val director: List<Person>,
     val originalLanguage: String = "",
+    val status: String = "",
+    val numberOfEpisodes: Int = 0,
     val mediaType: MediaType = MediaType.MOVIE,
     val cast: List<CastMember>,
     val ratings: List<RatingSource>,
@@ -59,4 +61,12 @@ data class Episode(
     val airDate: String?,
     val voteAverage: Double,
     val isWatched: Boolean = false
+)
+
+data class ShowProgress(
+    val percentage: Int,
+    val color: androidx.compose.ui.graphics.Color,
+    val label: String,
+    val totalReleased: Int,
+    val watched: Int
 )

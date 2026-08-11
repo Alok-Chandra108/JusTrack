@@ -6,10 +6,15 @@ import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.model.Season
+import com.alok.justrack.data.model.Episode
+import com.alok.justrack.data.model.ShowProgress
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.util.DateUtils
 import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
+import com.alok.justrack.ui.theme.GoldAccent
+import com.alok.justrack.ui.theme.WatchedGreen
+import com.alok.justrack.ui.theme.EndedPurple
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -27,6 +32,9 @@ class DetailViewModel @Inject constructor(
     private val _rawDetails = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
     private val _watchedEpisodes = MutableStateFlow<Set<String>>(emptySet())
     private var watchedEpisodesJob: Job? = null
+    private var syncJob: Job? = null
+
+    private val _releasedEpisodeCount = MutableStateFlow(0)
     
     val showCompletionEvents: Flow<String> = repository.showCompletionEvents
 
@@ -82,6 +90,48 @@ class DetailViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailUiState.Loading)
 
+    val showProgress: StateFlow<ShowProgress?> = combine(
+        _rawDetails,
+        _watchedEpisodes,
+        _releasedEpisodeCount
+    ) { details, watchedEps, releasedCount ->
+        if (details is DetailUiState.Success && details.item.mediaType == MediaType.TV) {
+            val total = if (releasedCount > 0) releasedCount else details.item.numberOfEpisodes
+            
+            // Filter out specials from watched count if they were synced
+            val watched = watchedEps.filter { 
+                !it.startsWith("S0E") 
+            }.size
+
+            val percentage = if (total > 0) (watched.toFloat() / total * 100).toInt().coerceIn(0, 100) else 0
+            
+            val status = details.item.status.lowercase()
+            val isEnded = status == "ended" || status == "canceled"
+            
+            val color = when {
+                total == 0 -> androidx.compose.ui.graphics.Color.Gray
+                isEnded -> EndedPurple
+                watched == total && total > 0 -> WatchedGreen
+                else -> GoldAccent
+            }
+            
+            val label = when {
+                total == 0 -> "Progress unavailable"
+                isEnded && watched == total && total > 0 -> "Ended"
+                watched == total && total > 0 -> "Completed"
+                else -> "$percentage%"
+            }
+            
+            ShowProgress(
+                percentage = percentage,
+                color = color,
+                label = label,
+                totalReleased = total,
+                watched = watched
+            )
+        } else null
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     private val _isInWatchlist = MutableStateFlow(false)
     val isInWatchlist: StateFlow<Boolean> = _isInWatchlist
 
@@ -132,9 +182,24 @@ class DetailViewModel @Inject constructor(
         // Setup reactive episode tracking for TV shows
         watchedEpisodesJob?.cancel()
         _watchedEpisodes.value = emptySet()
+        _releasedEpisodeCount.value = 0
         if (currentMediaType == MediaType.TV) {
             watchedEpisodesJob = repository.getWatchedEpisodesFlow(id)
                 .onEach { _watchedEpisodes.value = it.toSet() }
+                .launchIn(viewModelScope)
+                
+            // Sync episodes to get accurate counts
+            syncJob?.cancel()
+            syncJob = viewModelScope.launch {
+                repository.syncEpisodes(id)
+                _releasedEpisodeCount.value = repository.getReleasedEpisodeCount(id)
+            }
+            
+            // Also update released count whenever episodes are updated
+            repository.episodesUpdateEvents
+                .onEach { 
+                    _releasedEpisodeCount.value = repository.getReleasedEpisodeCount(id)
+                }
                 .launchIn(viewModelScope)
         }
 

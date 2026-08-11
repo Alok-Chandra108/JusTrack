@@ -9,6 +9,7 @@ val SurfaceVariant = Color(0xFF23262B)
 val DescriptionBackground = Color(0xFF23262B)
 val WatchlistBlue = Color(0xFF7BA4E8)
 val WatchedGreen = Color(0xFF10B981) // Vibrant Emerald Green for "Watched"
+val EndedPurple = Color(0xFF5B21B6) // Deep Purple for Ended shows
 val LightShadow = Color(0xFF2C2D31)
 val DarkShadow = Color(0xFF000000)
 

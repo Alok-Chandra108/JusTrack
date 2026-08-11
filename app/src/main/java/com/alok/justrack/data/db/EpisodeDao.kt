@@ -63,6 +63,13 @@ interface EpisodeDao {
     suspend fun getTotalEpisodeCount(showId: String): Int
 
     @Query("""
+        SELECT COUNT(*) FROM episode_entity ee
+        WHERE ee.showId = :showId AND ee.seasonNumber > 0
+          AND (ee.airDate IS NULL OR ee.airDate <= :today)
+    """)
+    suspend fun getReleasedEpisodeCount(showId: String, today: String): Int
+
+    @Query("""
         SELECT e.* FROM episode_entity e
         WHERE e.showId = :showId
           AND e.seasonNumber > 0

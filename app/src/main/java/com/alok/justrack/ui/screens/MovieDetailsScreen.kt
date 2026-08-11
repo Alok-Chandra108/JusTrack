@@ -66,6 +66,7 @@ fun DetailScreen(
     val posterImages by viewModel.posterImages.collectAsState()
     val backdropImages by viewModel.backdropImages.collectAsState()
     val episodeConfirmation by viewModel.episodeMarkConfirmation.collectAsState()
+    val showProgress by viewModel.showProgress.collectAsState()
 
     var showMoreSheet by remember { mutableStateOf(false) }
     var showListPicker by remember { mutableStateOf(false) }
@@ -100,6 +101,7 @@ fun DetailScreen(
                     movie = state.item,
                     isInWatchlist = isInWatchlist,
                     isWatched = isWatched,
+                    showProgress = showProgress,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
                     onBackClick = { navController.popBackStack() },
@@ -245,6 +247,7 @@ fun MovieDetailsScreen(
     movie: MovieDetails,
     isInWatchlist: Boolean,
     isWatched: Boolean,
+    showProgress: com.alok.justrack.data.model.ShowProgress?,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBackClick: () -> Unit,
@@ -280,6 +283,13 @@ fun MovieDetailsScreen(
                 onShareClick = {},
                 onMoreClick = onMoreClick
             )
+
+            if (movie.mediaType == MediaType.TV && showProgress != null) {
+                EpisodeProgressBar(
+                    progress = showProgress,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
 
             if (movie.mediaType == MediaType.TV) {
                 TabRow(
@@ -656,3 +666,53 @@ fun EpisodeRow(
         }
     }
 }
+
+@Composable
+fun EpisodeProgressBar(
+    progress: com.alok.justrack.data.model.ShowProgress,
+    modifier: Modifier = Modifier
+) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.percentage / 100f,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 800, easing = androidx.compose.animation.core.EaseOutExpo),
+        label = "progress"
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Progress Track
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(animatedProgress)
+                        .fillMaxHeight()
+                        .background(progress.color)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Text(
+                text = progress.label,
+                style = MaterialTheme.typography.labelLarge,
+                color = progress.color,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+        }
+    }
+}
+

@@ -106,6 +106,8 @@ object TmdbMapper {
             certification = cert,
             director = directorPeople,
             originalLanguage = originalLanguage ?: "en",
+            status = status ?: "",
+            numberOfEpisodes = numberOfEpisodes ?: 0,
             mediaType = detectedType,
             cast = castMembers,
             ratings = listOf(

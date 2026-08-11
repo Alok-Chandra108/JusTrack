@@ -27,6 +27,8 @@ data class TmdbMediaDto(
     @SerializedName("release_dates") val releaseDates: TmdbReleaseDatesResponse?,
     @SerializedName("content_ratings") val contentRatings: TmdbContentRatingsResponse?,
     @SerializedName("created_by") val createdBy: List<TmdbCreatedByDto>?,
+    @SerializedName("status") val status: String?,
+    @SerializedName("number_of_episodes") val numberOfEpisodes: Int?,
     @SerializedName("seasons") val seasons: List<TmdbSeasonDto>?,
     @SerializedName("recommendations") val recommendations: TmdbPaginatedResponse<TmdbMediaDto>?
 )
