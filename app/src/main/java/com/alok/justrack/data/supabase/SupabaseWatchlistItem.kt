@@ -40,5 +40,6 @@ data class SupabaseWatchlistItem(
     @SerialName("media_type")    val mediaType: String,
     @SerialName("added_at")      val addedAt: Long = System.currentTimeMillis(),
     @SerialName("is_watched")    val isWatched: Boolean = false,
-    @SerialName("in_watchlist")  val inWatchlist: Boolean = false
+    @SerialName("in_watchlist")  val inWatchlist: Boolean = false,
+    @SerialName("is_watch_later") val isWatchLater: Boolean = false
 )

@@ -130,6 +130,18 @@ class SupabaseMediaRepository @Inject constructor(
         }
     }
 
+    override suspend fun toggleWatchLater(id: String, isWatchLater: Boolean) {
+        try {
+            postgrest.update({
+                set("is_watch_later", isWatchLater)
+            }) {
+                filter { eq("id", id) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     override suspend fun getMediaDetail(id: String, mediaType: MediaType): MovieDetails? {
         return try {
             when (mediaType) {
@@ -172,6 +184,7 @@ class SupabaseMediaRepository @Inject constructor(
         mediaType = MediaType.valueOf(mediaType),
         isWatched = isWatched,
         inWatchlist = inWatchlist,
+        isWatchLater = isWatchLater,
         addedAt = addedAt
     )
 
@@ -186,6 +199,7 @@ class SupabaseMediaRepository @Inject constructor(
         mediaType = mediaType.name,
         isWatched = isWatched,
         inWatchlist = inWatchlist,
+        isWatchLater = isWatchLater,
         addedAt = addedAt
     )
 

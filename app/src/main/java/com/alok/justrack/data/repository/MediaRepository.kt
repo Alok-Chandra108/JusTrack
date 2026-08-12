@@ -21,6 +21,7 @@ interface MediaRepository {
     suspend fun isInWatchlist(id: String): Boolean
     suspend fun setWatched(item: MediaItem, watched: Boolean)
     suspend fun isWatched(id: String): Boolean
+    suspend fun toggleWatchLater(id: String, isWatchLater: Boolean)
 
     // Favourites
     fun getFavouritesFlow(): Flow<List<MediaItem>>

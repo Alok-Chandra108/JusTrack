@@ -154,6 +154,10 @@ class TmdbMediaRepository @Inject constructor(
         return watchlistDao.getWatchedStatus(id) ?: false
     }
 
+    override suspend fun toggleWatchLater(id: String, isWatchLater: Boolean) {
+        watchlistDao.updateWatchLater(id, isWatchLater)
+    }
+
     override fun getFavouritesFlow(): Flow<List<MediaItem>> = favouriteDao.getAllFlow()
         .map { entities -> entities.map { it.toMediaItem() } }
 
@@ -464,6 +468,7 @@ class TmdbMediaRepository @Inject constructor(
         mediaType = MediaType.valueOf(mediaType),
         isWatched = isWatched,
         inWatchlist = inWatchlist,
+        isWatchLater = isWatchLater,
         addedAt = addedAt
     )
 
@@ -478,6 +483,7 @@ class TmdbMediaRepository @Inject constructor(
         mediaType = mediaType.name,
         isWatched = isWatched,
         inWatchlist = inWatchlist,
+        isWatchLater = isWatchLater,
         addedAt = addedAt
     )
 

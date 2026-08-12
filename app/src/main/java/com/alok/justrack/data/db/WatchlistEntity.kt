@@ -17,5 +17,6 @@ data class WatchlistEntity(
     val mediaType: String,
     val addedAt: Long = System.currentTimeMillis(),
     val isWatched: Boolean = false,
-    val inWatchlist: Boolean = false
+    val inWatchlist: Boolean = false,
+    val isWatchLater: Boolean = false
 )

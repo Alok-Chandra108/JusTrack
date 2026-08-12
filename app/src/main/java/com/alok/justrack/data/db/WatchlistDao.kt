@@ -36,6 +36,9 @@ interface WatchlistDao {
     @Query("UPDATE watchlist SET inWatchlist = :inWatchlist WHERE id = :id")
     suspend fun updateInWatchlist(id: String, inWatchlist: Boolean)
 
+    @Query("UPDATE watchlist SET isWatchLater = :isWatchLater WHERE id = :id")
+    suspend fun updateWatchLater(id: String, isWatchLater: Boolean)
+
     @Query("UPDATE watchlist SET customPosterPath = :posterPath WHERE id = :id")
     suspend fun updateCustomPoster(id: String, posterPath: String?)
 

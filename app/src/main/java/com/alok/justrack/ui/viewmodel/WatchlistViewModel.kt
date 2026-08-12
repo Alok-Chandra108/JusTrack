@@ -165,7 +165,8 @@ class WatchlistViewModel @Inject constructor(
         val remainingCount: Int,
         val watchedCount: Int,
         val totalCount: Int,
-        val isSyncing: Boolean = false
+        val isSyncing: Boolean = false,
+        val isWatchLater: Boolean = false
     )
 
     private val _isGridView = MutableStateFlow(false)
@@ -261,7 +262,8 @@ class WatchlistViewModel @Inject constructor(
                                     remainingCount = remainingCount,
                                     watchedCount = watchedCount,
                                     totalCount = totalCount,
-                                    isSyncing = false
+                                    isSyncing = false,
+                                    isWatchLater = show.isWatchLater
                                 )
                             )
                         } else if (totalCount == 0) {
@@ -278,7 +280,8 @@ class WatchlistViewModel @Inject constructor(
                                     remainingCount = 0,
                                     watchedCount = 0,
                                     totalCount = 0,
-                                    isSyncing = true
+                                    isSyncing = true,
+                                    isWatchLater = show.isWatchLater
                                 )
                             )
                         }
@@ -307,7 +310,8 @@ class WatchlistViewModel @Inject constructor(
                                 isNew = false,
                                 remainingCount = 0,
                                 watchedCount = 0,
-                                totalCount = 0
+                                totalCount = 0,
+                                isWatchLater = show.isWatchLater
                             )
                         )
                     }
@@ -318,11 +322,17 @@ class WatchlistViewModel @Inject constructor(
 
     // Grouped episodes for the UI (maintains "IN PROGRESS" first)
     val groupedWatchlistEpisodes = watchlistEpisodes.map { items ->
-        val groups = items.groupBy { if (it.watchedCount == 0) "HAVEN'T STARTED" else "IN PROGRESS" }
-        // Ensure "IN PROGRESS" is first if it exists
+        val groups = items.groupBy { 
+            when {
+                it.isWatchLater -> "WATCH LATER"
+                it.watchedCount == 0 -> "HAVEN'T STARTED"
+                else -> "IN PROGRESS"
+            }
+        }
         val sortedGroups = mutableMapOf<String, List<WatchlistEpisodeItem>>()
         groups["IN PROGRESS"]?.let { sortedGroups["IN PROGRESS"] = it }
         groups["HAVEN'T STARTED"]?.let { sortedGroups["HAVEN'T STARTED"] = it }
+        groups["WATCH LATER"]?.let { sortedGroups["WATCH LATER"] = it }
         sortedGroups
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
@@ -384,6 +394,12 @@ class WatchlistViewModel @Inject constructor(
     fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int) {
         viewModelScope.launch {
             repository.markEpisodeWatched(showId, seasonNumber, episodeNumber, true)
+        }
+    }
+
+    fun toggleWatchLater(showId: String, currentStatus: Boolean) {
+        viewModelScope.launch {
+            repository.toggleWatchLater(showId, !currentStatus)
         }
     }
 
