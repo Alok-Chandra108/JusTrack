@@ -30,7 +30,25 @@ data class TmdbMediaDto(
     @SerializedName("status") val status: String?,
     @SerializedName("number_of_episodes") val numberOfEpisodes: Int?,
     @SerializedName("seasons") val seasons: List<TmdbSeasonDto>?,
-    @SerializedName("recommendations") val recommendations: TmdbPaginatedResponse<TmdbMediaDto>?
+    @SerializedName("recommendations") val recommendations: TmdbPaginatedResponse<TmdbMediaDto>?,
+    @SerializedName("watch/providers") val watchProviders: TmdbWatchProvidersResponse?
+)
+
+data class TmdbWatchProvidersResponse(
+    @SerializedName("results") val results: Map<String, TmdbWatchProviderResult>?
+)
+
+data class TmdbWatchProviderResult(
+    @SerializedName("link") val link: String?,
+    @SerializedName("flatrate") val flatrate: List<TmdbWatchProviderItem>?,
+    @SerializedName("rent") val rent: List<TmdbWatchProviderItem>?,
+    @SerializedName("buy") val buy: List<TmdbWatchProviderItem>?
+)
+
+data class TmdbWatchProviderItem(
+    @SerializedName("provider_id") val providerId: Int,
+    @SerializedName("provider_name") val providerName: String,
+    @SerializedName("logo_path") val logoPath: String?
 )
 
 data class TmdbSeasonDto(

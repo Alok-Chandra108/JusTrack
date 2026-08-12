@@ -17,6 +17,18 @@ data class Person(
     val name: String
 )
 
+data class WatchProvider(
+    val id: Int,
+    val name: String,
+    val logoUrl: String
+)
+
+data class WatchProviders(
+    val stream: List<WatchProvider> = emptyList(),
+    val rent: List<WatchProvider> = emptyList(),
+    val buy: List<WatchProvider> = emptyList()
+)
+
 data class MovieDetails(
     val id: String,
     val title: String,
@@ -36,7 +48,8 @@ data class MovieDetails(
     val cast: List<CastMember>,
     val ratings: List<RatingSource>,
     val recommendations: List<MediaItem>,
-    val seasons: List<Season> = emptyList()
+    val seasons: List<Season> = emptyList(),
+    val watchProviders: WatchProviders? = null
 )
 
 data class Season(

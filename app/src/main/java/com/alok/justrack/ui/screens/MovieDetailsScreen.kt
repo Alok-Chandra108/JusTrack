@@ -37,6 +37,8 @@ import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.model.Season
 import com.alok.justrack.data.model.Episode
+import com.alok.justrack.data.model.WatchProviders
+import com.alok.justrack.data.model.WatchProvider
 import com.alok.justrack.ui.components.*
 import com.alok.justrack.ui.theme.*
 import com.alok.justrack.ui.viewmodel.DetailUiState
@@ -372,6 +374,11 @@ fun MovieDetailsScreen(
                         onWatchedToggle = onWatchedToggle
                     )
 
+                    movie.watchProviders?.let { providers ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        WatchProvidersSection(providers = providers)
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
                     CollapsibleDescription(description = movie.overview)
                     Spacer(modifier = Modifier.height(20.dp))
@@ -427,6 +434,12 @@ fun TvShowAboutSection(
             onWatchlistToggle = onWatchlistToggle,
             onWatchedToggle = onWatchedToggle
         )
+        
+        movie.watchProviders?.let { providers ->
+            Spacer(modifier = Modifier.height(16.dp))
+            WatchProvidersSection(providers = providers)
+        }
+        
         Spacer(modifier = Modifier.height(16.dp))
         CollapsibleDescription(description = movie.overview)
         Spacer(modifier = Modifier.height(20.dp))
@@ -667,6 +680,61 @@ fun EpisodeRow(
                     modifier = Modifier.size(18.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun WatchProvidersSection(
+    providers: WatchProviders,
+    modifier: Modifier = Modifier
+) {
+    if (providers.stream.isEmpty() && providers.rent.isEmpty() && providers.buy.isEmpty()) {
+        return
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Where to Watch",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold
+        )
+        
+        if (providers.stream.isNotEmpty()) {
+            ProviderRow(label = "Stream", providers = providers.stream)
+        } else if (providers.rent.isNotEmpty()) {
+            ProviderRow(label = "Rent", providers = providers.rent)
+        } else if (providers.buy.isNotEmpty()) {
+            ProviderRow(label = "Buy", providers = providers.buy)
+        }
+
+        Text(
+            text = "Powered by JustWatch",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            fontSize = 9.sp
+        )
+    }
+}
+
+@Composable
+fun ProviderRow(label: String, providers: List<WatchProvider>) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(vertical = 4.dp)
+    ) {
+        providers.take(6).forEach { provider ->
+            AsyncImage(
+                model = provider.logoUrl,
+                contentDescription = provider.name,
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }

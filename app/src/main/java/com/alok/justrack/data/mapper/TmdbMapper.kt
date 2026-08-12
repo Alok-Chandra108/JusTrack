@@ -1,9 +1,6 @@
 package com.alok.justrack.data.mapper
 
-import com.alok.justrack.data.api.TmdbMediaDto
-import com.alok.justrack.data.api.TmdbEpisodeDto
-import com.alok.justrack.data.api.TmdbSeasonDto
-import com.alok.justrack.data.api.TmdbPersonDto
+import com.alok.justrack.data.api.*
 import com.alok.justrack.data.model.*
 import com.alok.justrack.util.Constants
 import java.time.format.DateTimeFormatter
@@ -114,7 +111,8 @@ object TmdbMapper {
                 RatingSource("TMDb", String.format(Locale.US, "%.1f", voteAverage ?: 0.0))
             ),
             recommendations = recommendations?.results?.map { it.toMediaItem() } ?: emptyList(),
-            seasons = seasons?.map { it.toSeason(emptySet()) } ?: emptyList()
+            seasons = seasons?.map { it.toSeason(emptySet()) } ?: emptyList(),
+            watchProviders = watchProviders.toWatchProviders()
         )
     }
 
@@ -184,4 +182,23 @@ object TmdbMapper {
             dateStr
         }
     }
+
+    private fun TmdbWatchProvidersResponse?.toWatchProviders(): WatchProviders? {
+        if (this == null || results == null) return null
+        
+        val countryCode = Locale.getDefault().country
+        val regionResult = results[countryCode] ?: results["US"] ?: return null
+
+        return WatchProviders(
+            stream = regionResult.flatrate?.map { it.toWatchProvider() } ?: emptyList(),
+            rent = regionResult.rent?.map { it.toWatchProvider() } ?: emptyList(),
+            buy = regionResult.buy?.map { it.toWatchProvider() } ?: emptyList()
+        )
+    }
+
+    private fun TmdbWatchProviderItem.toWatchProvider() = WatchProvider(
+        id = providerId,
+        name = providerName,
+        logoUrl = logoPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W154}$it" } ?: ""
+    )
 }
