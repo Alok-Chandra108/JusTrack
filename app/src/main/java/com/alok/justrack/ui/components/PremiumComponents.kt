@@ -155,6 +155,7 @@ fun PosterInfoRow(
                 .then(sharedModifier)
                 .size(width = 120.dp, height = 175.dp)
                 .clip(RoundedCornerShape(10.dp))
+                .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         )
 
@@ -560,6 +561,7 @@ fun RecommendationItem(
                     .fillMaxWidth()
                     .height(150.dp)
                     .clip(RoundedCornerShape(10.dp))
+                    .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
 
@@ -638,6 +640,7 @@ fun PosterCard(
                         .height(190.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 )
                 
@@ -727,6 +730,7 @@ fun PosterOnlyCard(
                 .aspectRatio(2f / 3f)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                 .clickable { onClick() }
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         )

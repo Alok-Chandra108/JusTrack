@@ -551,6 +551,7 @@ private fun ExplorePosterCard(
                     .height(180.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
             
