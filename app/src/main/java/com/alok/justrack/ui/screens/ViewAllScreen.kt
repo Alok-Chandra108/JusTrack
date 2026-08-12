@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
+import com.alok.justrack.ui.components.CapsuleHeader
 import com.alok.justrack.ui.components.PosterCard
 import com.alok.justrack.ui.components.PosterOnlyCard
 import com.alok.justrack.ui.navigation.Screen
@@ -61,26 +62,26 @@ fun ViewAllScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         // --- Header ---
-        Row(
+        Box(
             modifier = Modifier
                 .statusBarsPadding()
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Back",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+            
+            CapsuleHeader(
+                title = title.uppercase()
             )
         }
 
@@ -93,9 +94,9 @@ fun ViewAllScreen(
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(filteredItems, key = { it.id + it.mediaType.name }) { item ->
