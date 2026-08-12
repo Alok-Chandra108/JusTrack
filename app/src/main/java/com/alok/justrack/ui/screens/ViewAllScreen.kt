@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.ui.components.PosterCard
+import com.alok.justrack.ui.components.PosterOnlyCard
 import com.alok.justrack.ui.navigation.Screen
 import com.alok.justrack.ui.theme.Background
 import com.alok.justrack.ui.theme.TextPrimary
@@ -98,7 +99,7 @@ fun ViewAllScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(filteredItems, key = { it.id + it.mediaType.name }) { item ->
-                    PosterCard(
+                    PosterOnlyCard(
                         item = item,
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
