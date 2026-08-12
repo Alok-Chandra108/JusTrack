@@ -30,6 +30,9 @@ interface WatchedEpisodeDao {
     @Query("SELECT COUNT(*) FROM watched_episodes WHERE showId = :showId AND seasonNumber = :seasonNumber")
     suspend fun getWatchedCountForSeason(showId: String, seasonNumber: Int): Int
 
+    @Query("SELECT COUNT(*) FROM watched_episodes WHERE showId = :showId")
+    suspend fun getWatchedEpisodeCountForShow(showId: String): Int
+
     @Query("SELECT MAX(watchedAt) FROM watched_episodes WHERE showId = :showId")
     suspend fun getLatestWatchActivityForShow(showId: String): Long?
     

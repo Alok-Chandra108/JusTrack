@@ -97,11 +97,15 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun removeFromWatchlist(id: String) {
         val existing = watchlistDao.getEntityById(id)
         if (existing != null) {
-            if (existing.isWatched) {
-                // If already watched, just remove from watchlist but keep the watched status
+            val hasProgress = if (existing.mediaType == MediaType.TV.name) {
+                watchedEpisodeDao.getWatchedEpisodeCountForShow(id) > 0
+            } else false
+
+            if (existing.isWatched || hasProgress) {
+                // Keep the record but remove from active watchlist if there is progress or it's fully watched
                 watchlistDao.insert(existing.copy(inWatchlist = false))
             } else {
-                // If not watched, delete entirely
+                // Delete entirely only if there's no progress
                 watchlistDao.deleteById(id)
             }
         }
