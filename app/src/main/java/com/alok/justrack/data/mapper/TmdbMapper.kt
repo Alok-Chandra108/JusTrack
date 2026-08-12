@@ -186,8 +186,9 @@ object TmdbMapper {
     private fun TmdbWatchProvidersResponse?.toWatchProviders(): WatchProviders? {
         if (this == null || results == null) return null
         
-        val countryCode = Locale.getDefault().country
-        val regionResult = results[countryCode] ?: results["US"] ?: return null
+        // Prioritize India (IN) as per user request, then fallback to device locale
+        val countryCode = Locale.getDefault().country.uppercase()
+        val regionResult = results["IN"] ?: results[countryCode] ?: return null
 
         return WatchProviders(
             stream = regionResult.flatrate?.map { it.toWatchProvider() } ?: emptyList(),

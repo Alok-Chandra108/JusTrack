@@ -34,6 +34,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.model.Season
 import com.alok.justrack.data.model.Episode
@@ -693,45 +695,53 @@ fun WatchProvidersSection(
         return
     }
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
         Text(
             text = "Where to Watch",
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold
         )
         
+        Spacer(modifier = Modifier.height(8.dp))
+        
         if (providers.stream.isNotEmpty()) {
-            ProviderRow(label = "Stream", providers = providers.stream)
+            ProviderRow(providers = providers.stream)
         } else if (providers.rent.isNotEmpty()) {
-            ProviderRow(label = "Rent", providers = providers.rent)
+            ProviderRow(providers = providers.rent)
         } else if (providers.buy.isNotEmpty()) {
-            ProviderRow(label = "Buy", providers = providers.buy)
+            ProviderRow(providers = providers.buy)
         }
 
+        Spacer(modifier = Modifier.height(4.dp))
+        
         Text(
             text = "Powered by JustWatch",
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            fontSize = 9.sp
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            fontSize = 10.sp
         )
     }
 }
 
 @Composable
-fun ProviderRow(label: String, providers: List<WatchProvider>) {
+fun ProviderRow(providers: List<WatchProvider>) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(vertical = 4.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         providers.take(6).forEach { provider ->
             AsyncImage(
                 model = provider.logoUrl,
                 contentDescription = provider.name,
                 modifier = Modifier
-                    .size(28.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop
             )
