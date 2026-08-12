@@ -403,6 +403,12 @@ class WatchlistViewModel @Inject constructor(
         }
     }
 
+    fun removeFromWatchlist(showId: String) {
+        viewModelScope.launch {
+            repository.removeFromWatchlist(showId)
+        }
+    }
+
     private fun calculateDaysAway(airDateString: String?): Long? {
         val airDate = DateUtils.parseDate(airDateString) ?: return null
         val today = LocalDate.now()

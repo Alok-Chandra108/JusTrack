@@ -335,6 +335,7 @@ fun MovieDetailsScreen(
                             movie = movie,
                             isInWatchlist = isInWatchlist,
                             isWatched = isWatched,
+                            showProgress = showProgress,
                             sharedTransitionScope = sharedTransitionScope,
                             animatedVisibilityScope = animatedVisibilityScope,
                             onWatchlistToggle = onWatchlistToggle,
@@ -366,6 +367,7 @@ fun MovieDetailsScreen(
                         isInWatchlist = isInWatchlist,
                         isWatched = isWatched,
                         releaseDate = movie.rawReleaseDate.ifEmpty { movie.releaseDate },
+                        isStopped = false,
                         onWatchlistToggle = onWatchlistToggle,
                         onWatchedToggle = onWatchedToggle
                     )
@@ -399,6 +401,7 @@ fun TvShowAboutSection(
     movie: MovieDetails,
     isInWatchlist: Boolean,
     isWatched: Boolean,
+    showProgress: com.alok.justrack.data.model.ShowProgress?,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onWatchlistToggle: () -> Unit,
@@ -420,6 +423,7 @@ fun TvShowAboutSection(
             isInWatchlist = isInWatchlist,
             isWatched = isWatched,
             releaseDate = movie.rawReleaseDate.ifEmpty { movie.releaseDate },
+            isStopped = !isInWatchlist && (showProgress?.watched ?: 0) > 0,
             onWatchlistToggle = onWatchlistToggle,
             onWatchedToggle = onWatchedToggle
         )

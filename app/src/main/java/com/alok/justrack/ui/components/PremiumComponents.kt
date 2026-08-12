@@ -31,6 +31,10 @@ import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.WatchLater
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -251,6 +255,7 @@ fun ActionButtons(
     isInWatchlist: Boolean,
     isWatched: Boolean,
     releaseDate: String = "",
+    isStopped: Boolean = false,
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit
 ) {
@@ -321,7 +326,7 @@ fun ActionButtons(
         }
 
         Button(
-            onClick = { if (isReleased) onWatchedToggle() },
+            onClick = { if (isReleased) { if (isStopped) onWatchlistToggle() else onWatchedToggle() } },
             enabled = isReleased,
             modifier = Modifier
                 .weight(1f)
@@ -341,14 +346,14 @@ fun ActionButtons(
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
-                if (isWatched) Icons.Filled.CheckCircle else Icons.Outlined.Visibility,
+                if (isStopped) Icons.Rounded.PlayArrow else if (isWatched) Icons.Filled.CheckCircle else Icons.Outlined.Visibility,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
                 tint = if (isReleased) watchedContent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                if (!isReleased) "Upcoming" else if (isWatched) "Watched" else "Mark Watched",
+                if (!isReleased) "Upcoming" else if (isStopped) "Continue" else if (isWatched) "Watched" else "Mark Watched",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp

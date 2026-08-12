@@ -200,6 +200,9 @@ private fun WatchlistTabContent(
                                     onWatchLaterToggle = {
                                         viewModel.toggleWatchLater(progress.showId, progress.isWatchLater)
                                     },
+                                    onStoppedWatching = {
+                                        viewModel.removeFromWatchlist(progress.showId)
+                                    },
                                     onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name)) }
                                 )
                             }
@@ -359,6 +362,7 @@ fun EpisodeTrackingCard(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onMarkWatched: () -> Unit,
     onWatchLaterToggle: () -> Unit,
+    onStoppedWatching: () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -398,34 +402,61 @@ fun EpisodeTrackingCard(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-        // --- Background (Watch Later Icon) ---
+        // --- Background Icons ---
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .clip(RoundedCornerShape(10.dp))
                 .background(
-                    if (progress.isWatchLater) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                    else MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                )
-                .padding(horizontal = 24.dp),
-            contentAlignment = Alignment.CenterEnd
-        ) {
-            val iconScale by animateFloatAsState(
-                targetValue = if (offsetX.value < -200f) 1.2f else 0.8f,
-                label = "icon_scale"
-            )
-            Icon(
-                imageVector = if (progress.isWatchLater) Icons.Rounded.RestartAlt else Icons.Rounded.WatchLater,
-                contentDescription = "Watch Later",
-                tint = if (progress.isWatchLater) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                modifier = Modifier
-                    .size(28.dp)
-                    .graphicsLayer {
-                        scaleX = iconScale
-                        scaleY = iconScale
-                        alpha = (kotlin.math.abs(offsetX.value) / 300f).coerceIn(0f, 1f)
+                    when {
+                        offsetX.value < 0 -> if (progress.isWatchLater) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                        offsetX.value > 0 -> MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                        else -> Color.Transparent
                     }
-            )
+                )
+                .padding(horizontal = 24.dp)
+        ) {
+            // Watch Later (Left Swipe - appears on right)
+            if (offsetX.value < 0) {
+                val iconScale by animateFloatAsState(
+                    targetValue = if (offsetX.value < -200f) 1.2f else 0.8f,
+                    label = "icon_scale_left"
+                )
+                Icon(
+                    imageVector = if (progress.isWatchLater) Icons.Rounded.RestartAlt else Icons.Rounded.WatchLater,
+                    contentDescription = "Watch Later",
+                    tint = if (progress.isWatchLater) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .align(Alignment.CenterEnd)
+                        .graphicsLayer {
+                            scaleX = iconScale
+                            scaleY = iconScale
+                            alpha = (kotlin.math.abs(offsetX.value) / 300f).coerceIn(0f, 1f)
+                        }
+                )
+            }
+
+            // Stopped Watching (Right Swipe - appears on left)
+            if (offsetX.value > 0) {
+                val iconScale by animateFloatAsState(
+                    targetValue = if (offsetX.value > 200f) 1.2f else 0.8f,
+                    label = "icon_scale_right"
+                )
+                Icon(
+                    imageVector = Icons.Rounded.VisibilityOff,
+                    contentDescription = "Stopped Watching",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .align(Alignment.CenterStart)
+                        .graphicsLayer {
+                            scaleX = iconScale
+                            scaleY = iconScale
+                            alpha = (offsetX.value / 300f).coerceIn(0f, 1f)
+                        }
+                )
+            }
         }
 
         // --- Foreground Card ---
@@ -438,23 +469,31 @@ fun EpisodeTrackingCard(
                         onHorizontalDrag = { change, dragAmount ->
                             change.consume()
                             scope.launch {
-                                // Clamp swipe to left only
-                                val newOffset = (offsetX.value + dragAmount).coerceAtMost(0f)
+                                // Allow bidirectional swipe
+                                val newOffset = offsetX.value + dragAmount
                                 offsetX.snapTo(newOffset)
                             }
                         },
                         onDragEnd = {
                             scope.launch {
                                 if (offsetX.value < -400f) {
-                                    // Full swipe -> Discard animation
+                                    // Full swipe Left -> Watch Later
                                     offsetX.animateTo(-size.width.toFloat(), tween(300))
                                     onWatchLaterToggle()
-                                    // Reset offset after toggle
+                                    kotlinx.coroutines.delay(500)
+                                    offsetX.snapTo(0f)
+                                } else if (offsetX.value > 400f) {
+                                    // Full swipe Right -> Stopped Watching
+                                    offsetX.animateTo(size.width.toFloat(), tween(300))
+                                    onStoppedWatching()
                                     kotlinx.coroutines.delay(500)
                                     offsetX.snapTo(0f)
                                 } else if (offsetX.value < -150f) {
-                                    // Partial swipe -> Reveal icon
+                                    // Partial swipe Left -> Reveal Watch Later icon
                                     offsetX.animateTo(-250f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+                                } else if (offsetX.value > 150f) {
+                                    // Partial swipe Right -> Reveal Stopped icon
+                                    offsetX.animateTo(250f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
                                 } else {
                                     // Cancel swipe
                                     offsetX.animateTo(0f, spring())
