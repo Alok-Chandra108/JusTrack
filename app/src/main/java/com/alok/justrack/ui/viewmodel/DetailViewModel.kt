@@ -93,7 +93,11 @@ class DetailViewModel @Inject constructor(
                             ep.copy(isWatched = watchedEps.contains("S${ep.seasonNumber}E${ep.episodeNumber}"))
                         }
                         
-                        val watchedCount = episodesWithWatchedStatus.count { it.isWatched }
+                        val watchedCount = if (episodesWithWatchedStatus.isNotEmpty()) {
+                            episodesWithWatchedStatus.count { it.isWatched }
+                        } else {
+                            watchedEps.count { it.startsWith("S${season.seasonNumber}E") }
+                        }
                         
                         season.copy(
                             watchedCount = watchedCount,
@@ -158,7 +162,9 @@ class DetailViewModel @Inject constructor(
     val isInWatchlist: StateFlow<Boolean> = _isInWatchlist
 
     private val _isWatched = MutableStateFlow(false)
-    val isWatched: StateFlow<Boolean> = _isWatched
+    val isWatched: StateFlow<Boolean> = combine(_isWatched, showProgress) { isWatched, progress ->
+        isWatched || (progress != null && progress.percentage == 100)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _isFavourite = MutableStateFlow(false)
     val isFavourite: StateFlow<Boolean> = _isFavourite
