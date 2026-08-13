@@ -291,7 +291,7 @@ fun MovieDetailsScreen(
             if (movie.mediaType == MediaType.TV && showProgress != null) {
                 EpisodeProgressBar(
                     progress = showProgress,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 0.dp)
                 )
             }
 

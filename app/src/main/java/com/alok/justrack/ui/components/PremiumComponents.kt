@@ -99,10 +99,10 @@ fun BackdropHeader(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.3f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
                             MaterialTheme.colorScheme.background
                         ),
-                        startY = 150f
+                        startY = 400f
                     )
                 )
         )
