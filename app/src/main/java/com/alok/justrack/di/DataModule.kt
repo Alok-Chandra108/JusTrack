@@ -45,7 +45,7 @@ abstract class DataModule {
                 context,
                 AppDatabase::class.java,
                 "justrack.db"
-            ).addMigrations(AppDatabase.MIGRATION_7_8)
+            ).addMigrations(AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9)
             .build()
         }
 

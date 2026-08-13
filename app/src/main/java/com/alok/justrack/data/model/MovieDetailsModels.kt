@@ -73,6 +73,7 @@ data class Episode(
     val episodeNumber: Int,
     val airDate: String?,
     val voteAverage: Double,
+    val runtime: Int = 0,
     val isWatched: Boolean = false
 )
 

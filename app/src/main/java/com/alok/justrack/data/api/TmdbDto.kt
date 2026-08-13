@@ -70,7 +70,8 @@ data class TmdbEpisodeDto(
     @SerializedName("season_number") val seasonNumber: Int,
     @SerializedName("episode_number") val episodeNumber: Int,
     @SerializedName("air_date") val airDate: String?,
-    @SerializedName("vote_average") val voteAverage: Double?
+    @SerializedName("vote_average") val voteAverage: Double?,
+    @SerializedName("runtime") val runtime: Int?
 )
 
 data class TmdbReleaseDatesResponse(

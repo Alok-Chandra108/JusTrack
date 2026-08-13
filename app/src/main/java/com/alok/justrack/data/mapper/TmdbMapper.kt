@@ -51,10 +51,37 @@ object TmdbMapper {
         val posterUrl = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" }
         val backdropUrl = backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" }
 
-        val runtimeStr = when {
-            runtime != null -> "${runtime / 60}h ${runtime % 60}m"
-            episodeRunTime != null && episodeRunTime.isNotEmpty() -> "${episodeRunTime.first()}m"
-            else -> "-"
+        val avgRuntime = when {
+            episodeRunTime != null && episodeRunTime.isNotEmpty() -> episodeRunTime.first()
+            originalLanguage == "ja" -> 24
+            else -> 45
+        }
+
+        val runtimeStr = when (detectedType) {
+            MediaType.MOVIE -> {
+                if (runtime != null) "${runtime / 60}h ${runtime % 60}m" else "-"
+            }
+            MediaType.TV -> {
+                // Initial estimate of total aired duration
+                val today = java.time.LocalDate.now()
+                val airedEpisodesCount = seasons?.filter { it.seasonNumber > 0 }
+                    ?.filter { 
+                        val airDate = com.alok.justrack.util.DateUtils.parseDate(it.airDate)
+                        airDate != null && !airDate.isAfter(today)
+                    }
+                    ?.sumOf { it.episodeCount ?: 0 } ?: 0
+                
+                val totalMinutes = airedEpisodesCount * avgRuntime
+                if (totalMinutes > 0) {
+                    val h = totalMinutes / 60
+                    val m = totalMinutes % 60
+                    if (h > 0) "${h}h ${m}m" else "${m}m"
+                } else if (avgRuntime > 0) {
+                    "${avgRuntime}m" 
+                } else {
+                    "-"
+                }
+            }
         }
 
         val castMembers = credits?.cast?.map {
@@ -111,13 +138,13 @@ object TmdbMapper {
                 RatingSource("TMDb", String.format(Locale.US, "%.1f", voteAverage ?: 0.0))
             ),
             recommendations = recommendations?.results?.map { it.toMediaItem() } ?: emptyList(),
-            seasons = seasons?.map { it.toSeason(emptySet()) } ?: emptyList(),
+            seasons = seasons?.map { it.toSeason(emptySet(), avgRuntime) } ?: emptyList(),
             watchProviders = watchProviders.toWatchProviders()
         )
     }
 
-    fun TmdbSeasonDto.toSeason(watchedEpisodes: Set<String>): Season {
-        val mappedEpisodes = episodes?.map { it.toEpisode(watchedEpisodes.contains("S${it.seasonNumber}E${it.episodeNumber}")) } ?: emptyList()
+    fun TmdbSeasonDto.toSeason(watchedEpisodes: Set<String>, fallbackRuntime: Int = 0): Season {
+        val mappedEpisodes = episodes?.map { it.toEpisode(watchedEpisodes.contains("S${it.seasonNumber}E${it.episodeNumber}"), fallbackRuntime) } ?: emptyList()
         return Season(
             id = id.toString(),
             name = name,
@@ -130,7 +157,7 @@ object TmdbMapper {
         )
     }
 
-    fun TmdbEpisodeDto.toEpisode(isWatched: Boolean): Episode {
+    fun TmdbEpisodeDto.toEpisode(isWatched: Boolean, fallbackRuntime: Int = 0): Episode {
         return Episode(
             id = id.toString(),
             name = name,
@@ -140,11 +167,12 @@ object TmdbMapper {
             episodeNumber = episodeNumber,
             airDate = airDate,
             voteAverage = voteAverage ?: 0.0,
+            runtime = if (runtime != null && runtime > 0) runtime else fallbackRuntime,
             isWatched = isWatched
         )
     }
 
-    fun TmdbEpisodeDto.toEntity(showId: String): com.alok.justrack.data.db.EpisodeEntity {
+    fun TmdbEpisodeDto.toEntity(showId: String, fallbackRuntime: Int = 0): com.alok.justrack.data.db.EpisodeEntity {
         return com.alok.justrack.data.db.EpisodeEntity(
             showId = showId,
             seasonNumber = seasonNumber,
@@ -153,7 +181,8 @@ object TmdbMapper {
             overview = overview,
             airDate = airDate,
             stillPath = stillPath,
-            voteAverage = voteAverage
+            voteAverage = voteAverage,
+            runtime = if (runtime != null && runtime > 0) runtime else fallbackRuntime
         )
     }
 

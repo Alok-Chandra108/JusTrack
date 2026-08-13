@@ -30,5 +30,6 @@ data class EpisodeEntity(
     val overview: String?,
     val airDate: String?, // Release/air date in string format (YYYY-MM-DD)
     val stillPath: String?, // Path to episode still image
-    val voteAverage: Double? = null
+    val voteAverage: Double? = null,
+    val runtime: Int = 0
 )

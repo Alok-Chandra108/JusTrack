@@ -261,13 +261,19 @@ class TmdbMediaRepository @Inject constructor(
             val tvDetails = apiService.getTvDetails(showId)
             val seasons = tvDetails.seasons ?: return
             
+            val fallbackRuntime = when {
+                tvDetails.episodeRunTime != null && tvDetails.episodeRunTime.isNotEmpty() -> tvDetails.episodeRunTime.first()
+                tvDetails.originalLanguage == "ja" -> 24
+                else -> 45
+            }
+
             coroutineScope {
                 seasons.map { seasonDto ->
                     async {
                         try {
                             val seasonDetails = apiService.getTvSeasonDetails(showId, seasonDto.seasonNumber)
                             val entities = seasonDetails.episodes?.map { episodeDto ->
-                                episodeDto.toEntity(showId)
+                                episodeDto.toEntity(showId, fallbackRuntime)
                             } ?: emptyList()
                             episodeDao.insertAll(entities)
                             _episodesUpdateEvents.emit(Unit)
@@ -284,13 +290,20 @@ class TmdbMediaRepository @Inject constructor(
 
     override suspend fun getSeasonDetails(tvId: String, seasonNumber: Int): Season? {
         return try {
+            val tvDetails = apiService.getTvDetails(tvId)
+            val fallbackRuntime = when {
+                tvDetails.episodeRunTime != null && tvDetails.episodeRunTime.isNotEmpty() -> tvDetails.episodeRunTime.first()
+                tvDetails.originalLanguage == "ja" -> 24
+                else -> 45
+            }
+
             val response = apiService.getTvSeasonDetails(tvId, seasonNumber)
             val watchedEpisodes = watchedEpisodeDao.getWatchedEpisodesForShowOnce(tvId)
                 .filter { it.seasonNumber == seasonNumber }
                 .map { "S${it.seasonNumber}E${it.episodeNumber}" }
                 .toSet()
             
-            response.toSeason(watchedEpisodes)
+            response.toSeason(watchedEpisodes, fallbackRuntime)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -402,6 +415,12 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun getReleasedEpisodeCount(showId: String): Int {
         val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         return episodeDao.getReleasedEpisodeCount(showId, today)
+    }
+
+    override fun getTotalAiredRuntimeFlow(showId: String): Flow<Int> {
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        return episodeDao.getTotalAiredRuntimeFlow(showId, today)
+            .map { it ?: 0 }
     }
 
     override suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int? {

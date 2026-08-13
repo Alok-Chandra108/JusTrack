@@ -35,6 +35,7 @@ class DetailViewModel @Inject constructor(
     private var syncJob: Job? = null
 
     private val _releasedEpisodeCount = MutableStateFlow(0)
+    private val _totalAiredRuntime = MutableStateFlow(0)
     
     val showCompletionEvents: Flow<String> = repository.showCompletionEvents
 
@@ -50,9 +51,27 @@ class DetailViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     // Reactive UI state that filters recommendations based on watched status
-    val uiState: StateFlow<DetailUiState> = combine(_rawDetails, _watchedIds, _watchlistIds, _watchedEpisodes, _recommendationSeed) { state, watched, inWatchlistIds, watchedEps, seed ->
+    val uiState: StateFlow<DetailUiState> = combine(
+        _rawDetails, 
+        _watchedIds, 
+        _watchlistIds, 
+        _watchedEpisodes, 
+        _recommendationSeed, 
+        _totalAiredRuntime
+    ) { flows ->
+        @Suppress("UNCHECKED_CAST")
+        val state = flows[0] as DetailUiState
+        @Suppress("UNCHECKED_CAST")
+        val watched = flows[1] as Set<String>
+        @Suppress("UNCHECKED_CAST")
+        val inWatchlistIds = flows[2] as Set<String>
+        @Suppress("UNCHECKED_CAST")
+        val watchedEps = flows[3] as Set<String>
+        val seed = flows[4] as Int
+        val totalRuntime = flows[5] as Int
+
         if (state is DetailUiState.Success) {
-            val filteredRecs = state.item.recommendations.filter { it.id !in watched }
+            val filteredRecs = state.item.recommendations.filter { it.id !in watched && it.id !in inWatchlistIds }
             
             // Process recommendations (Shuffle and map watchlist status)
             val processedRecs = if (filteredRecs.isNotEmpty()) {
@@ -63,7 +82,14 @@ class DetailViewModel @Inject constructor(
 
             // For TV shows, ensure episodes in seasons reflect latest watched status and update counts
             val finalItem = if (state.item.mediaType == MediaType.TV) {
+                val formattedRuntime = if (totalRuntime > 0) {
+                    val h = totalRuntime / 60
+                    val m = totalRuntime % 60
+                    if (h > 0) "${h}h ${m}m" else "${m}m"
+                } else state.item.runtime // Fallback to estimate if precise is 0
+
                 state.item.copy(
+                    runtime = formattedRuntime,
                     recommendations = processedRecs,
                     seasons = state.item.seasons.map { season ->
                         val seasonWatchedEps = watchedEps.filter { it.startsWith("S${season.seasonNumber}E") }
@@ -183,9 +209,14 @@ class DetailViewModel @Inject constructor(
         watchedEpisodesJob?.cancel()
         _watchedEpisodes.value = emptySet()
         _releasedEpisodeCount.value = 0
+        _totalAiredRuntime.value = 0
         if (currentMediaType == MediaType.TV) {
             watchedEpisodesJob = repository.getWatchedEpisodesFlow(id)
                 .onEach { _watchedEpisodes.value = it.toSet() }
+                .launchIn(viewModelScope)
+            
+            repository.getTotalAiredRuntimeFlow(id)
+                .onEach { _totalAiredRuntime.value = it }
                 .launchIn(viewModelScope)
                 
             // Sync episodes to get accurate counts

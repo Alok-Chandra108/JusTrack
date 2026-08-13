@@ -273,7 +273,7 @@ class WatchlistViewModel @Inject constructor(
                                     showId = show.id,
                                     showName = show.title,
                                     showPosterPath = show.posterPath,
-                                    episode = Episode("-1", "Syncing episodes...", "", null, 1, 1, null, 0.0, false),
+                                    episode = Episode("-1", "Syncing episodes...", "", null, 1, 1, null, 0.0, 0, false),
                                     isPremiere = false,
                                     isFinale = false,
                                     isNew = false,

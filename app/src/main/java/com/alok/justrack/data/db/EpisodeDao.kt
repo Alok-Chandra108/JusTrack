@@ -88,4 +88,11 @@ interface EpisodeDao {
 
     @Query("SELECT * FROM episode_entity WHERE showId = :showId AND airDate >= :today ORDER BY airDate ASC")
     suspend fun getFutureEpisodes(showId: String, today: String): List<EpisodeEntity>
+
+    @Query("""
+        SELECT SUM(runtime) FROM episode_entity
+        WHERE showId = :showId AND seasonNumber > 0
+          AND (airDate IS NULL OR airDate <= :today)
+    """)
+    fun getTotalAiredRuntimeFlow(showId: String, today: String): Flow<Int?>
 }
