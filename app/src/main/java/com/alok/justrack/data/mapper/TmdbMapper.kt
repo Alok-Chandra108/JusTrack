@@ -51,15 +51,16 @@ object TmdbMapper {
         val posterUrl = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" }
         val backdropUrl = backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" }
 
+        val isAnimation = genres?.any { it.id == 16 } == true
         val avgRuntime = when {
             episodeRunTime != null && episodeRunTime.isNotEmpty() -> episodeRunTime.first()
-            originalLanguage == "ja" -> 24
+            isAnimation || originalLanguage == "ja" -> 24
             else -> 45
         }
 
         val runtimeStr = when (detectedType) {
             MediaType.MOVIE -> {
-                if (runtime != null) "${runtime / 60}h ${runtime % 60}m" else "-"
+                com.alok.justrack.util.DateUtils.formatMinutes(runtime ?: 0)
             }
             MediaType.TV -> {
                 // Initial estimate of total aired duration
@@ -72,14 +73,8 @@ object TmdbMapper {
                     ?.sumOf { it.episodeCount ?: 0 } ?: 0
                 
                 val totalMinutes = airedEpisodesCount * avgRuntime
-                if (totalMinutes > 0) {
-                    val h = totalMinutes / 60
-                    val m = totalMinutes % 60
-                    if (h > 0) "${h}h ${m}m" else "${m}m"
-                } else if (avgRuntime > 0) {
-                    "${avgRuntime}m" 
-                } else {
-                    "-"
+                com.alok.justrack.util.DateUtils.formatMinutes(totalMinutes).ifEmpty { 
+                    com.alok.justrack.util.DateUtils.formatMinutes(avgRuntime) 
                 }
             }
         }

@@ -268,20 +268,22 @@ class TmdbMediaRepository @Inject constructor(
             }
 
             coroutineScope {
-                seasons.map { seasonDto ->
-                    async {
-                        try {
-                            val seasonDetails = apiService.getTvSeasonDetails(showId, seasonDto.seasonNumber)
-                            val entities = seasonDetails.episodes?.map { episodeDto ->
-                                episodeDto.toEntity(showId, fallbackRuntime)
-                            } ?: emptyList()
-                            episodeDao.insertAll(entities)
-                            _episodesUpdateEvents.emit(Unit)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                seasons.chunked(5).forEach { chunk ->
+                    chunk.map { seasonDto ->
+                        async {
+                            try {
+                                val seasonDetails = apiService.getTvSeasonDetails(showId, seasonDto.seasonNumber)
+                                val entities = seasonDetails.episodes?.map { episodeDto ->
+                                    episodeDto.toEntity(showId, fallbackRuntime)
+                                } ?: emptyList()
+                                episodeDao.insertAll(entities)
+                                _episodesUpdateEvents.emit(Unit)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
-                    }
-                }.awaitAll()
+                    }.awaitAll()
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()

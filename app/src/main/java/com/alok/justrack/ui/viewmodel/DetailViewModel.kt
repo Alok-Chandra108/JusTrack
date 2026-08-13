@@ -71,37 +71,33 @@ class DetailViewModel @Inject constructor(
         val totalRuntime = flows[5] as Int
 
         if (state is DetailUiState.Success) {
+            // 1. Process Recommendations (Only depends on watched, inWatchlistIds, and seed)
             val filteredRecs = state.item.recommendations.filter { it.id !in watched && it.id !in inWatchlistIds }
-            
-            // Process recommendations (Shuffle and map watchlist status)
             val processedRecs = if (filteredRecs.isNotEmpty()) {
                 filteredRecs.shuffled(java.util.Random(seed.toLong())).map { 
                     it.copy(inWatchlist = it.id in inWatchlistIds) 
                 }
             } else emptyList()
 
-            // For TV shows, ensure episodes in seasons reflect latest watched status and update counts
+            // 2. Process TV Content (Only depends on watchedEps and totalRuntime)
             val finalItem = if (state.item.mediaType == MediaType.TV) {
                 val formattedRuntime = if (totalRuntime > 0) {
-                    val h = totalRuntime / 60
-                    val m = totalRuntime % 60
-                    if (h > 0) "${h}h ${m}m" else "${m}m"
-                } else state.item.runtime // Fallback to estimate if precise is 0
+                    com.alok.justrack.util.DateUtils.formatMinutes(totalRuntime)
+                } else state.item.runtime
 
                 state.item.copy(
                     runtime = formattedRuntime,
                     recommendations = processedRecs,
                     seasons = state.item.seasons.map { season ->
-                        val seasonWatchedEps = watchedEps.filter { it.startsWith("S${season.seasonNumber}E") }
                         val episodesWithWatchedStatus = season.episodes.map { ep ->
                             ep.copy(isWatched = watchedEps.contains("S${ep.seasonNumber}E${ep.episodeNumber}"))
                         }
                         
+                        val watchedCount = episodesWithWatchedStatus.count { it.isWatched }
+                        
                         season.copy(
-                            watchedCount = seasonWatchedEps.size,
-                            // If we have detailed episodes, use them. Otherwise keep current.
+                            watchedCount = watchedCount,
                             episodes = if (episodesWithWatchedStatus.isNotEmpty()) episodesWithWatchedStatus else season.episodes,
-                            // Ensure total count is updated if episodes are present but count is 0
                             episodeCount = if (season.episodeCount == 0 && episodesWithWatchedStatus.isNotEmpty()) episodesWithWatchedStatus.size else season.episodeCount
                         )
                     }

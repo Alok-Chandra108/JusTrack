@@ -32,4 +32,18 @@ object DateUtils {
         val today = LocalDate.now()
         return ChronoUnit.DAYS.between(today, targetDate)
     }
+
+    /**
+     * Formats total minutes into "Xh Ym" or "Ym" format.
+     */
+    fun formatMinutes(totalMinutes: Int): String {
+        if (totalMinutes <= 0) return "-"
+        val h = totalMinutes / 60
+        val m = totalMinutes % 60
+        return when {
+            h > 0 && m > 0 -> "${h}h ${m}m"
+            h > 0 -> "${h}h"
+            else -> "${m}m"
+        }
+    }
 }
