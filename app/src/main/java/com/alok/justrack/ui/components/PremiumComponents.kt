@@ -346,14 +346,14 @@ fun ActionButtons(
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
-                if (isStopped) Icons.Rounded.PlayArrow else if (isWatched) Icons.Filled.CheckCircle else Icons.Outlined.Visibility,
+                if (isWatched) Icons.Filled.CheckCircle else if (isStopped) Icons.Rounded.PlayArrow else Icons.Outlined.Visibility,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
                 tint = if (isReleased) watchedContent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                if (!isReleased) "Upcoming" else if (isStopped) "Continue" else if (isWatched) "Watched" else "Mark Watched",
+                if (!isReleased) "Upcoming" else if (isWatched) "Watched" else if (isStopped) "Continue" else "Mark Watched",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp

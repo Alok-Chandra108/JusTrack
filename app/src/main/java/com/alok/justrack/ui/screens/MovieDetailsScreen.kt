@@ -432,7 +432,7 @@ fun TvShowAboutSection(
             isInWatchlist = isInWatchlist,
             isWatched = isWatched,
             releaseDate = movie.rawReleaseDate.ifEmpty { movie.releaseDate },
-            isStopped = !isInWatchlist && (showProgress?.watched ?: 0) > 0,
+            isStopped = !isInWatchlist && (showProgress?.watched ?: 0) > 0 && (showProgress?.percentage ?: 0) < 100,
             onWatchlistToggle = onWatchlistToggle,
             onWatchedToggle = onWatchedToggle
         )
