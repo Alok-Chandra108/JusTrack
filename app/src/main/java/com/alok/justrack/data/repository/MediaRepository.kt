@@ -69,6 +69,12 @@ interface MediaRepository {
     suspend fun getFutureEpisodes(showId: String): List<Episode>
     suspend fun getLatestWatchActivity(showId: String): Long?
 
+    // Stats
+    fun getTotalWatchedTvRuntimeFlow(): Flow<Int>
+    fun getTotalWatchedEpisodeCountFlow(): Flow<Int>
+    fun getTotalWatchedMovieRuntimeFlow(): Flow<Int>
+    fun getTotalWatchedMovieCountFlow(): Flow<Int>
+
     // Person
     suspend fun getPersonDetails(id: String): PersonDetails?
 }

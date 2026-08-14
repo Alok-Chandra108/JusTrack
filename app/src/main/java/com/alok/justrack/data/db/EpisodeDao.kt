@@ -95,4 +95,17 @@ interface EpisodeDao {
           AND (airDate IS NULL OR airDate <= :today)
     """)
     fun getTotalAiredRuntimeFlow(showId: String, today: String): Flow<Int?>
+
+    @Query("""
+        SELECT SUM(ee.runtime) 
+        FROM episode_entity ee
+        INNER JOIN watched_episodes we ON ee.showId = we.showId 
+          AND ee.seasonNumber = we.seasonNumber 
+          AND ee.episodeNumber = we.episodeNumber
+        WHERE ee.seasonNumber > 0
+    """)
+    fun getTotalWatchedTvRuntimeFlow(): Flow<Int?>
+
+    @Query("SELECT COUNT(*) FROM watched_episodes WHERE seasonNumber > 0")
+    fun getTotalWatchedEpisodeCountFlow(): Flow<Int>
 }

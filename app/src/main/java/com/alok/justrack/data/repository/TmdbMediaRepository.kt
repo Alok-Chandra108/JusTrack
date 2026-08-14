@@ -425,6 +425,18 @@ class TmdbMediaRepository @Inject constructor(
             .map { it ?: 0 }
     }
 
+    override fun getTotalWatchedTvRuntimeFlow(): Flow<Int> = 
+        episodeDao.getTotalWatchedTvRuntimeFlow().map { it ?: 0 }
+
+    override fun getTotalWatchedEpisodeCountFlow(): Flow<Int> = 
+        episodeDao.getTotalWatchedEpisodeCountFlow()
+
+    override fun getTotalWatchedMovieRuntimeFlow(): Flow<Int> = 
+        watchlistDao.getTotalWatchedMovieRuntimeFlow().map { it ?: 0 }
+
+    override fun getTotalWatchedMovieCountFlow(): Flow<Int> = 
+        watchlistDao.getTotalWatchedMovieCountFlow()
+
     override suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int? {
         return episodeDao.getMaxEpisodeNumberForSeason(showId, seasonNumber)
     }
@@ -494,6 +506,7 @@ class TmdbMediaRepository @Inject constructor(
         isWatched = isWatched,
         inWatchlist = inWatchlist,
         isWatchLater = isWatchLater,
+        runtime = runtime,
         addedAt = addedAt
     )
 
@@ -509,6 +522,7 @@ class TmdbMediaRepository @Inject constructor(
         isWatched = isWatched,
         inWatchlist = inWatchlist,
         isWatchLater = isWatchLater,
+        runtime = runtime,
         addedAt = addedAt
     )
 

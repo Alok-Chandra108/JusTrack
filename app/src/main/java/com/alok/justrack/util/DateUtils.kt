@@ -46,4 +46,21 @@ object DateUtils {
             else -> "${m}m"
         }
     }
+
+    /**
+     * Converts minutes into a WatchTime object with months, days, and hours.
+     * Assumes 1 month = 30 days.
+     */
+    fun toWatchTime(totalMinutes: Int): com.alok.justrack.data.model.WatchTime {
+        if (totalMinutes <= 0) return com.alok.justrack.data.model.WatchTime()
+        
+        val totalHours = totalMinutes / 60
+        val totalDays = totalHours / 24
+        
+        val months = totalDays / 30
+        val days = totalDays % 30
+        val hours = totalHours % 24
+        
+        return com.alok.justrack.data.model.WatchTime(months, days, hours)
+    }
 }

@@ -55,15 +55,30 @@ class WatchlistViewModel @Inject constructor(
         )
 
     // Stats derived from watchlist
-    val stats: StateFlow<StatsData?> = watchlistItems.map { items ->
+    val stats: StateFlow<StatsData?> = combine(
+        watchlistItems,
+        repository.getTotalWatchedTvRuntimeFlow(),
+        repository.getTotalWatchedEpisodeCountFlow(),
+        repository.getTotalWatchedMovieRuntimeFlow(),
+        repository.getTotalWatchedMovieCountFlow()
+    ) { items, tvMinutes, epCount, movieMinutes, movieCount ->
         val total = items.size
-        val watchedMovies = items.count { it.mediaType == MediaType.MOVIE && it.isWatched }
-        val watchedShows = items.count { it.mediaType == MediaType.TV && it.isWatched }
         val avgRating = if (total > 0) {
             Math.round(items.map { it.rating * 10 }.average()) / 10.0
         } else 0.0
         val topTitle = items.maxByOrNull { it.rating }?.title ?: "-"
-        StatsData(total, watchedMovies, watchedShows, avgRating, topTitle)
+        
+        StatsData(
+            totalItems = total,
+            movieCount = items.count { it.mediaType == MediaType.MOVIE && it.isWatched },
+            tvCount = items.count { it.mediaType == MediaType.TV && it.isWatched },
+            averageRating = avgRating,
+            topRatedTitle = topTitle,
+            showWatchTime = DateUtils.toWatchTime(tvMinutes),
+            episodesWatched = epCount,
+            movieWatchTime = DateUtils.toWatchTime(movieMinutes),
+            moviesWatched = movieCount
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,

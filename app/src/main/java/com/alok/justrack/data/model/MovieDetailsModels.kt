@@ -39,6 +39,7 @@ data class MovieDetails(
     val releaseDate: String,
     val rawReleaseDate: String = "",
     val runtime: String,
+    val runtimeInt: Int = 0,
     val certification: String,
     val director: List<Person>,
     val originalLanguage: String = "",

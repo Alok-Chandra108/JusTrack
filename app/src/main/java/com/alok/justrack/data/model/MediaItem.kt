@@ -12,6 +12,7 @@ data class MediaItem(
     val isWatched: Boolean = false,
     val inWatchlist: Boolean = false,
     val isWatchLater: Boolean = false,
+    val runtime: Int = 0,
     val addedAt: Long = System.currentTimeMillis()
 )
 

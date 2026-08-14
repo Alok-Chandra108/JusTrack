@@ -8,6 +8,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -1015,6 +1017,181 @@ fun ProfileHeader(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+fun StatsHorizontalRow(
+    stats: com.alok.justrack.data.model.StatsData,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Stats",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Icon(
+                imageVector = Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 1. TV Watch Time
+            WatchTimeStatCard(
+                label = "TV time",
+                watchTime = stats.showWatchTime,
+                icon = Icons.Outlined.Tv
+            )
+
+            // 2. Episodes Watched
+            SimpleStatCard(
+                label = "Episodes watched",
+                value = stats.episodesWatched.toString(),
+                icon = Icons.Outlined.LibraryBooks
+            )
+
+            // 3. Movie Watch Time
+            WatchTimeStatCard(
+                label = "Movie time",
+                watchTime = stats.movieWatchTime,
+                icon = Icons.Outlined.Movie
+            )
+
+            // 4. Movies Watched
+            SimpleStatCard(
+                label = "Movies watched",
+                value = stats.moviesWatched.toString(),
+                icon = Icons.Outlined.LocalActivity
+            )
+        }
+    }
+}
+
+@Composable
+private fun WatchTimeStatCard(
+    label: String,
+    watchTime: com.alok.justrack.data.model.WatchTime,
+    icon: ImageVector
+) {
+    Surface(
+        modifier = Modifier.width(180.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TimeComponent(value = watchTime.months.toString(), label = "MONTHS")
+                TimeComponent(value = watchTime.days.toString(), label = "DAY")
+                TimeComponent(value = watchTime.hours.toString(), label = "HOURS")
+            }
+        }
+    }
+}
+
+@Composable
+private fun SimpleStatCard(
+    label: String,
+    value: String,
+    icon: ImageVector
+) {
+    Surface(
+        modifier = Modifier.width(150.dp).height(92.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeComponent(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Medium
         )
     }
 }

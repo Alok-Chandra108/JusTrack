@@ -50,4 +50,10 @@ interface WatchlistDao {
 
     @Query("SELECT customBackdropPath FROM watchlist WHERE id = :id")
     suspend fun getCustomBackdrop(id: String): String?
+
+    @Query("SELECT SUM(runtime) FROM watchlist WHERE mediaType = 'MOVIE' AND isWatched = 1")
+    fun getTotalWatchedMovieRuntimeFlow(): Flow<Int?>
+
+    @Query("SELECT COUNT(*) FROM watchlist WHERE mediaType = 'MOVIE' AND isWatched = 1")
+    fun getTotalWatchedMovieCountFlow(): Flow<Int>
 }

@@ -15,6 +15,7 @@ data class WatchlistEntity(
     val rating: Double,
     val releaseDate: String,
     val mediaType: String,
+    val runtime: Int = 0,
     val addedAt: Long = System.currentTimeMillis(),
     val isWatched: Boolean = false,
     val inWatchlist: Boolean = false,

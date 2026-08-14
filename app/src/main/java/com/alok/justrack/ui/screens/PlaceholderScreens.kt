@@ -518,11 +518,15 @@ fun ProfileScreen(
                     
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 2. Stats Section (Dual Stats)
-                    DualStatsRow(
-                        movieCount = stats?.movieCount ?: 0,
-                        showCount = stats?.tvCount ?: 0
-                    )
+                    // 2. Stats Section (Horizontal Scrollable)
+                    stats?.let { statsData ->
+                        StatsHorizontalRow(stats = statsData)
+                    } ?: run {
+                        DualStatsRow(
+                            movieCount = stats?.movieCount ?: 0,
+                            showCount = stats?.tvCount ?: 0
+                        )
+                    }
                     
                     Spacer(modifier = Modifier.height(24.dp))
 

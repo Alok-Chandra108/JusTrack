@@ -272,5 +272,11 @@ class SupabaseMediaRepository @Inject constructor(
     override suspend fun getFutureEpisodes(showId: String): List<Episode> = emptyList()
     override suspend fun getLatestWatchActivity(showId: String): Long? = null
 
+    // Stats (stubs)
+    override fun getTotalWatchedTvRuntimeFlow(): Flow<Int> = flow { emit(0) }
+    override fun getTotalWatchedEpisodeCountFlow(): Flow<Int> = flow { emit(0) }
+    override fun getTotalWatchedMovieRuntimeFlow(): Flow<Int> = flow { emit(0) }
+    override fun getTotalWatchedMovieCountFlow(): Flow<Int> = flow { emit(0) }
+
     override suspend fun getPersonDetails(id: String): PersonDetails? = null
 }

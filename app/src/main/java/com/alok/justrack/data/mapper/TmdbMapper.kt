@@ -34,7 +34,8 @@ object TmdbMapper {
             backdropPath = backdropUrl,
             rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
             releaseDate = rawDate,
-            mediaType = detectedType
+            mediaType = detectedType,
+            runtime = runtime ?: episodeRunTime?.firstOrNull() ?: 0
         )
     }
 
@@ -122,6 +123,7 @@ object TmdbMapper {
             releaseDate = formatDate(rawDate),
             rawReleaseDate = rawDate,
             runtime = runtimeStr,
+            runtimeInt = runtime ?: episodeRunTime?.firstOrNull() ?: 0,
             certification = cert,
             director = directorPeople,
             originalLanguage = originalLanguage ?: "en",
