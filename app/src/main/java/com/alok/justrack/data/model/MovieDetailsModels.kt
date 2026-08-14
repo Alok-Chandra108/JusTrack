@@ -46,6 +46,7 @@ data class MovieDetails(
     val status: String = "",
     val numberOfEpisodes: Int = 0,
     val mediaType: MediaType = MediaType.MOVIE,
+    val genreIds: List<Int> = emptyList(),
     val cast: List<CastMember>,
     val ratings: List<RatingSource>,
     val recommendations: List<MediaItem>,

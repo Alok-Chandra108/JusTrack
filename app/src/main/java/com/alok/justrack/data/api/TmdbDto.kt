@@ -31,6 +31,7 @@ data class TmdbMediaDto(
     @SerializedName("number_of_episodes") val numberOfEpisodes: Int?,
     @SerializedName("seasons") val seasons: List<TmdbSeasonDto>?,
     @SerializedName("genres") val genres: List<TmdbGenreDto>?,
+    @SerializedName("genre_ids") val genreIds: List<Int>?,
     @SerializedName("recommendations") val recommendations: TmdbPaginatedResponse<TmdbMediaDto>?,
     @SerializedName("watch/providers") val watchProviders: TmdbWatchProvidersResponse?
 )

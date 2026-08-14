@@ -71,8 +71,24 @@ class DetailViewModel @Inject constructor(
         val totalRuntime = flows[5] as Int
 
         if (state is DetailUiState.Success) {
-            // 1. Process Recommendations (Only depends on watched, inWatchlistIds, and seed)
-            val filteredRecs = state.item.recommendations.filter { it.id !in watched && it.id !in inWatchlistIds }
+            // 1. Process Recommendations (Deduplicate and prioritize discovery)
+            val allRecs = state.item.recommendations.distinctBy { it.id }.filter { it.id != state.item.id }
+            
+            // Filter out items in _watchedIds (Completed shows)
+            val discoveryRecs = allRecs.filter { it.id !in watched }
+            
+            // If the show is TV, we also want to hide it if it's already in watchlist but NOT completed?
+            // User said "Always hide shows that are 100% completed."
+            // So if it's in watchlist but 50% done, should it show? 
+            // Usually, recommendations are for NEW things. 
+            // I'll keep the logic to hide watchlist items if we have enough other stuff.
+            
+            val filteredRecs = if (discoveryRecs.count { it.id !in inWatchlistIds } >= 5) {
+                discoveryRecs.filter { it.id !in inWatchlistIds }
+            } else {
+                discoveryRecs
+            }
+
             val processedRecs = if (filteredRecs.isNotEmpty()) {
                 filteredRecs.shuffled(java.util.Random(seed.toLong())).map { 
                     it.copy(inWatchlist = it.id in inWatchlistIds) 
@@ -289,7 +305,8 @@ class DetailViewModel @Inject constructor(
     }
 
     private suspend fun fetchSmartRecommendations(item: MovieDetails): List<MediaItem> = coroutineScope {
-        val actorIds = item.cast.take(2).map { it.id }
+        val actorIds = item.cast.take(4).map { it.id }
+        val genreIds = item.genreIds.take(2).joinToString(",")
         val lang = item.originalLanguage
         
         val actorRequests = actorIds.map { actorId ->
@@ -304,6 +321,16 @@ class DetailViewModel @Inject constructor(
             }
         }
 
+        val genreRequest = async {
+            try {
+                if (item.mediaType == MediaType.MOVIE) {
+                    apiService.discoverMovies(withGenres = genreIds, includeAdult = false, sortBy = "popularity.desc").results
+                } else {
+                    apiService.discoverTv(withGenres = genreIds, includeAdult = false, sortBy = "popularity.desc").results
+                }
+            } catch (e: Exception) { emptyList() }
+        }
+
         val regionalRequest = async {
             try {
                 if (item.mediaType == MediaType.MOVIE) {
@@ -315,9 +342,10 @@ class DetailViewModel @Inject constructor(
         }
 
         val actorResults = actorRequests.flatMap { it.await() }
+        val genreResults = genreRequest.await()
         val regionalResults = regionalRequest.await()
 
-        (actorResults + regionalResults)
+        (actorResults + genreResults + regionalResults)
             .map { it.toMediaItem(item.mediaType) }
             .distinctBy { it.id }
     }

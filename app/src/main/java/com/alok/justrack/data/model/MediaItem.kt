@@ -13,6 +13,7 @@ data class MediaItem(
     val inWatchlist: Boolean = false,
     val isWatchLater: Boolean = false,
     val runtime: Int = 0,
+    val genreIds: List<Int> = emptyList(),
     val addedAt: Long = System.currentTimeMillis()
 )
 

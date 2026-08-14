@@ -35,7 +35,8 @@ object TmdbMapper {
             rating = voteAverage?.let { Math.round(it * 10) / 10.0 } ?: 0.0,
             releaseDate = rawDate,
             mediaType = detectedType,
-            runtime = runtime ?: episodeRunTime?.firstOrNull() ?: 0
+            runtime = runtime ?: episodeRunTime?.firstOrNull() ?: 0,
+            genreIds = genreIds ?: emptyList()
         )
     }
 
@@ -130,6 +131,7 @@ object TmdbMapper {
             status = status ?: "",
             numberOfEpisodes = numberOfEpisodes ?: 0,
             mediaType = detectedType,
+            genreIds = genres?.map { it.id } ?: emptyList(),
             cast = castMembers,
             ratings = listOf(
                 RatingSource("TMDb", String.format(Locale.US, "%.1f", voteAverage ?: 0.0))
