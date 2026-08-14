@@ -437,6 +437,48 @@ class TmdbMediaRepository @Inject constructor(
     override fun getTotalWatchedMovieCountFlow(): Flow<Int> = 
         watchlistDao.getTotalWatchedMovieCountFlow()
 
+    override suspend fun syncMissingRuntimes() {
+        withContext(Dispatchers.IO) {
+            // 1. Handle Movies: Fetch watched movies with 0 runtime
+            // We'll process them in chunks to show progress gradually and respect rate limits
+            var moviesToSync = watchlistDao.getWatchedMoviesMissingRuntime()
+            
+            while (moviesToSync.isNotEmpty()) {
+                val batch = moviesToSync.take(20)
+                batch.forEach { entity ->
+                    try {
+                        val details = apiService.getMovieDetails(entity.id)
+                        if (details.runtime != null && details.runtime > 0) {
+                            watchlistDao.updateRuntime(entity.id, details.runtime)
+                        }
+                        delay(150) // Respect TMDb rate limits (~40 requests per 10 seconds)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                // Refresh list for next batch
+                moviesToSync = watchlistDao.getWatchedMoviesMissingRuntime()
+                // Safety break if needed, but the loop naturally terminates when all are updated
+            }
+
+            // 2. Handle TV Shows: Check for watched shows that might be missing episode data
+            val watchedShows = watchlistDao.getAllOnce()
+                .filter { it.mediaType == MediaType.TV.name && it.isWatched }
+            
+            watchedShows.forEach { show ->
+                try {
+                    // If we have no episodes stored for a watched show, sync them to get runtimes
+                    if (episodeDao.getTotalEpisodeCount(show.id) == 0) {
+                        syncEpisodes(show.id)
+                        delay(500)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     override suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int? {
         return episodeDao.getMaxEpisodeNumberForSeason(showId, seasonNumber)
     }

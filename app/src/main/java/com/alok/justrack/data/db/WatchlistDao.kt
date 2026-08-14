@@ -51,6 +51,12 @@ interface WatchlistDao {
     @Query("SELECT customBackdropPath FROM watchlist WHERE id = :id")
     suspend fun getCustomBackdrop(id: String): String?
 
+    @Query("SELECT * FROM watchlist WHERE isWatched = 1 AND runtime = 0 AND mediaType = 'MOVIE'")
+    suspend fun getWatchedMoviesMissingRuntime(): List<WatchlistEntity>
+
+    @Query("UPDATE watchlist SET runtime = :runtime WHERE id = :id")
+    suspend fun updateRuntime(id: String, runtime: Int)
+
     @Query("SELECT SUM(runtime) FROM watchlist WHERE mediaType = 'MOVIE' AND isWatched = 1")
     fun getTotalWatchedMovieRuntimeFlow(): Flow<Int?>
 

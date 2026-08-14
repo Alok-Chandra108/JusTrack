@@ -277,6 +277,7 @@ class SupabaseMediaRepository @Inject constructor(
     override fun getTotalWatchedEpisodeCountFlow(): Flow<Int> = flow { emit(0) }
     override fun getTotalWatchedMovieRuntimeFlow(): Flow<Int> = flow { emit(0) }
     override fun getTotalWatchedMovieCountFlow(): Flow<Int> = flow { emit(0) }
+    override suspend fun syncMissingRuntimes() {}
 
     override suspend fun getPersonDetails(id: String): PersonDetails? = null
 }

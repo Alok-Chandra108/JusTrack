@@ -23,6 +23,10 @@ class WatchlistViewModel @Inject constructor(
     private val repository: MediaRepository
 ) : ViewModel() {
 
+    init {
+        syncMissingRuntimes()
+    }
+
     val showCompletionEvents: Flow<String> = repository.showCompletionEvents
 
     // Existing UI state for backward compatibility (used by MoviesScreen etc.)
@@ -409,6 +413,12 @@ class WatchlistViewModel @Inject constructor(
     fun markEpisodeWatched(showId: String, seasonNumber: Int, episodeNumber: Int) {
         viewModelScope.launch {
             repository.markEpisodeWatched(showId, seasonNumber, episodeNumber, true)
+        }
+    }
+
+    fun syncMissingRuntimes() {
+        viewModelScope.launch {
+            repository.syncMissingRuntimes()
         }
     }
 

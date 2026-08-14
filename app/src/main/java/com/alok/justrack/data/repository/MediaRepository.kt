@@ -75,6 +75,9 @@ interface MediaRepository {
     fun getTotalWatchedMovieRuntimeFlow(): Flow<Int>
     fun getTotalWatchedMovieCountFlow(): Flow<Int>
 
+    // Sync
+    suspend fun syncMissingRuntimes()
+
     // Person
     suspend fun getPersonDetails(id: String): PersonDetails?
 }

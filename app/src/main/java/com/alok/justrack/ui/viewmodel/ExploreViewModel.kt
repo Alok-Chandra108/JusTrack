@@ -234,7 +234,23 @@ class ExploreViewModel @Inject constructor(
     fun toggleWatched(item: MediaItem) {
         viewModelScope.launch {
             val isCurrentlyWatched = repository.isWatched(item.id)
-            repository.setWatched(item, !isCurrentlyWatched)
+            val markingAsWatched = !isCurrentlyWatched
+            
+            if (markingAsWatched) {
+                // Fetch full details to get runtime before marking as watched
+                try {
+                    val details = repository.getMediaDetail(item.id, item.mediaType)
+                    if (details != null) {
+                        repository.setWatched(item.copy(runtime = details.runtimeInt), true)
+                    } else {
+                        repository.setWatched(item, true)
+                    }
+                } catch (e: Exception) {
+                    repository.setWatched(item, true)
+                }
+            } else {
+                repository.setWatched(item, false)
+            }
         }
     }
 

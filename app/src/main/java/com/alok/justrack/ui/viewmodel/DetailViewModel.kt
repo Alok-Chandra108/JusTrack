@@ -276,6 +276,7 @@ class DetailViewModel @Inject constructor(
                         mediaType = finalItem.mediaType,
                         isWatched = _isWatched.value,
                         inWatchlist = _isInWatchlist.value,
+                        runtime = finalItem.runtimeInt,
                         addedAt = existingItem?.addedAt ?: System.currentTimeMillis()
                     )
                 } else {
