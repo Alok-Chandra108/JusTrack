@@ -1094,15 +1094,20 @@ private fun WatchTimeStatCard(
     icon: ImageVector
 ) {
     Surface(
-        modifier = Modifier.width(180.dp),
+        modifier = Modifier.width(200.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
@@ -1111,10 +1116,12 @@ private fun WatchTimeStatCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = label,
+                    text = label.uppercase(),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             
@@ -1122,7 +1129,7 @@ private fun WatchTimeStatCard(
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 TimeComponent(value = watchTime.months.toString(), label = "MONTHS")
                 TimeComponent(value = watchTime.days.toString(), label = "DAY")
@@ -1139,15 +1146,20 @@ private fun SimpleStatCard(
     icon: ImageVector
 ) {
     Surface(
-        modifier = Modifier.width(150.dp).height(92.dp),
+        modifier = Modifier.width(180.dp).height(92.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
@@ -1156,10 +1168,12 @@ private fun SimpleStatCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = label,
+                    text = label.uppercase(),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             
