@@ -30,6 +30,22 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun episodeDao(): EpisodeDao // Added for episode tracking
 
     companion object {
+        val MIGRATION_14_10 = object : Migration(14, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 1. Recreate watchlist table (remove genreIds, totalEpisodes, lastSyncAt)
+                database.execSQL("CREATE TABLE IF NOT EXISTS `watchlist_new` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `overview` TEXT NOT NULL, `posterPath` TEXT, `backdropPath` TEXT, `customPosterPath` TEXT, `customBackdropPath` TEXT, `rating` REAL NOT NULL, `releaseDate` TEXT NOT NULL, `mediaType` TEXT NOT NULL, `runtime` INTEGER NOT NULL DEFAULT 0, `addedAt` INTEGER NOT NULL, `isWatched` INTEGER NOT NULL, `inWatchlist` INTEGER NOT NULL, `isWatchLater` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))")
+                database.execSQL("INSERT INTO watchlist_new (id, title, overview, posterPath, backdropPath, customPosterPath, customBackdropPath, rating, releaseDate, mediaType, runtime, addedAt, isWatched, inWatchlist, isWatchLater) SELECT id, title, overview, posterPath, backdropPath, customPosterPath, customBackdropPath, rating, releaseDate, mediaType, runtime, addedAt, isWatched, inWatchlist, isWatchLater FROM watchlist")
+                database.execSQL("DROP TABLE watchlist")
+                database.execSQL("ALTER TABLE watchlist_new RENAME TO watchlist")
+
+                // 2. Recreate watched_episodes table (remove foreign key to watchlist)
+                database.execSQL("CREATE TABLE IF NOT EXISTS `watched_episodes_new` (`localId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `showId` TEXT NOT NULL, `seasonNumber` INTEGER NOT NULL, `episodeNumber` INTEGER NOT NULL, `watchedAt` INTEGER NOT NULL)")
+                database.execSQL("INSERT INTO watched_episodes_new (localId, showId, seasonNumber, episodeNumber, watchedAt) SELECT localId, showId, seasonNumber, episodeNumber, watchedAt FROM watched_episodes")
+                database.execSQL("DROP TABLE watched_episodes")
+                database.execSQL("ALTER TABLE watched_episodes_new RENAME TO watched_episodes")
+            }
+        }
+
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE watchlist ADD COLUMN runtime INTEGER NOT NULL DEFAULT 0")
