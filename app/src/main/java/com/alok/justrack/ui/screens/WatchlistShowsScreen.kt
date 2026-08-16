@@ -28,7 +28,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -370,37 +374,28 @@ fun EpisodeTrackingCard(
     val showName = progress.showName
     val showPosterPath = progress.showPosterPath
     
-    // Animation state for checkmark - persist across episode swaps for the same show
-    var isClicked by remember(progress.showId) { mutableStateOf(false) }
-    
-    // When a new episode ID arrives for this show, reset the clicked state
-    LaunchedEffect(episode.id) {
-        isClicked = false
-    }
+    // Animation state for Color Swipe (Sheen)
+    var isSwiping by remember(progress.showId) { mutableStateOf(false) }
     
     val swipeProgress by animateFloatAsState(
-        targetValue = if (isClicked) 1.2f else 0f,
-        animationSpec = tween(durationMillis = 450, easing = LinearOutSlowInEasing),
+        targetValue = if (isSwiping) 1f else 0f,
+        animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
         label = "swipe_progress"
     )
-    
-    val buttonColor by animateColorAsState(
-        targetValue = if (isClicked) WatchedGreen else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        animationSpec = tween(200),
-        label = "button_color"
-    )
+
+    // Trigger data update at the sheen's midpoint
+    LaunchedEffect(isSwiping) {
+        if (isSwiping) {
+            kotlinx.coroutines.delay(300)
+            onMarkWatched()
+            kotlinx.coroutines.delay(300)
+            isSwiping = false
+        }
+    }
 
     // Swipe to Watch Later State
     val offsetX = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
-
-    // Delay the actual data update until the animation is well underway
-    LaunchedEffect(isClicked) {
-        if (isClicked) {
-            kotlinx.coroutines.delay(400) 
-            onMarkWatched()
-        }
-    }
 
     Box(
         modifier = modifier
@@ -469,6 +464,24 @@ fun EpisodeTrackingCard(
             modifier = Modifier
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
                 .fillMaxWidth()
+                .drawWithContent {
+                    drawContent()
+                    if (swipeProgress > 0f && swipeProgress < 1f) {
+                        // Diagonal sheen glint
+                        val width = size.width
+                        val height = size.height
+                        val xOffset = width * 1.5f * swipeProgress - width * 0.25f
+                        
+                        val brush = Brush.linearGradient(
+                            0.0f to Color.Transparent,
+                            0.5f to Color.White.copy(alpha = 0.25f),
+                            1.0f to Color.Transparent,
+                            start = Offset(xOffset, 0f),
+                            end = Offset(xOffset + width * 0.3f, height)
+                        )
+                        drawRect(brush = brush)
+                    }
+                }
                 .pointerInput(progress.showId) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
@@ -579,8 +592,7 @@ fun EpisodeTrackingCard(
                             AnimatedContent(
                                 targetState = episode to progress.remainingCount,
                                 transitionSpec = {
-                                    fadeIn(animationSpec = tween(220, delayMillis = 90)) togetherWith
-                                    fadeOut(animationSpec = tween(90))
+                                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
                                 },
                                 label = "episode_header_transition"
                             ) { (targetEpisode, targetRemaining) ->
@@ -618,8 +630,7 @@ fun EpisodeTrackingCard(
                             AnimatedContent(
                                 targetState = if (progress.isSyncing) "Fetching data..." else episode.name,
                                 transitionSpec = {
-                                    fadeIn(animationSpec = tween(220, delayMillis = 90)) togetherWith
-                                    fadeOut(animationSpec = tween(90))
+                                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
                                 },
                                 label = "episode_name_transition"
                             ) { targetName ->
@@ -638,25 +649,14 @@ fun EpisodeTrackingCard(
                         Spacer(modifier = Modifier.height(2.dp))
                     }
 
-                    // Checkmark Icon
-                    val iconScale by animateFloatAsState(
-                        targetValue = if (isClicked) 1.2f else 1f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                        label = "icon_scale"
-                    )
-
                     Box(
                         modifier = Modifier
                             .padding(horizontal = 4.dp)
                             .size(40.dp)
-                            .graphicsLayer {
-                                scaleX = iconScale
-                                scaleY = iconScale
-                            }
                             .clip(CircleShape)
-                            .background(buttonColor)
-                            .clickable(enabled = !progress.isSyncing && !isClicked) { 
-                                isClicked = true
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                            .clickable(enabled = !progress.isSyncing && !isSwiping) { 
+                                isSwiping = true
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -670,35 +670,11 @@ fun EpisodeTrackingCard(
                             Icon(
                                 imageVector = Icons.Rounded.Check,
                                 contentDescription = "Mark Watched",
-                                tint = if (isClicked) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
                     }
-                }
-
-                // --- Success Swipe Overlay ---
-                if (swipeProgress > 0f) {
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clip(RoundedCornerShape(10.dp))
-                            .graphicsLayer {
-                                translationX = (swipeProgress - 1f) * size.width
-                                alpha = (1.2f - swipeProgress).coerceIn(0f, 1f)
-                            }
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        WatchedGreen.copy(alpha = 0.3f),
-                                        WatchedGreen.copy(alpha = 0.6f),
-                                        WatchedGreen.copy(alpha = 0.2f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
                 }
             }
         }
