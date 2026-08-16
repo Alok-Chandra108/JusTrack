@@ -379,14 +379,14 @@ fun EpisodeTrackingCard(
     
     val swipeProgress by animateFloatAsState(
         targetValue = if (isSwiping) 1f else 0f,
-        animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
+        animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing),
         label = "swipe_progress"
     )
 
     // Trigger data update at the sheen's midpoint
     LaunchedEffect(isSwiping) {
         if (isSwiping) {
-            kotlinx.coroutines.delay(300)
+            kotlinx.coroutines.delay(200)
             onMarkWatched()
             kotlinx.coroutines.delay(300)
             isSwiping = false
@@ -590,59 +590,64 @@ fun EpisodeTrackingCard(
                         // Episode Details
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             AnimatedContent(
-                                targetState = episode to progress.remainingCount,
+                                targetState = if (isSwiping && swipeProgress < 0.6f) null else (episode to progress.remainingCount),
                                 transitionSpec = {
-                                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
+                                    fadeIn(tween(150)) togetherWith fadeOut(tween(150))
                                 },
                                 label = "episode_header_transition"
-                            ) { (targetEpisode, targetRemaining) ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "S%02d | E%02d".format(Locale.US, targetEpisode.seasonNumber, targetEpisode.episodeNumber),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
-                                    )
-                                    if (targetRemaining > 0) {
+                            ) { state ->
+                                if (state != null) {
+                                    val (targetEpisode, targetRemaining) = state
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
-                                            text = " +$targetRemaining",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 11.sp
+                                            text = "S%02d | E%02d".format(Locale.US, targetEpisode.seasonNumber, targetEpisode.episodeNumber),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp
                                         )
-                                    }
-                                    
-                                    // Badges
-                                    Row(modifier = Modifier.padding(start = 4.dp)) {
-                                        if (progress.isNew) {
-                                            WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
-                                        } else if (progress.isPremiere) {
-                                            WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
-                                        } else if (progress.isFinale) {
-                                            WatchlistBadge(text = "FINALE", color = MaterialTheme.colorScheme.tertiary)
+                                        if (targetRemaining > 0) {
+                                            Text(
+                                                text = " +$targetRemaining",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontWeight = FontWeight.Medium,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                        
+                                        // Badges
+                                        Row(modifier = Modifier.padding(start = 4.dp)) {
+                                            if (progress.isNew) {
+                                                WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
+                                            } else if (progress.isPremiere) {
+                                                WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
+                                            } else if (progress.isFinale) {
+                                                WatchlistBadge(text = "FINALE", color = MaterialTheme.colorScheme.tertiary)
+                                            }
                                         }
                                     }
                                 }
                             }
 
                             AnimatedContent(
-                                targetState = if (progress.isSyncing) "Fetching data..." else episode.name,
+                                targetState = if (isSwiping && swipeProgress < 0.6f) null else if (progress.isSyncing) "Fetching data..." else episode.name,
                                 transitionSpec = {
-                                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
+                                    fadeIn(tween(150)) togetherWith fadeOut(tween(150))
                                 },
                                 label = "episode_name_transition"
                             ) { targetName ->
-                                Text(
-                                    text = targetName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Light,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    lineHeight = 14.sp
-                                )
+                                if (targetName != null) {
+                                    Text(
+                                        text = targetName,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Light,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        lineHeight = 14.sp
+                                    )
+                                }
                             }
                         }
                         
