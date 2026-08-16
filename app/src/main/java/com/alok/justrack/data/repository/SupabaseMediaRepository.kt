@@ -263,6 +263,7 @@ class SupabaseMediaRepository @Inject constructor(
     override fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> = flow { emit(emptyList()) }
     override fun getAllWatchedEpisodesFlow(): Flow<Map<String, Set<String>>> = flow { emit(emptyMap()) }
     override suspend fun getNextEpisodeToWatch(showId: String, onlyReleased: Boolean): Episode? = null
+    override suspend fun getWatchlistEpisodesData(showIds: List<String>): Map<String, WatchlistDataBatch> = emptyMap()
     override suspend fun getUnwatchedEpisodeCount(showId: String): Int = 0
     override suspend fun getWatchedEpisodeCount(showId: String): Int = 0
     override suspend fun getTotalEpisodeCount(showId: String): Int = 0

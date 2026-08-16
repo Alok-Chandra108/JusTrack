@@ -238,105 +238,69 @@ class WatchlistViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val watchlistEpisodes: StateFlow<List<WatchlistEpisodeItem>> = combine(
         explicitWatchlistItems,
-        repository.getAllWatchedEpisodesFlow(),
-        repository.episodesUpdateEvents.onStart { emit(Unit) }
-    ) { items, _, _ -> items }
+        repository.getAllWatchedEpisodesFlow()
+    ) { items, _ -> items }
         .flatMapLatest { items ->
             val tvShows = items.filter { it.mediaType == MediaType.TV }
             flow {
-                val episodeItems = mutableListOf<WatchlistEpisodeItem>()
-                for (show in tvShows) {
-                    try {
-                        // Try to get next episode from cache/DB - ONLY RELEASED
-                        val nextEpisode = repository.getNextEpisodeToWatch(show.id, onlyReleased = true)
+                if (tvShows.isEmpty()) {
+                    emit(emptyList())
+                    return@flow
+                }
+
+                val showIds = tvShows.map { it.id }
+                val batchData = repository.getWatchlistEpisodesData(showIds)
+                
+                val episodeItems = tvShows.mapNotNull { show ->
+                    val data = batchData[show.id]
+                    val nextEpisode = data?.nextEpisode
+                    
+                    if (nextEpisode != null) {
+                        val isPremiere = nextEpisode.episodeNumber == 1
+                        val maxEp = repository.getMaxEpisodeNumberForSeason(show.id, nextEpisode.seasonNumber)
+                        val isFinale = nextEpisode.episodeNumber == maxEp
                         
-                        // Filter out season 0 if it somehow leaked through
-                        if (nextEpisode != null && nextEpisode.seasonNumber == 0) {
-                             // This case is handled by DAO, but being defensive
-                             continue 
-                        }
-                        
-                        val isPremiere = nextEpisode?.episodeNumber == 1
-                        val maxEp = nextEpisode?.let { repository.getMaxEpisodeNumberForSeason(show.id, it.seasonNumber) }
-                        val isFinale = nextEpisode?.episodeNumber != null && nextEpisode.episodeNumber == maxEp
-                        
-                        val daysAway = calculateDaysAway(nextEpisode?.airDate)
-                        // Aired in the last 7 days
+                        val daysAway = calculateDaysAway(nextEpisode.airDate)
                         val isNew = daysAway != null && daysAway < 0 && daysAway >= -7
                         
-                        val totalCount = repository.getTotalEpisodeCount(show.id)
-                        val watchedCount = repository.getWatchedEpisodeCount(show.id)
-                        val remainingCount = (totalCount - watchedCount - 1).coerceAtLeast(0)
+                        val remainingCount = (data.totalCount - data.watchedCount - 1).coerceAtLeast(0)
 
-                        if (nextEpisode != null && nextEpisode.seasonNumber > 0) {
-                            episodeItems.add(
-                                WatchlistEpisodeItem(
-                                    showId = show.id,
-                                    showName = show.title,
-                                    showPosterPath = show.posterPath,
-                                    episode = nextEpisode,
-                                    isPremiere = isPremiere,
-                                    isFinale = isFinale,
-                                    isNew = isNew,
-                                    remainingCount = remainingCount,
-                                    watchedCount = watchedCount,
-                                    totalCount = totalCount,
-                                    isSyncing = false,
-                                    isWatchLater = show.isWatchLater
-                                )
-                            )
-                        } else if (totalCount == 0) {
-                            // Show is in watchlist but has no episodes in DB yet -> Syncing
-                            episodeItems.add(
-                                WatchlistEpisodeItem(
-                                    showId = show.id,
-                                    showName = show.title,
-                                    showPosterPath = show.posterPath,
-                                    episode = Episode("-1", "Syncing episodes...", "", null, 1, 1, null, 0.0, 0, false),
-                                    isPremiere = false,
-                                    isFinale = false,
-                                    isNew = false,
-                                    remainingCount = 0,
-                                    watchedCount = 0,
-                                    totalCount = 0,
-                                    isSyncing = true,
-                                    isWatchLater = show.isWatchLater
-                                )
-                            )
-                        }
-                    } catch (e: Exception) {
-                        // Log error for this specific show but continue processing others
-                        e.printStackTrace()
-                        // Add a placeholder episode for this show so UI doesn't break
-                        episodeItems.add(
-                            WatchlistEpisodeItem(
-                                showId = show.id,
-                                showName = show.title,
-                                showPosterPath = show.posterPath,
-                                episode = Episode(
-                                    id = "-1",
-                                    name = "Error loading episode",
-                                    overview = "",
-                                    stillPath = null,
-                                    seasonNumber = 1,
-                                    episodeNumber = 1,
-                                    airDate = null,
-                                    voteAverage = 0.0,
-                                    isWatched = false
-                                ),
-                                isPremiere = false,
-                                isFinale = false,
-                                isNew = false,
-                                remainingCount = 0,
-                                watchedCount = 0,
-                                totalCount = 0,
-                                isWatchLater = show.isWatchLater
-                            )
+                        WatchlistEpisodeItem(
+                            showId = show.id,
+                            showName = show.title,
+                            showPosterPath = show.posterPath,
+                            episode = nextEpisode,
+                            isPremiere = isPremiere,
+                            isFinale = isFinale,
+                            isNew = isNew,
+                            remainingCount = remainingCount,
+                            watchedCount = data.watchedCount,
+                            totalCount = data.totalCount,
+                            isSyncing = false,
+                            isWatchLater = show.isWatchLater
                         )
+                    } else if (data != null && data.totalCount == 0) {
+                        // Show is in watchlist but has no episodes in DB yet -> Syncing
+                        WatchlistEpisodeItem(
+                            showId = show.id,
+                            showName = show.title,
+                            showPosterPath = show.posterPath,
+                            episode = Episode("-1", "Syncing episodes...", "", null, 1, 1, null, 0.0, 0, false),
+                            isPremiere = false,
+                            isFinale = false,
+                            isNew = false,
+                            remainingCount = 0,
+                            watchedCount = 0,
+                            totalCount = 0,
+                            isSyncing = true,
+                            isWatchLater = show.isWatchLater
+                        )
+                    } else {
+                        null
                     }
                 }
-                emit(episodeItems.filter { it.episode.seasonNumber > 0 }.sortedByDescending { it.isNew })
-            }
+                emit(episodeItems.sortedByDescending { it.isNew })
+            }.flowOn(kotlinx.coroutines.Dispatchers.Default)
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Grouped episodes for the UI (maintains "IN PROGRESS" first)
@@ -358,9 +322,8 @@ class WatchlistViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val upcomingEpisodes: StateFlow<List<UpcomingEpisodeItem>> = combine(
         explicitWatchlistItems,
-        repository.getAllWatchedEpisodesFlow(),
-        repository.episodesUpdateEvents.onStart { emit(Unit) }
-    ) { items, _, _ -> items }
+        repository.getAllWatchedEpisodesFlow()
+    ) { items, _ -> items }
         .flatMapLatest { items ->
             val tvShows = items.filter { it.mediaType == MediaType.TV }
             flow {

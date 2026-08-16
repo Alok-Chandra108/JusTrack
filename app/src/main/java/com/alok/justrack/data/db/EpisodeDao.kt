@@ -86,6 +86,35 @@ interface EpisodeDao {
     @Query("SELECT MAX(episodeNumber) FROM episode_entity WHERE showId = :showId AND seasonNumber = :seasonNumber")
     suspend fun getMaxEpisodeNumberForSeason(showId: String, seasonNumber: Int): Int?
 
+    // --- Batch Queries for Watchlist Performance ---
+
+    @Query("""
+        SELECT e.* FROM episode_entity e
+        WHERE e.showId IN (:showIds)
+          AND e.seasonNumber > 0
+          AND (e.airDate IS NULL OR e.airDate <= :today)
+          AND NOT EXISTS (
+            SELECT 1 FROM watched_episodes we
+            WHERE we.showId = e.showId AND we.seasonNumber = e.seasonNumber AND we.episodeNumber = e.episodeNumber
+          )
+        ORDER BY e.showId, e.seasonNumber, e.episodeNumber
+    """)
+    suspend fun getAllNextReleasedUnwatchedEpisodes(showIds: List<String>, today: String): List<EpisodeEntity>
+
+    @Query("""
+        SELECT showId, COUNT(*) as count FROM watched_episodes 
+        WHERE showId IN (:showIds) AND seasonNumber > 0 
+        GROUP BY showId
+    """)
+    suspend fun getWatchedCountsForShows(showIds: List<String>): List<ShowCount>
+
+    @Query("""
+        SELECT showId, COUNT(*) as count FROM episode_entity 
+        WHERE showId IN (:showIds) AND seasonNumber > 0 
+        GROUP BY showId
+    """)
+    suspend fun getTotalCountsForShows(showIds: List<String>): List<ShowCount>
+
     @Query("SELECT * FROM episode_entity WHERE showId = :showId AND airDate >= :today ORDER BY airDate ASC")
     suspend fun getFutureEpisodes(showId: String, today: String): List<EpisodeEntity>
 
@@ -109,3 +138,8 @@ interface EpisodeDao {
     @Query("SELECT COUNT(*) FROM watched_episodes WHERE seasonNumber > 0")
     fun getTotalWatchedEpisodeCountFlow(): Flow<Int>
 }
+
+data class ShowCount(
+    val showId: String,
+    val count: Int
+)

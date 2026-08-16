@@ -60,6 +60,9 @@ interface MediaRepository {
     fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> // Returns "S{season}E{episode}" strings
     fun getAllWatchedEpisodesFlow(): Flow<Map<String, Set<String>>> // Map<showId, Set<"S{season}E{episode}">>
     suspend fun getNextEpisodeToWatch(showId: String, onlyReleased: Boolean = false): Episode?
+    
+    // Batch data for Watchlist screen performance
+    suspend fun getWatchlistEpisodesData(showIds: List<String>): Map<String, WatchlistDataBatch>
     suspend fun getUnwatchedEpisodeCount(showId: String): Int
     suspend fun getWatchedEpisodeCount(showId: String): Int
     suspend fun getTotalEpisodeCount(showId: String): Int
@@ -81,3 +84,10 @@ interface MediaRepository {
     // Person
     suspend fun getPersonDetails(id: String): PersonDetails?
 }
+
+data class WatchlistDataBatch(
+    val nextEpisode: Episode?,
+    val watchedCount: Int,
+    val totalCount: Int,
+    val maxEpisodeInSeason: Int? = null
+)

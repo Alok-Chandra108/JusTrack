@@ -370,11 +370,16 @@ fun EpisodeTrackingCard(
     val showName = progress.showName
     val showPosterPath = progress.showPosterPath
     
-    // Animation state for checkmark
-    var isClicked by remember(progress.showId, episode.id) { mutableStateOf(false) }
+    // Animation state for checkmark - persist across episode swaps for the same show
+    var isClicked by remember(progress.showId) { mutableStateOf(false) }
+    
+    // When a new episode ID arrives for this show, reset the clicked state
+    LaunchedEffect(episode.id) {
+        isClicked = false
+    }
     
     val swipeProgress by animateFloatAsState(
-        targetValue = if (isClicked) 1f else 0f,
+        targetValue = if (isClicked) 1.2f else 0f,
         animationSpec = tween(durationMillis = 450, easing = LinearOutSlowInEasing),
         label = "swipe_progress"
     )
@@ -389,10 +394,10 @@ fun EpisodeTrackingCard(
     val offsetX = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
 
-    // Delay the actual data update until the animation finishes (for checkmark)
+    // Delay the actual data update until the animation is well underway
     LaunchedEffect(isClicked) {
         if (isClicked) {
-            kotlinx.coroutines.delay(450)
+            kotlinx.coroutines.delay(400) 
             onMarkWatched()
         }
     }
@@ -571,55 +576,83 @@ fun EpisodeTrackingCard(
 
                         // Episode Details
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "S%02d | E%02d".format(Locale.US, episode.seasonNumber, episode.episodeNumber),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                                if (progress.remainingCount > 0) {
+                            AnimatedContent(
+                                targetState = episode to progress.remainingCount,
+                                transitionSpec = {
+                                    fadeIn(animationSpec = tween(220, delayMillis = 90)) togetherWith
+                                    fadeOut(animationSpec = tween(90))
+                                },
+                                label = "episode_header_transition"
+                            ) { (targetEpisode, targetRemaining) ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = " +${progress.remainingCount}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 11.sp
+                                        text = "S%02d | E%02d".format(Locale.US, targetEpisode.seasonNumber, targetEpisode.episodeNumber),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
                                     )
-                                }
-                                
-                                // Badges
-                                Row(modifier = Modifier.padding(start = 4.dp)) {
-                                    if (progress.isNew) {
-                                        WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
-                                    } else if (progress.isPremiere) {
-                                        WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
-                                    } else if (progress.isFinale) {
-                                        WatchlistBadge(text = "FINALE", color = MaterialTheme.colorScheme.tertiary)
+                                    if (targetRemaining > 0) {
+                                        Text(
+                                            text = " +$targetRemaining",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    
+                                    // Badges
+                                    Row(modifier = Modifier.padding(start = 4.dp)) {
+                                        if (progress.isNew) {
+                                            WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
+                                        } else if (progress.isPremiere) {
+                                            WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
+                                        } else if (progress.isFinale) {
+                                            WatchlistBadge(text = "FINALE", color = MaterialTheme.colorScheme.tertiary)
+                                        }
                                     }
                                 }
                             }
 
-                            Text(
-                                text = if (progress.isSyncing) "Fetching data..." else episode.name,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Light,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                lineHeight = 14.sp
-                            )
+                            AnimatedContent(
+                                targetState = if (progress.isSyncing) "Fetching data..." else episode.name,
+                                transitionSpec = {
+                                    fadeIn(animationSpec = tween(220, delayMillis = 90)) togetherWith
+                                    fadeOut(animationSpec = tween(90))
+                                },
+                                label = "episode_name_transition"
+                            ) { targetName ->
+                                Text(
+                                    text = targetName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Light,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    lineHeight = 14.sp
+                                )
+                            }
                         }
                         
                         Spacer(modifier = Modifier.height(2.dp))
                     }
 
                     // Checkmark Icon
+                    val iconScale by animateFloatAsState(
+                        targetValue = if (isClicked) 1.2f else 1f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                        label = "icon_scale"
+                    )
+
                     Box(
                         modifier = Modifier
                             .padding(horizontal = 4.dp)
                             .size(40.dp)
+                            .graphicsLayer {
+                                scaleX = iconScale
+                                scaleY = iconScale
+                            }
                             .clip(CircleShape)
                             .background(buttonColor)
                             .clickable(enabled = !progress.isSyncing && !isClicked) { 
@@ -649,16 +682,18 @@ fun EpisodeTrackingCard(
                     Box(
                         modifier = Modifier
                             .matchParentSize()
+                            .clip(RoundedCornerShape(10.dp))
                             .graphicsLayer {
                                 translationX = (swipeProgress - 1f) * size.width
+                                alpha = (1.2f - swipeProgress).coerceIn(0f, 1f)
                             }
                             .background(
                                 Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
+                                        WatchedGreen.copy(alpha = 0.3f),
+                                        WatchedGreen.copy(alpha = 0.6f),
                                         WatchedGreen.copy(alpha = 0.2f),
-                                        WatchedGreen.copy(alpha = 0.4f),
-                                        WatchedGreen.copy(alpha = 0.1f),
                                         Color.Transparent
                                     )
                                 )

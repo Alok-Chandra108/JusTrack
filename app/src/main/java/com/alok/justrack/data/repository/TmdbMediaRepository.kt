@@ -400,6 +400,40 @@ class TmdbMediaRepository @Inject constructor(
         }
     }
 
+    override suspend fun getWatchlistEpisodesData(showIds: List<String>): Map<String, WatchlistDataBatch> {
+        if (showIds.isEmpty()) return emptyMap()
+
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val allNextEpisodes = episodeDao.getAllNextReleasedUnwatchedEpisodes(showIds, today)
+        val watchedCounts = episodeDao.getWatchedCountsForShows(showIds).associateBy { it.showId }
+        val totalCounts = episodeDao.getTotalCountsForShows(showIds).associateBy { it.showId }
+
+        // Group next episodes by showId and take the first one (since they are ordered by season/episode)
+        val nextEpisodeByShow = allNextEpisodes.groupBy { it.showId }.mapValues { (_, entities) ->
+            entities.first().let { entity ->
+                Episode(
+                    id = "${entity.showId}_${entity.seasonNumber}_${entity.episodeNumber}",
+                    name = entity.title,
+                    overview = entity.overview ?: "",
+                    stillPath = entity.stillPath,
+                    seasonNumber = entity.seasonNumber,
+                    episodeNumber = entity.episodeNumber,
+                    airDate = entity.airDate,
+                    voteAverage = entity.voteAverage ?: 0.0,
+                    isWatched = false
+                )
+            }
+        }
+
+        return showIds.associateWith { showId ->
+            WatchlistDataBatch(
+                nextEpisode = nextEpisodeByShow[showId],
+                watchedCount = watchedCounts[showId]?.count ?: 0,
+                totalCount = totalCounts[showId]?.count ?: 0
+            )
+        }
+    }
+
     override suspend fun getUnwatchedEpisodeCount(showId: String): Int {
         val total = episodeDao.getTotalEpisodeCount(showId)
         val watched = episodeDao.getWatchedEpisodeCount(showId)
