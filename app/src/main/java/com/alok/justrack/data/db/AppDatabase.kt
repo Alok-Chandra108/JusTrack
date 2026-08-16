@@ -18,7 +18,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WatchedEpisodeEntity::class,
         EpisodeEntity::class // Added for episode tracking
     ],
-    version = 10, // Incremented version to 10 to add runtime to watchlist
+    version = 11, // Incremented to 11 to add indices to watched_episodes
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +30,15 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun episodeDao(): EpisodeDao // Added for episode tracking
 
     companion object {
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Remove duplicates before creating unique index
+                database.execSQL("DELETE FROM watched_episodes WHERE localId NOT IN (SELECT MIN(localId) FROM watched_episodes GROUP BY showId, seasonNumber, episodeNumber)")
+                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_watched_episodes_showId_seasonNumber_episodeNumber` ON `watched_episodes` (`showId`, `seasonNumber`, `episodeNumber`)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_watched_episodes_showId` ON `watched_episodes` (`showId`)")
+            }
+        }
+
         val MIGRATION_14_10 = object : Migration(14, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // 1. Recreate watchlist table (remove genreIds, totalEpisodes, lastSyncAt)

@@ -383,9 +383,13 @@ fun EpisodeTrackingCard(
         label = "swipe_progress"
     )
 
+    // Track the ID to synchronize data arrival with animation
+    var startedSwipingWithId by remember { mutableStateOf("") }
+
     // Trigger data update
     LaunchedEffect(isSwiping) {
         if (isSwiping) {
+            startedSwipingWithId = episode.id
             kotlinx.coroutines.delay(180) // Timed with glint reaching text area
             onMarkWatched()
             kotlinx.coroutines.delay(320)
@@ -590,7 +594,7 @@ fun EpisodeTrackingCard(
                         // Episode Details
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             AnimatedContent(
-                                targetState = if (isSwiping && swipeProgress < 0.5f) null else (episode to progress.remainingCount),
+                                targetState = if (isSwiping && episode.id == startedSwipingWithId) null else (episode to progress.remainingCount),
                                 transitionSpec = {
                                     if (targetState == null) {
                                         EnterTransition.None togetherWith (fadeOut(tween(120)) + slideOutHorizontally { -20 })
@@ -635,7 +639,7 @@ fun EpisodeTrackingCard(
                             }
 
                             AnimatedContent(
-                                targetState = if (isSwiping && swipeProgress < 0.5f) null else if (progress.isSyncing) "Fetching data..." else episode.name,
+                                targetState = if (isSwiping && episode.id == startedSwipingWithId) null else if (progress.isSyncing) "Fetching data..." else episode.name,
                                 transitionSpec = {
                                     if (targetState == null) {
                                         EnterTransition.None togetherWith (fadeOut(tween(120)) + slideOutHorizontally { -20 })

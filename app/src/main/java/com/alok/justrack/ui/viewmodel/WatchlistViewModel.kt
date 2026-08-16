@@ -301,7 +301,10 @@ class WatchlistViewModel @Inject constructor(
                 }
                 emit(episodeItems.sortedByDescending { it.isNew })
             }.flowOn(kotlinx.coroutines.Dispatchers.Default)
-        }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        }
+        .conflate()
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Grouped episodes for the UI (maintains "IN PROGRESS" first)
     val groupedWatchlistEpisodes = watchlistEpisodes.map { items ->
