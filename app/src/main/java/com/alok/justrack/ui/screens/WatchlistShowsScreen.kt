@@ -373,22 +373,22 @@ fun EpisodeTrackingCard(
     val episode = progress.episode
     val showName = progress.showName
     val showPosterPath = progress.showPosterPath
-    
+
     // Animation state for Color Swipe (Sheen)
     var isSwiping by remember(progress.showId) { mutableStateOf(false) }
-    
+
     val swipeProgress by animateFloatAsState(
         targetValue = if (isSwiping) 1f else 0f,
         animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing),
         label = "swipe_progress"
     )
 
-    // Trigger data update at the sheen's midpoint
+    // Trigger data update
     LaunchedEffect(isSwiping) {
         if (isSwiping) {
-            kotlinx.coroutines.delay(200)
+            kotlinx.coroutines.delay(180) // Timed with glint reaching text area
             onMarkWatched()
-            kotlinx.coroutines.delay(300)
+            kotlinx.coroutines.delay(320)
             isSwiping = false
         }
     }
@@ -590,9 +590,13 @@ fun EpisodeTrackingCard(
                         // Episode Details
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             AnimatedContent(
-                                targetState = if (isSwiping && swipeProgress < 0.6f) null else (episode to progress.remainingCount),
+                                targetState = if (isSwiping && swipeProgress < 0.5f) null else (episode to progress.remainingCount),
                                 transitionSpec = {
-                                    fadeIn(tween(150)) togetherWith fadeOut(tween(150))
+                                    if (targetState == null) {
+                                        EnterTransition.None togetherWith (fadeOut(tween(120)) + slideOutHorizontally { -20 })
+                                    } else {
+                                        (fadeIn(tween(180)) + slideInHorizontally { 20 }) togetherWith ExitTransition.None
+                                    }
                                 },
                                 label = "episode_header_transition"
                             ) { state ->
@@ -615,7 +619,7 @@ fun EpisodeTrackingCard(
                                                 fontSize = 11.sp
                                             )
                                         }
-                                        
+
                                         // Badges
                                         Row(modifier = Modifier.padding(start = 4.dp)) {
                                             if (progress.isNew) {
@@ -631,9 +635,13 @@ fun EpisodeTrackingCard(
                             }
 
                             AnimatedContent(
-                                targetState = if (isSwiping && swipeProgress < 0.6f) null else if (progress.isSyncing) "Fetching data..." else episode.name,
+                                targetState = if (isSwiping && swipeProgress < 0.5f) null else if (progress.isSyncing) "Fetching data..." else episode.name,
                                 transitionSpec = {
-                                    fadeIn(tween(150)) togetherWith fadeOut(tween(150))
+                                    if (targetState == null) {
+                                        EnterTransition.None togetherWith (fadeOut(tween(120)) + slideOutHorizontally { -20 })
+                                    } else {
+                                        (fadeIn(tween(180)) + slideInHorizontally { 20 }) togetherWith ExitTransition.None
+                                    }
                                 },
                                 label = "episode_name_transition"
                             ) { targetName ->
@@ -660,7 +668,7 @@ fun EpisodeTrackingCard(
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-                            .clickable(enabled = !progress.isSyncing && !isSwiping) { 
+                            .clickable(enabled = !progress.isSyncing && !isSwiping) {
                                 isSwiping = true
                             },
                         contentAlignment = Alignment.Center
