@@ -814,7 +814,7 @@ fun PremiumTabScaffold(
 fun WatchlistBadge(text: String, color: Color) {
     Surface(
         color = MaterialTheme.colorScheme.background,
-        shape = CircleShape,
+        shape = RoundedCornerShape(4.dp),
         border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
     ) {
         Text(
@@ -822,7 +822,7 @@ fun WatchlistBadge(text: String, color: Color) {
             color = color,
             fontSize = 9.sp,
             fontWeight = FontWeight.Black,
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = .2.dp)
+            modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.5.dp)
         )
     }
 }
