@@ -6,14 +6,20 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ListDao {
 
-    @Query("SELECT * FROM custom_lists ORDER BY createdAt DESC")
+    @Query("SELECT * FROM custom_lists ORDER BY position ASC, createdAt DESC")
     fun getAllListsFlow(): Flow<List<ListEntity>>
 
-    @Query("SELECT * FROM custom_lists ORDER BY createdAt DESC")
+    @Query("SELECT * FROM custom_lists ORDER BY position ASC, createdAt DESC")
     suspend fun getAllLists(): List<ListEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun createList(entity: ListEntity)
+
+    @Query("UPDATE custom_lists SET name = :name WHERE id = :listId")
+    suspend fun updateListName(listId: String, name: String)
+
+    @Query("UPDATE custom_lists SET position = :position WHERE id = :listId")
+    suspend fun updateListPosition(listId: String, position: Int)
 
     @Query("DELETE FROM custom_lists WHERE id = :listId")
     suspend fun deleteList(listId: String)

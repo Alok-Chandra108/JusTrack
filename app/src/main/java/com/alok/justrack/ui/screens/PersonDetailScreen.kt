@@ -193,7 +193,9 @@ private fun PersonContent(
         // Filmography - Movies
         if (person.movieCredits.isNotEmpty()) {
             val sortedMovies = remember(person.movieCredits) {
-                person.movieCredits.sortedByDescending { it.releaseDate }
+                person.movieCredits
+                    .distinctBy { it.id + it.mediaType.name }
+                    .sortedByDescending { it.releaseDate }
             }
             FilmographySection(
                 title = "Movies",
@@ -208,7 +210,9 @@ private fun PersonContent(
         // Filmography - TV Shows
         if (person.tvCredits.isNotEmpty()) {
             val sortedTv = remember(person.tvCredits) {
-                person.tvCredits.sortedByDescending { it.releaseDate }
+                person.tvCredits
+                    .distinctBy { it.id + it.mediaType.name }
+                    .sortedByDescending { it.releaseDate }
             }
             FilmographySection(
                 title = "TV Shows",
@@ -248,7 +252,7 @@ private fun FilmographySection(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(end = 16.dp)
         ) {
-            items(items, key = { it.id }) { item ->
+            items(items, key = { "${it.id}-${it.mediaType.name}" }) { item ->
                 PersonFilmographyCard(
                     item = item,
                     onWatchlistClick = {

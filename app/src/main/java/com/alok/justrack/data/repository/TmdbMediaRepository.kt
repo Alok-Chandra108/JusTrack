@@ -187,12 +187,24 @@ class TmdbMediaRepository @Inject constructor(
         .map { entities -> entities.map { it.id to it.name } }
 
     override suspend fun createList(name: String) {
-        listDao.createList(ListEntity(id = UUID.randomUUID().toString(), name = name))
+        val existingLists = listDao.getAllLists()
+        val nextPosition = (existingLists.maxByOrNull { it.position }?.position ?: -1) + 1
+        listDao.createList(ListEntity(id = UUID.randomUUID().toString(), name = name, position = nextPosition))
+    }
+
+    override suspend fun renameList(listId: String, newName: String) {
+        listDao.updateListName(listId, newName)
     }
 
     override suspend fun deleteList(listId: String) {
         listDao.deleteList(listId)
         listDao.deleteListItems(listId)
+    }
+
+    override suspend fun reorderLists(listIds: List<String>) {
+        listIds.forEachIndexed { index, id ->
+            listDao.updateListPosition(id, index)
+        }
     }
 
     override suspend fun addToList(listId: String, item: MediaItem) {

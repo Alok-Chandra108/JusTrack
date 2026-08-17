@@ -125,7 +125,7 @@ private fun MovieWatchlistTabContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(movies, key = { it.id }) { movie ->
+                        items(movies, key = { "${it.id}-${it.mediaType.name}" }) { movie ->
                             PosterOnlyCard(
                                 item = movie,
                                 sharedTransitionScope = sharedTransitionScope,
@@ -140,7 +140,7 @@ private fun MovieWatchlistTabContent(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(movies, key = { it.id }) { movie ->
+                        items(movies, key = { "${it.id}-${it.mediaType.name}" }) { movie ->
                             MovieWatchlistCard(
                                 movie = movie,
                                 sharedTransitionScope = sharedTransitionScope,
@@ -201,7 +201,7 @@ private fun MovieUpcomingTabContent(
                                 title = groupName
                             )
                         }
-                        items(movies, key = { it.id }) { movie ->
+                        items(movies, key = { "${it.id}-${it.mediaType.name}" }) { movie ->
                             UpcomingMovieCard(
                                 movie = movie,
                                 sharedTransitionScope = sharedTransitionScope,
@@ -452,6 +452,14 @@ fun ProfileScreen(
     val watchedShows by viewModel.watchedShows.collectAsState()
     val favoriteMovies by viewModel.favoriteMovies.collectAsState()
     val favoriteShows by viewModel.favoriteShows.collectAsState()
+    
+    var activeListForManagement by remember { mutableStateOf<Triple<String, String, List<MediaItem>>?>(null) }
+    var listToRename by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var showCreateList by remember { mutableStateOf(false) }
+    
+    val listSearchQuery by viewModel.listSearchQuery.collectAsState()
+    val listSearchResults by viewModel.listSearchResults.collectAsState()
+    val isSearchingList by viewModel.isSearchingList.collectAsState()
 
     Column(
         modifier = Modifier
@@ -527,28 +535,29 @@ fun ProfileScreen(
                             showCount = stats?.tvCount ?: 0
                         )
                     }
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 3. Custom Lists Section
+                    CustomListsSection(
+                        lists = listsWithPreviews,
+                        onCreateClick = { showCreateList = true },
+                        onListClick = { _, name, _ -> 
+                            navController.navigate(Screen.ViewAll.createRoute(name, "list"))
+                        },
+                        onManageClick = { id, name, items ->
+                            activeListForManagement = Triple(id, name, items)
+                        },
+                        onRenameClick = { id, name ->
+                            listToRename = id to name
+                        },
+                        onDeleteClick = { id ->
+                            viewModel.deleteList(id)
+                        }
+                    )
                     
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 3. Lists Section (Horizontal Previews)
-                    listsWithPreviews.forEach { (listName, items) ->
-                        HorizontalSection(
-                            title = listName,
-                            items = items,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            onItemClick = { item ->
-                                navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
-                            },
-                            onViewAllClick = {
-                                navController.navigate(Screen.ViewAll.createRoute(listName, "list"))
-                            },
-                            emptyMessage = "This list is empty"
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    // 4. Shows (Watched & In Progress)
+                    // 5. Shows (Watched & In Progress)
                     HorizontalSection(
                         title = "Shows",
                         items = watchedShows,
@@ -564,7 +573,7 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 5. Favorite shows (Hearted only)
+                    // 6. Favorite shows (Hearted only)
                     HorizontalSection(
                         title = "Favorite shows",
                         items = favoriteShows,
@@ -582,7 +591,7 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 6. Movies (Watched only)
+                    // 7. Movies (Watched only)
                     HorizontalSection(
                         title = "Movies",
                         items = watchedMovies,
@@ -598,7 +607,7 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 7. Favorite movies (Hearted only)
+                    // 8. Favorite movies (Hearted only)
                     HorizontalSection(
                         title = "Favorite movies",
                         items = favoriteMovies,
@@ -617,5 +626,71 @@ fun ProfileScreen(
                 }
             }
         }
+    }
+
+    // --- Dialogs & Bottom Sheets ---
+
+    if (showCreateList) {
+        var newListName by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showCreateList = false },
+            title = { Text("Create New List") },
+            text = {
+                TextField(
+                    value = newListName,
+                    onValueChange = { newListName = it },
+                    placeholder = { Text("List Name (e.g. 🍿 Action Hits)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newListName.isNotBlank()) {
+                            viewModel.createList(newListName.trim())
+                            showCreateList = false
+                        }
+                    },
+                    enabled = newListName.isNotBlank()
+                ) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCreateList = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    listToRename?.let { (id, name) ->
+        RenameListDialog(
+            initialName = name,
+            onDismiss = { listToRename = null },
+            onConfirm = { newName ->
+                viewModel.renameList(id, newName)
+                listToRename = null
+            }
+        )
+    }
+
+    activeListForManagement?.let { (id, name, items) ->
+        ListManagementBottomSheet(
+            listName = name,
+            items = items,
+            onDismiss = { activeListForManagement = null },
+            onRemoveItem = { item ->
+                viewModel.removeFromList(id, item.id, item.mediaType)
+            },
+            onSearchAndAdd = { item ->
+                viewModel.addToList(id, item)
+            },
+            searchQuery = listSearchQuery,
+            onSearchQueryChange = { viewModel.onListSearchQueryChange(it) },
+            searchResults = listSearchResults,
+            isSearching = isSearchingList
+        )
     }
 }

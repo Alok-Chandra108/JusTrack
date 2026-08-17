@@ -124,7 +124,7 @@ fun ExploreScreen(
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                items(search.items, key = { it.id }) { item ->
+                                items(search.items, key = { "${it.id}-${it.mediaType.name}" }) { item ->
                                     ExploreMediaCard(
                                         item = item,
                                         onClick = { navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name)) },
@@ -449,7 +449,7 @@ private fun ExploreSection(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(items, key = { it.id }) { item ->
+            items(items, key = { "${it.id}-${it.mediaType.name}" }) { item ->
                 ExplorePosterCard(
                     item = item,
                     sharedTransitionScope = sharedTransitionScope,
@@ -504,7 +504,7 @@ private fun ExploreSectionLazy(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(items, key = { it.id }) { item ->
+                items(items, key = { "${it.id}-${it.mediaType.name}" }) { item ->
                     ExplorePosterCard(
                         item = item,
                         sharedTransitionScope = sharedTransitionScope,

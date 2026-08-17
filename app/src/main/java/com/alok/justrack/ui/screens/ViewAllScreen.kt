@@ -51,7 +51,7 @@ fun ViewAllScreen(
             "watchlist_tv" -> explicitWatchlistItems.filter { it.mediaType == MediaType.TV }
             "favorite_movie" -> favoriteMovies
             "favorite_tv" -> favoriteShows
-            "list" -> listsWithPreviews.find { it.first == title }?.second ?: emptyList()
+            "list" -> listsWithPreviews.find { it.second == title }?.third ?: emptyList()
             else -> emptyList()
         }
     }
@@ -99,7 +99,7 @@ fun ViewAllScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(filteredItems, key = { it.id + it.mediaType.name }) { item ->
+                items(filteredItems, key = { "${it.id}-${it.mediaType.name}-${it.addedAt}" }) { item ->
                     PosterOnlyCard(
                         item = item,
                         sharedTransitionScope = sharedTransitionScope,

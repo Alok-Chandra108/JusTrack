@@ -32,7 +32,9 @@ interface MediaRepository {
     // Custom lists
     fun getListsFlow(): Flow<List<Pair<String, String>>>
     suspend fun createList(name: String)
+    suspend fun renameList(listId: String, newName: String)
     suspend fun deleteList(listId: String)
+    suspend fun reorderLists(listIds: List<String>)
     suspend fun addToList(listId: String, item: MediaItem)
     suspend fun removeFromList(listId: String, mediaId: String, mediaType: MediaType)
     suspend fun isInList(listId: String, mediaId: String, mediaType: MediaType): Boolean

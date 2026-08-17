@@ -50,6 +50,7 @@ abstract class DataModule {
                 AppDatabase.MIGRATION_8_9,
                 AppDatabase.MIGRATION_9_10,
                 AppDatabase.MIGRATION_10_11,
+                AppDatabase.MIGRATION_11_12,
                 AppDatabase.MIGRATION_14_10
             ).build()
         }

@@ -214,7 +214,9 @@ class SupabaseMediaRepository @Inject constructor(
 
     override fun getListsFlow(): Flow<List<Pair<String, String>>> = flow { emit(emptyList()) }
     override suspend fun createList(name: String) {}
+    override suspend fun renameList(listId: String, newName: String) {}
     override suspend fun deleteList(listId: String) {}
+    override suspend fun reorderLists(listIds: List<String>) {}
     override suspend fun addToList(listId: String, item: MediaItem) {}
     override suspend fun removeFromList(listId: String, mediaId: String, mediaType: MediaType) {}
     override suspend fun isInList(listId: String, mediaId: String, mediaType: MediaType): Boolean = false

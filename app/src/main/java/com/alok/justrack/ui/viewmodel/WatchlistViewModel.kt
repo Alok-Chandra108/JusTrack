@@ -9,8 +9,8 @@ import com.alok.justrack.data.model.StatsData
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -133,13 +133,69 @@ class WatchlistViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    // List Management & Search
+    private val _listSearchQuery = MutableStateFlow("")
+    val listSearchQuery: StateFlow<String> = _listSearchQuery.asStateFlow()
+
+    private val _listSearchResults = MutableStateFlow<List<MediaItem>>(emptyList())
+    val listSearchResults: StateFlow<List<MediaItem>> = _listSearchResults.asStateFlow()
+
+    private val _isSearchingList = MutableStateFlow(false)
+    val isSearchingList: StateFlow<Boolean> = _isSearchingList.asStateFlow()
+
+    private var searchJob: Job? = null
+
+    fun onListSearchQueryChange(query: String) {
+        _listSearchQuery.value = query
+        searchJob?.cancel()
+        if (query.length >= 2) {
+            searchJob = viewModelScope.launch {
+                _isSearchingList.value = true
+                try {
+                    _listSearchResults.value = repository.searchMedia(query)
+                } catch (e: Exception) {
+                    _listSearchResults.value = emptyList()
+                } finally {
+                    _isSearchingList.value = false
+                }
+            }
+        } else {
+            _listSearchResults.value = emptyList()
+            _isSearchingList.value = false
+        }
+    }
+
+    fun renameList(listId: String, newName: String) {
+        viewModelScope.launch { repository.renameList(listId, newName) }
+    }
+
+    fun deleteList(listId: String) {
+        viewModelScope.launch { repository.deleteList(listId) }
+    }
+
+    fun reorderLists(listIds: List<String>) {
+        viewModelScope.launch { repository.reorderLists(listIds) }
+    }
+
+    fun addToList(listId: String, item: MediaItem) {
+        viewModelScope.launch { repository.addToList(listId, item) }
+    }
+
+    fun removeFromList(listId: String, mediaId: String, mediaType: MediaType) {
+        viewModelScope.launch { repository.removeFromList(listId, mediaId, mediaType) }
+    }
+
+    fun createList(name: String) {
+        viewModelScope.launch { repository.createList(name) }
+    }
+
     // Lists with previews
     @OptIn(ExperimentalCoroutinesApi::class)
-    val listsWithPreviews: StateFlow<List<Pair<String, List<MediaItem>>>> = lists.flatMapLatest { listPairs ->
+    val listsWithPreviews: StateFlow<List<Triple<String, String, List<MediaItem>>>> = lists.flatMapLatest { listPairs ->
         if (listPairs.isEmpty()) flowOf(emptyList())
         else {
             val flows = listPairs.map { (id, name) ->
-                repository.getListItemsFlow(id).map { items -> name to items }
+                repository.getListItemsFlow(id).map { items -> Triple(id, name, items) }
             }
             combine(flows) { it.toList() }
         }

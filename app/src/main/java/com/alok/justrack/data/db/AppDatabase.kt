@@ -18,7 +18,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WatchedEpisodeEntity::class,
         EpisodeEntity::class // Added for episode tracking
     ],
-    version = 11, // Incremented to 11 to add indices to watched_episodes
+    version = 12, // Incremented to 12 to add position to custom_lists
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +30,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun episodeDao(): EpisodeDao // Added for episode tracking
 
     companion object {
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE custom_lists ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // Remove duplicates before creating unique index

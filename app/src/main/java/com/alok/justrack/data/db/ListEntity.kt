@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class ListEntity(
     @PrimaryKey val id: String,
     val name: String,
+    val position: Int = 0,
     val createdAt: Long = System.currentTimeMillis()
 )
