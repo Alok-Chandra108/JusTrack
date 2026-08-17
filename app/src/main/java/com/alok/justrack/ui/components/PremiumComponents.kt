@@ -612,7 +612,9 @@ fun PosterCard(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showRating: Boolean = true,
+    showYear: Boolean = true
 ) {
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
@@ -652,7 +654,7 @@ fun PosterCard(
                 )
                 
                 // Rating Badge
-                if (item.rating > 0) {
+                if (showRating && item.rating > 0) {
                     Surface(
                         color = Color.Black.copy(alpha = 0.7f),
                         modifier = Modifier
@@ -692,12 +694,14 @@ fun PosterCard(
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.SemiBold
             )
-            Text(
-                text = item.releaseDate.split("-").firstOrNull() ?: "",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 10.sp
-            )
+            if (showYear) {
+                Text(
+                    text = item.releaseDate.split("-").firstOrNull() ?: "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 10.sp
+                )
+            }
         }
     }
 }
@@ -942,7 +946,9 @@ fun HorizontalSection(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     icon: ImageVector? = null,
     iconTint: Color? = null,
-    emptyMessage: String = "No data yet"
+    emptyMessage: String = "No data yet",
+    showRating: Boolean = true,
+    showYear: Boolean = true
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(
@@ -981,7 +987,9 @@ fun HorizontalSection(
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
                         onClick = { onItemClick(item) },
-                        modifier = Modifier.width(130.dp)
+                        modifier = Modifier.width(130.dp),
+                        showRating = showRating,
+                        showYear = showYear
                     )
                 }
             }
