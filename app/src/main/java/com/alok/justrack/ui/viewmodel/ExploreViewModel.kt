@@ -45,14 +45,18 @@ class ExploreViewModel @Inject constructor(
     private val repository: MediaRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ExploreUiState>(ExploreUiState.Loading)
-    val uiState: StateFlow<ExploreUiState> = _uiState.asStateFlow()
+    private val _internalUiState = MutableStateFlow<ExploreUiState>(ExploreUiState.Loading)
+    val uiState: StateFlow<ExploreUiState> = combine(_internalUiState, repository.getWatchlistFlow()) { state, watchlist ->
+        updateStateWithWatchlist(state, watchlist)
+    }.stateIn(viewModelScope, SharingStarted.Lazily, ExploreUiState.Loading)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _searchState = MutableStateFlow<ExploreSearchUiState>(ExploreSearchUiState.Idle)
-    val searchState: StateFlow<ExploreSearchUiState> = _searchState.asStateFlow()
+    private val _internalSearchState = MutableStateFlow<ExploreSearchUiState>(ExploreSearchUiState.Idle)
+    val searchState: StateFlow<ExploreSearchUiState> = combine(_internalSearchState, repository.getWatchlistFlow()) { state, watchlist ->
+        updateSearchStateWithWatchlist(state, watchlist)
+    }.stateIn(viewModelScope, SharingStarted.Lazily, ExploreSearchUiState.Idle)
 
     private val bannerCache = mutableMapOf<String, List<MediaItem>>()
     private val sectionCache = mutableMapOf<String, List<MediaItem>>()
@@ -85,19 +89,19 @@ class ExploreViewModel @Inject constructor(
                 val trending = loadWithCache("trending") { fetchTrending() }
                 val genres = loadGenres()
 
-                _uiState.value = ExploreUiState.Success(
+                _internalUiState.value = ExploreUiState.Success(
                     bannerItems = trending.take(10),
                     trending = trending,
                     genres = genres
                 )
             } catch (e: Exception) {
-                _uiState.value = ExploreUiState.Error(e.message ?: "Failed to load explore data")
+                _internalUiState.value = ExploreUiState.Error(e.message ?: "Failed to load explore data")
             }
         }
     }
 
     fun loadSection(sectionName: String) {
-        val currentState = _uiState.value as? ExploreUiState.Success ?: return
+        val currentState = _internalUiState.value as? ExploreUiState.Success ?: return
         if (isSectionLoaded(sectionName, currentState)) return
 
         viewModelScope.launch {
@@ -113,7 +117,7 @@ class ExploreViewModel @Inject constructor(
                         else -> emptyList()
                     }
                 }
-                _uiState.value = when (sectionName) {
+                _internalUiState.value = when (sectionName) {
                     "popular_movies" -> currentState.copy(popularMovies = items)
                     "popular_tv" -> currentState.copy(popularTv = items)
                     "top_rated_movies" -> currentState.copy(topRatedMovies = items)
@@ -145,7 +149,7 @@ class ExploreViewModel @Inject constructor(
     }
 
     private suspend fun performSearch(query: String) = coroutineScope {
-        _searchState.value = ExploreSearchUiState.Searching
+        _internalSearchState.value = ExploreSearchUiState.Searching
         
         // 1. Extract potential year (e.g., "Welcome 2007" -> "Welcome", 2007)
         val yearRegex = Regex("\\b(19|20)\\d{2}\\b")
@@ -187,9 +191,9 @@ class ExploreViewModel @Inject constructor(
                 .distinctBy { it.id + it.mediaType.name }
                 .take(40)
 
-            _searchState.value = ExploreSearchUiState.Results(finalItems)
+            _internalSearchState.value = ExploreSearchUiState.Results(finalItems)
         } catch (e: Exception) {
-            _searchState.value = ExploreSearchUiState.Error(e.message ?: "Search failed")
+            _internalSearchState.value = ExploreSearchUiState.Error(e.message ?: "Search failed")
         }
     }
 
@@ -199,12 +203,12 @@ class ExploreViewModel @Inject constructor(
 
     fun clearSearch() {
         _searchQuery.value = ""
-        _searchState.value = ExploreSearchUiState.Idle
+        _internalSearchState.value = ExploreSearchUiState.Idle
     }
 
     fun selectGenre(genre: Genre) {
-        val currentState = _uiState.value as? ExploreUiState.Success ?: return
-        _uiState.value = currentState.copy(selectedGenre = genre)
+        val currentState = _internalUiState.value as? ExploreUiState.Success ?: return
+        _internalUiState.value = currentState.copy(selectedGenre = genre)
 
         viewModelScope.launch {
             try {
@@ -215,7 +219,7 @@ class ExploreViewModel @Inject constructor(
                         .map { it.toMediaItem() }
                         .sortedByDescending { it.rating }
                 }
-                _uiState.value = currentState.copy(genreResults = items, selectedGenre = genre)
+                _internalUiState.value = currentState.copy(genreResults = items, selectedGenre = genre)
             } catch (e: Exception) {
                 // Keep existing state on error
             }
@@ -223,8 +227,8 @@ class ExploreViewModel @Inject constructor(
     }
 
     fun clearGenreSelection() {
-        val currentState = _uiState.value as? ExploreUiState.Success ?: return
-        _uiState.value = currentState.copy(selectedGenre = null, genreResults = emptyList())
+        val currentState = _internalUiState.value as? ExploreUiState.Success ?: return
+        _internalUiState.value = currentState.copy(selectedGenre = null, genreResults = emptyList())
     }
 
     fun addToWatchlist(item: MediaItem) {
@@ -278,6 +282,37 @@ class ExploreViewModel @Inject constructor(
     }
 
     fun getLists() = repository.getListsFlow()
+
+    private fun updateStateWithWatchlist(state: ExploreUiState, watchlist: List<MediaItem>): ExploreUiState {
+        return if (state is ExploreUiState.Success) {
+            state.copy(
+                bannerItems = state.bannerItems.map { it.syncWithWatchlist(watchlist) },
+                trending = state.trending.map { it.syncWithWatchlist(watchlist) },
+                popularMovies = state.popularMovies.map { it.syncWithWatchlist(watchlist) },
+                popularTv = state.popularTv.map { it.syncWithWatchlist(watchlist) },
+                topRatedMovies = state.topRatedMovies.map { it.syncWithWatchlist(watchlist) },
+                topRatedTv = state.topRatedTv.map { it.syncWithWatchlist(watchlist) },
+                upcomingMovies = state.upcomingMovies.map { it.syncWithWatchlist(watchlist) },
+                onTheAirTv = state.onTheAirTv.map { it.syncWithWatchlist(watchlist) },
+                genreResults = state.genreResults.map { it.syncWithWatchlist(watchlist) }
+            )
+        } else state
+    }
+
+    private fun updateSearchStateWithWatchlist(state: ExploreSearchUiState, watchlist: List<MediaItem>): ExploreSearchUiState {
+        return if (state is ExploreSearchUiState.Results) {
+            state.copy(items = state.items.map { it.syncWithWatchlist(watchlist) })
+        } else state
+    }
+
+    private fun MediaItem.syncWithWatchlist(watchlist: List<MediaItem>): MediaItem {
+        val localItem = watchlist.find { it.id == this.id && it.mediaType == this.mediaType }
+        return if (localItem != null) {
+            this.copy(isWatched = localItem.isWatched, inWatchlist = localItem.inWatchlist)
+        } else {
+            this.copy(isWatched = false, inWatchlist = false)
+        }
+    }
 
     private suspend fun loadWithCache(key: String, fetcher: suspend () -> List<MediaItem>): List<MediaItem> {
         val cached = sectionCache[key]
