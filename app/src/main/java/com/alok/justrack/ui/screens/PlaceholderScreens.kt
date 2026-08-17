@@ -543,9 +543,7 @@ fun ProfileScreen(
                             onViewAllClick = {
                                 navController.navigate(Screen.ViewAll.createRoute(listName, "list"))
                             },
-                            emptyMessage = "This list is empty",
-                            showRating = false,
-                            showYear = false
+                            emptyMessage = "This list is empty"
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
@@ -562,9 +560,7 @@ fun ProfileScreen(
                         onViewAllClick = {
                             navController.navigate(Screen.ViewAll.createRoute("Shows", "tv"))
                         },
-                        emptyMessage = "No shows in progress or watched",
-                        showRating = false,
-                        showYear = false
+                        emptyMessage = "No shows in progress or watched"
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -582,9 +578,7 @@ fun ProfileScreen(
                         },
                         icon = Icons.Rounded.Favorite,
                         iconTint = MaterialTheme.colorScheme.error,
-                        emptyMessage = "No favorite shows yet",
-                        showRating = false,
-                        showYear = false
+                        emptyMessage = "No favorite shows yet"
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -600,9 +594,7 @@ fun ProfileScreen(
                         onViewAllClick = {
                             navController.navigate(Screen.ViewAll.createRoute("Watched Movies", "movie"))
                         },
-                        emptyMessage = "No watched movies yet",
-                        showRating = false,
-                        showYear = false
+                        emptyMessage = "No watched movies yet"
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -620,9 +612,7 @@ fun ProfileScreen(
                         },
                         icon = Icons.Rounded.Favorite,
                         iconTint = MaterialTheme.colorScheme.error,
-                        emptyMessage = "No favorite movies yet",
-                        showRating = false,
-                        showYear = false
+                        emptyMessage = "No favorite movies yet"
                     )
                 }
             }

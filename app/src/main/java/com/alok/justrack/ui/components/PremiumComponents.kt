@@ -612,9 +612,7 @@ fun PosterCard(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    showRating: Boolean = true,
-    showYear: Boolean = true
+    modifier: Modifier = Modifier
 ) {
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
@@ -652,36 +650,6 @@ fun PosterCard(
                         .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 )
-                
-                // Rating Badge
-                if (showRating && item.rating > 0) {
-                    Surface(
-                        color = Color.Black.copy(alpha = 0.7f),
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .align(Alignment.TopStart)
-                            .clip(RoundedCornerShape(6.dp))
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Star,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(10.dp)
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Text(
-                                text = String.format(Locale.getDefault(), "%.1f", item.rating),
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
             }
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -694,14 +662,6 @@ fun PosterCard(
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.SemiBold
             )
-            if (showYear) {
-                Text(
-                    text = item.releaseDate.split("-").firstOrNull() ?: "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 10.sp
-                )
-            }
         }
     }
 }
@@ -946,9 +906,7 @@ fun HorizontalSection(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     icon: ImageVector? = null,
     iconTint: Color? = null,
-    emptyMessage: String = "No data yet",
-    showRating: Boolean = true,
-    showYear: Boolean = true
+    emptyMessage: String = "No data yet"
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(
@@ -987,9 +945,7 @@ fun HorizontalSection(
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
                         onClick = { onItemClick(item) },
-                        modifier = Modifier.width(130.dp),
-                        showRating = showRating,
-                        showYear = showYear
+                        modifier = Modifier.width(130.dp)
                     )
                 }
             }
