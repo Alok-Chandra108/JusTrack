@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -86,6 +87,7 @@ fun PersonDetailScreen(
                 PersonContent(
                     person = state.person,
                     navController = navController,
+                    viewModel = viewModel,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -97,6 +99,7 @@ fun PersonDetailScreen(
 private fun PersonContent(
     person: PersonDetails,
     navController: NavController,
+    viewModel: PersonViewModel,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -195,6 +198,7 @@ private fun PersonContent(
             FilmographySection(
                 title = "Movies",
                 items = sortedMovies,
+                viewModel = viewModel,
                 onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) }
             )
         }
@@ -209,6 +213,7 @@ private fun PersonContent(
             FilmographySection(
                 title = "TV Shows",
                 items = sortedTv,
+                viewModel = viewModel,
                 onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) }
             )
         }
@@ -221,6 +226,7 @@ private fun PersonContent(
 private fun FilmographySection(
     title: String,
     items: List<MediaItem>,
+    viewModel: PersonViewModel,
     onItemClick: (MediaItem) -> Unit
 ) {
     Column {
@@ -236,7 +242,7 @@ private fun FilmographySection(
         LazyHorizontalGrid(
             rows = GridCells.Fixed(2),
             modifier = Modifier
-                .height(380.dp) // Height for 2 rows of posters + spacing
+                .height(420.dp) // Increased height slightly to accommodate buttons
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -245,6 +251,13 @@ private fun FilmographySection(
             items(items, key = { it.id }) { item ->
                 PersonFilmographyCard(
                     item = item,
+                    onWatchlistClick = {
+                        if (item.inWatchlist) viewModel.removeFromWatchlist(item.id)
+                        else viewModel.addToWatchlist(item)
+                    },
+                    onWatchedClick = {
+                        viewModel.toggleWatched(item)
+                    },
                     onClick = { onItemClick(item) }
                 )
             }
@@ -255,6 +268,8 @@ private fun FilmographySection(
 @Composable
 private fun PersonFilmographyCard(
     item: MediaItem,
+    onWatchlistClick: () -> Unit,
+    onWatchedClick: () -> Unit,
     onClick: () -> Unit
 ) {
     Column(
@@ -262,16 +277,62 @@ private fun PersonFilmographyCard(
             .width(110.dp)
             .clickable { onClick() }
     ) {
-        AsyncImage(
-            model = item.posterPath,
-            contentDescription = item.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .height(160.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(SurfaceColor)
-        )
+        Box {
+            AsyncImage(
+                model = item.posterPath,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .height(160.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(SurfaceColor)
+            )
+
+            // Quick Actions
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Watchlist Button
+                Surface(
+                    onClick = onWatchlistClick,
+                    modifier = Modifier.size(28.dp),
+                    shape = CircleShape,
+                    color = if (item.inWatchlist) AccentPrimary else Color.Black.copy(alpha = 0.6f),
+                    tonalElevation = 4.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = if (item.inWatchlist) Icons.Rounded.BookmarkAdded else Icons.Rounded.BookmarkAdd,
+                            contentDescription = if (item.inWatchlist) "In Watchlist" else "Add to Watchlist",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                // Watched Button
+                Surface(
+                    onClick = onWatchedClick,
+                    modifier = Modifier.size(28.dp),
+                    shape = CircleShape,
+                    color = if (item.isWatched) WatchedGreen else Color.Black.copy(alpha = 0.6f),
+                    tonalElevation = 4.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = if (item.isWatched) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
+                            contentDescription = if (item.isWatched) "Mark Unwatched" else "Mark Watched",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = item.title,
