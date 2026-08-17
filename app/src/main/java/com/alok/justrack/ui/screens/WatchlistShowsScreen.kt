@@ -49,6 +49,11 @@ import com.alok.justrack.ui.components.*
 import com.alok.justrack.ui.navigation.Screen
 import com.alok.justrack.ui.theme.*
 import com.alok.justrack.ui.viewmodel.WatchlistViewModel
+import com.alok.justrack.util.ConfettiManager
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.PartySystem
 import java.util.Locale
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -65,27 +70,49 @@ fun WatchlistShowsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val tabTitles = listOf("WATCHLIST", "UPCOMING")
     var selectedTab by remember { mutableIntStateOf(0) }
+    
+    var confettiParties by remember { mutableStateOf<List<Party>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        viewModel.showCompletionEvents.collect {
+            confettiParties = ConfettiManager.getCelebrationParty()
+        }
+    }
 
     PremiumTabScaffold(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
         tabTitles = tabTitles
     ) { tab ->
-        when (tab) {
-            0 -> WatchlistTabContent(
-                uiState = uiState, 
-                viewModel = viewModel, 
-                navController = navController,
-                sharedTransitionScope = sharedTransitionScope,
-                animatedVisibilityScope = animatedVisibilityScope
-            )
-            1 -> UpcomingTabContent(
-                uiState = uiState, 
-                viewModel = viewModel, 
-                navController = navController,
-                sharedTransitionScope = sharedTransitionScope,
-                animatedVisibilityScope = animatedVisibilityScope
-            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (tab) {
+                0 -> WatchlistTabContent(
+                    uiState = uiState, 
+                    viewModel = viewModel, 
+                    navController = navController,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+                1 -> UpcomingTabContent(
+                    uiState = uiState, 
+                    viewModel = viewModel, 
+                    navController = navController,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+            }
+
+            if (confettiParties.isNotEmpty()) {
+                KonfettiView(
+                    modifier = Modifier.fillMaxSize(),
+                    parties = confettiParties,
+                    updateListener = object : OnParticleSystemUpdateListener {
+                        override fun onParticleSystemEnded(system: PartySystem, activeSystems: Int) {
+                            if (activeSystems == 0) confettiParties = emptyList()
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -373,6 +400,7 @@ fun EpisodeTrackingCard(
     val episode = progress.episode
     val showName = progress.showName
     val showPosterPath = progress.showPosterPath
+    val isLastEpisode = progress.remainingCount == 0
 
     // Animation state for Color Swipe (Sheen)
     var isSwiping by remember(progress.showId) { mutableStateOf(false) }
@@ -530,9 +558,50 @@ fun EpisodeTrackingCard(
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
+                if (isSwiping && isLastEpisode) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(WatchedGreen.copy(alpha = (swipeProgress * 0.8f).coerceIn(0f, 0.8f)))
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Rounded.Celebration,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .graphicsLayer {
+                                        scaleX = (swipeProgress * 1.5f).coerceIn(0f, 1.2f)
+                                        scaleY = (swipeProgress * 1.5f).coerceIn(0f, 1.2f)
+                                    }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "SERIES COMPLETE!",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.graphicsLayer {
+                                    alpha = (swipeProgress * 2f - 0.2f).coerceIn(0f, 1f)
+                                }
+                            )
+                        }
+                    }
+                }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .graphicsLayer {
+                            // Fade out existing content as badge appears
+                            if (isSwiping && isLastEpisode) {
+                                alpha = (1f - swipeProgress * 2f).coerceIn(0f, 1f)
+                            }
+                        }
                 ) {
                     // Image on the left (Poster)
                     with(sharedTransitionScope) {
