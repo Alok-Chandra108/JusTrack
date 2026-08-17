@@ -337,6 +337,7 @@ class TmdbMediaRepository @Inject constructor(
         } else {
             watchedEpisodeDao.delete(showId, seasonNumber, episodeNumber)
         }
+        _episodesUpdateEvents.emit(Unit)
     }
 
     override suspend fun markEpisodesWatched(showId: String, seasonNumber: Int, episodeNumbers: List<Int>, watched: Boolean) {
@@ -352,6 +353,7 @@ class TmdbMediaRepository @Inject constructor(
                 watchedEpisodeDao.delete(showId, seasonNumber, it)
             }
         }
+        _episodesUpdateEvents.emit(Unit)
     }
 
     override suspend fun markSeasonWatched(showId: String, seasonNumber: Int, watched: Boolean, episodes: List<Episode>) {
@@ -364,6 +366,7 @@ class TmdbMediaRepository @Inject constructor(
         } else {
             watchedEpisodeDao.deleteSeason(showId, seasonNumber)
         }
+        _episodesUpdateEvents.emit(Unit)
     }
 
     override fun getWatchedEpisodesFlow(showId: String): Flow<List<String>> = 
