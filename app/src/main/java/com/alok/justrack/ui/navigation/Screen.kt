@@ -5,8 +5,9 @@ sealed class Screen(val route: String, val label: String) {
     object Movies : Screen("movies", "Movies")
     object Explore : Screen("explore", "Explore")
     object Profile : Screen("profile", "Profile")
-    object Detail : Screen("detail/{id}/{mediaType}", "Detail") {
-        fun createRoute(id: String, mediaType: String) = "detail/$id/$mediaType"
+    object Detail : Screen("detail/{id}/{mediaType}?key={key}", "Detail") {
+        fun createRoute(id: String, mediaType: String, key: String? = null) = 
+            "detail/$id/$mediaType" + (if (key != null) "?key=$key" else "")
     }
     object ViewAll : Screen("view_all/{title}/{type}", "View All") {
         fun createRoute(title: String, type: String) = "view_all/$title/$type"

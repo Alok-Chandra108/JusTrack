@@ -563,8 +563,8 @@ fun ProfileScreen(
                         items = watchedShows,
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
-                        onItemClick = { item ->
-                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        onItemClick = { item, key ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key))
                         },
                         onViewAllClick = {
                             navController.navigate(Screen.ViewAll.createRoute("Shows", "tv"))
@@ -579,8 +579,8 @@ fun ProfileScreen(
                         items = favoriteShows,
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
-                        onItemClick = { item ->
-                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        onItemClick = { item, key ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key))
                         },
                         onViewAllClick = {
                             navController.navigate(Screen.ViewAll.createRoute("Favorite Shows", "favorite_tv"))
@@ -597,8 +597,8 @@ fun ProfileScreen(
                         items = watchedMovies,
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
-                        onItemClick = { item ->
-                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        onItemClick = { item, key ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key))
                         },
                         onViewAllClick = {
                             navController.navigate(Screen.ViewAll.createRoute("Watched Movies", "movie"))
@@ -613,8 +613,8 @@ fun ProfileScreen(
                         items = favoriteMovies,
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
-                        onItemClick = { item ->
-                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name))
+                        onItemClick = { item, key ->
+                            navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key))
                         },
                         onViewAllClick = {
                             navController.navigate(Screen.ViewAll.createRoute("Favorite Movies", "favorite_movie"))

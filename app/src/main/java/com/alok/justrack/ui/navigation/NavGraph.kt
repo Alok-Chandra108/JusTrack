@@ -28,10 +28,29 @@ fun NavGraph(navController: NavHostController) {
             composable(Screen.Profile.route) {
                 ProfileScreen(navController)
             }
-            composable(Screen.Detail.route) { backStackEntry ->
+            composable(
+                route = Screen.Detail.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("id") { type = androidx.navigation.NavType.StringType },
+                    androidx.navigation.navArgument("mediaType") { type = androidx.navigation.NavType.StringType },
+                    androidx.navigation.navArgument("key") { 
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id") ?: ""
                 val mediaType = backStackEntry.arguments?.getString("mediaType") ?: "MOVIE"
-                DetailScreen(navController, id, mediaType, sharedTransitionScope = this@SharedTransitionLayout, animatedVisibilityScope = this)
+                val sharedKey = backStackEntry.arguments?.getString("key")
+                DetailScreen(
+                    navController = navController,
+                    id = id,
+                    mediaType = mediaType,
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this,
+                    sharedElementKey = sharedKey
+                )
             }
             composable(Screen.ViewAll.route) { backStackEntry ->
                 val title = backStackEntry.arguments?.getString("title") ?: ""

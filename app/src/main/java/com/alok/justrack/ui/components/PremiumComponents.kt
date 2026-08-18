@@ -149,7 +149,8 @@ fun PosterInfoRow(
     movie: MovieDetails, 
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
-    onPersonClick: (com.alok.justrack.data.model.Person) -> Unit = {}
+    onPersonClick: (com.alok.justrack.data.model.Person) -> Unit = {},
+    sharedElementKey: String? = null
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -158,7 +159,7 @@ fun PosterInfoRow(
         val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
             with(sharedTransitionScope) {
                 Modifier.sharedElement(
-                    rememberSharedContentState(key = "poster-${movie.id}"),
+                    rememberSharedContentState(key = sharedElementKey ?: "poster-${movie.id}"),
                     animatedVisibilityScope = animatedVisibilityScope
                 )
             }
@@ -497,7 +498,7 @@ fun RecommendationsSection(
     recommendations: List<MediaItem>,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
-    onRecommendationClick: (MediaItem) -> Unit = {},
+    onRecommendationClick: (MediaItem, String) -> Unit = { _, _ -> },
     onWatchlistToggle: (MediaItem) -> Unit = {},
     onRefreshClick: () -> Unit = {}
 ) {
@@ -534,12 +535,14 @@ fun RecommendationsSection(
             contentPadding = PaddingValues(end = 10.dp)
         ) {
             items(recommendations, key = { "${it.id}-${it.mediaType.name}" }) { item ->
+                val sharedKey = "recommendation-${item.id}"
                 RecommendationItem(
                     item = item,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    onClick = { onRecommendationClick(item) },
-                    onWatchlistClick = { onWatchlistToggle(item) }
+                    onClick = { onRecommendationClick(item, sharedKey) },
+                    onWatchlistClick = { onWatchlistToggle(item) },
+                    sharedElementKey = sharedKey
                 )
             }
         }
@@ -553,7 +556,8 @@ fun RecommendationItem(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit = {},
-    onWatchlistClick: () -> Unit = {}
+    onWatchlistClick: () -> Unit = {},
+    sharedElementKey: String? = null
 ) {
     Column(
         modifier = Modifier
@@ -563,7 +567,7 @@ fun RecommendationItem(
         val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
             with(sharedTransitionScope) {
                 Modifier.sharedElement(
-                    rememberSharedContentState(key = "poster-${item.id}"),
+                    rememberSharedContentState(key = sharedElementKey ?: "poster-${item.id}"),
                     animatedVisibilityScope = animatedVisibilityScope
                 )
             }
@@ -623,7 +627,8 @@ fun PosterCard(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sharedElementKey: String? = null
 ) {
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
@@ -631,7 +636,7 @@ fun PosterCard(
     val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
         with(sharedTransitionScope) {
             Modifier.sharedElement(
-                rememberSharedContentState(key = "poster-${item.id}"),
+                rememberSharedContentState(key = sharedElementKey ?: "poster-${item.id}"),
                 animatedVisibilityScope = animatedVisibilityScope
             )
         }
@@ -684,7 +689,8 @@ fun PosterOnlyCard(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sharedElementKey: String? = null
 ) {
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
@@ -692,7 +698,7 @@ fun PosterOnlyCard(
     val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
         with(sharedTransitionScope) {
             Modifier.sharedElement(
-                rememberSharedContentState(key = "poster-${item.id}"),
+                rememberSharedContentState(key = sharedElementKey ?: "poster-${item.id}"),
                 animatedVisibilityScope = animatedVisibilityScope
             )
         }
@@ -935,7 +941,7 @@ fun SectionHeader(
 fun HorizontalSection(
     title: String,
     items: List<MediaItem>,
-    onItemClick: (MediaItem) -> Unit,
+    onItemClick: (MediaItem, String) -> Unit,
     onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope? = null,
@@ -978,12 +984,14 @@ fun HorizontalSection(
                 state = rememberLazyListState()
             ) {
                 items(items.take(7), key = { "${it.id}-${it.mediaType.name}" }) { item ->
+                    val sharedKey = "section-$title-${item.id}"
                     PosterCard(
                         item = item, 
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
-                        onClick = { onItemClick(item) },
-                        modifier = Modifier.width(130.dp)
+                        onClick = { onItemClick(item, sharedKey) },
+                        modifier = Modifier.width(130.dp),
+                        sharedElementKey = sharedKey
                     )
                 }
             }

@@ -165,7 +165,7 @@ fun ExploreScreen(
                                         items = state.genreResults,
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope,
-                                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                        onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                         onItemLongPress = { longPressItem = it; showLongPressSheet = true }
                                     )
                                 }
@@ -179,7 +179,7 @@ fun ExploreScreen(
                                         items = state.trending,
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope,
-                                        onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                        onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                         onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                         onLoadMore = { }
                                     )
@@ -193,7 +193,7 @@ fun ExploreScreen(
                                     items = state.popularMovies,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                    onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("popular_movies") }
                                 )
@@ -206,7 +206,7 @@ fun ExploreScreen(
                                     items = state.popularTv,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                    onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("popular_tv") }
                                 )
@@ -219,7 +219,7 @@ fun ExploreScreen(
                                     items = state.topRatedMovies,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                    onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("top_rated_movies") }
                                 )
@@ -232,7 +232,7 @@ fun ExploreScreen(
                                     items = state.topRatedTv,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                    onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("top_rated_tv") }
                                 )
@@ -245,7 +245,7 @@ fun ExploreScreen(
                                     items = state.upcomingMovies,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                    onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("upcoming_movies") },
                                     showDate = true
@@ -259,7 +259,7 @@ fun ExploreScreen(
                                     items = state.onTheAirTv,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    onItemClick = { navController.navigate(Screen.Detail.createRoute(it.id, it.mediaType.name)) },
+                                    onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
                                     onLoadMore = { viewModel.loadSection("on_the_air_tv") }
                                 )
@@ -432,7 +432,7 @@ private fun ExploreSection(
     items: List<MediaItem>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onItemClick: (MediaItem) -> Unit,
+    onItemClick: (MediaItem, String) -> Unit,
     onItemLongPress: (MediaItem) -> Unit,
     onLoadMore: () -> Unit = {}
 ) {
@@ -450,11 +450,13 @@ private fun ExploreSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(items, key = { "${it.id}-${it.mediaType.name}" }) { item ->
+                val sharedKey = "explore-$title-${item.id}"
                 ExplorePosterCard(
                     item = item,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    onClick = { onItemClick(item) },
+                    sharedElementKey = sharedKey,
+                    onClick = { onItemClick(item, sharedKey) },
                     onLongPress = { onItemLongPress(item) }
                 )
             }
@@ -469,7 +471,7 @@ private fun ExploreSectionLazy(
     items: List<MediaItem>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onItemClick: (MediaItem) -> Unit,
+    onItemClick: (MediaItem, String) -> Unit,
     onItemLongPress: (MediaItem) -> Unit,
     onLoadMore: () -> Unit,
     showDate: Boolean = false
@@ -505,11 +507,13 @@ private fun ExploreSectionLazy(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(items, key = { "${it.id}-${it.mediaType.name}" }) { item ->
+                    val sharedKey = "explore-$title-${item.id}"
                     ExplorePosterCard(
                         item = item,
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
-                        onClick = { onItemClick(item) },
+                        sharedElementKey = sharedKey,
+                        onClick = { onItemClick(item, sharedKey) },
                         onLongPress = { onItemLongPress(item) },
                         showDate = showDate
                     )
@@ -527,7 +531,8 @@ private fun ExplorePosterCard(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
     onLongPress: () -> Unit,
-    showDate: Boolean = false
+    showDate: Boolean = false,
+    sharedElementKey: String? = null
 ) {
     with(sharedTransitionScope) {
         Box(
@@ -545,7 +550,7 @@ private fun ExplorePosterCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .sharedElement(
-                        rememberSharedContentState(key = "poster-${item.id}"),
+                        rememberSharedContentState(key = sharedElementKey ?: "poster-${item.id}"),
                         animatedVisibilityScope = animatedVisibilityScope
                     )
                     .height(180.dp)

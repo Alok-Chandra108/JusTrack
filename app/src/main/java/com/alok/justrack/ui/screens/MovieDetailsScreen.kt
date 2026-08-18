@@ -60,6 +60,7 @@ fun DetailScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: DetailViewModel = hiltViewModel(),
+    sharedElementKey: String? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isInWatchlist by viewModel.isInWatchlist.collectAsState()
@@ -108,6 +109,7 @@ fun DetailScreen(
                     showProgress = showProgress,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
+                    sharedElementKey = sharedElementKey,
                     onBackClick = { navController.popBackStack() },
                     onWatchlistToggle = { viewModel.toggleWatchlist(state.item) },
                     onWatchedToggle = { viewModel.toggleWatched(state.item.id) },
@@ -121,8 +123,8 @@ fun DetailScreen(
                     onSeasonWatchedToggle = { season ->
                         viewModel.toggleSeasonWatched(season)
                     },
-                    onRecommendationClick = { item ->
-                        navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name))
+                    onRecommendationClick = { item, key ->
+                        navController.navigate(com.alok.justrack.ui.navigation.Screen.Detail.createRoute(item.id, item.mediaType.name, key))
                     },
                     onRecommendationWatchlistToggle = { item ->
                         viewModel.toggleWatchlistForRecommendation(item)
@@ -258,11 +260,12 @@ fun MovieDetailsScreen(
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit,
     modifier: Modifier = Modifier,
+    sharedElementKey: String? = null,
     onMoreClick: () -> Unit = {},
     onSeasonClick: (Int) -> Unit = {},
     onEpisodeWatchedToggle: (Int, Int, Boolean) -> Unit = { _, _, _ -> },
     onSeasonWatchedToggle: (Season) -> Unit = {},
-    onRecommendationClick: (MediaItem) -> Unit = {},
+    onRecommendationClick: (MediaItem, String) -> Unit = { _, _ -> },
     onRecommendationWatchlistToggle: (MediaItem) -> Unit = {},
     onRecommendationRefresh: () -> Unit = {},
     onPersonClick: (com.alok.justrack.data.model.Person) -> Unit = {}
@@ -342,6 +345,7 @@ fun MovieDetailsScreen(
                             showProgress = showProgress,
                             sharedTransitionScope = sharedTransitionScope,
                             animatedVisibilityScope = animatedVisibilityScope,
+                            sharedElementKey = sharedElementKey,
                             onWatchlistToggle = onWatchlistToggle,
                             onWatchedToggle = onWatchedToggle,
                             onRecommendationClick = onRecommendationClick,
@@ -363,6 +367,7 @@ fun MovieDetailsScreen(
                         movie = movie, 
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
+                        sharedElementKey = sharedElementKey,
                         onPersonClick = onPersonClick
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -413,9 +418,10 @@ fun TvShowAboutSection(
     showProgress: com.alok.justrack.data.model.ShowProgress?,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedElementKey: String? = null,
     onWatchlistToggle: () -> Unit,
     onWatchedToggle: () -> Unit,
-    onRecommendationClick: (MediaItem) -> Unit,
+    onRecommendationClick: (MediaItem, String) -> Unit,
     onRecommendationWatchlistToggle: (MediaItem) -> Unit,
     onRecommendationRefresh: () -> Unit,
     onPersonClick: (com.alok.justrack.data.model.Person) -> Unit
@@ -425,6 +431,7 @@ fun TvShowAboutSection(
             movie = movie, 
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
+            sharedElementKey = sharedElementKey,
             onPersonClick = onPersonClick
         )
         Spacer(modifier = Modifier.height(16.dp))
