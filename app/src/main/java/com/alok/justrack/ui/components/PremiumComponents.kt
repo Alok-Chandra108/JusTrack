@@ -824,16 +824,17 @@ fun PremiumTabScaffold(
 @Composable
 fun WatchlistBadge(text: String, color: Color) {
     Surface(
-        color = MaterialTheme.colorScheme.background,
-        shape = RoundedCornerShape(4.dp),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
+        color = color.copy(alpha = 0.15f),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
     ) {
         Text(
             text = text,
             color = color,
-            fontSize = 9.sp,
+            fontSize = 8.sp,
             fontWeight = FontWeight.Black,
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.5.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            letterSpacing = 0.5.sp
         )
     }
 }

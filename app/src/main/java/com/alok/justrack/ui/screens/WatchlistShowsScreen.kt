@@ -595,7 +595,7 @@ fun EpisodeTrackingCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .padding(8.dp)
+                        .padding(6.dp)
                         .graphicsLayer {
                             // Fade out existing content as badge appears
                             if (isSwiping && isLastEpisode) {
@@ -614,20 +614,20 @@ fun EpisodeTrackingCard(
                                     rememberSharedContentState(key = "poster-${progress.showId}"),
                                     animatedVisibilityScope = animatedVisibilityScope
                                 )
-                                .size(68.dp, 98.dp)
+                                .size(58.dp, 84.dp)
                                 .clip(RoundedCornerShape(6.dp))
                                 .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .height(98.dp)
-                            .padding(vertical = 4.dp),
+                            .height(84.dp)
+                            .padding(vertical = 2.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         // Show title Capsule at TOP
@@ -675,7 +675,10 @@ fun EpisodeTrackingCard(
                             ) { state ->
                                 if (state != null) {
                                     val (targetEpisode, targetRemaining) = state
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
                                         Text(
                                             text = "S%02d | E%02d".format(Locale.US, targetEpisode.seasonNumber, targetEpisode.episodeNumber),
                                             style = MaterialTheme.typography.labelMedium,
@@ -693,14 +696,18 @@ fun EpisodeTrackingCard(
                                             )
                                         }
 
+                                        Spacer(modifier = Modifier.weight(1f))
+
                                         // Badges
-                                        Row(modifier = Modifier.padding(start = 4.dp)) {
-                                            if (progress.isNew) {
-                                                WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
-                                            } else if (progress.isPremiere) {
-                                                WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
-                                            } else if (progress.isFinale) {
-                                                WatchlistBadge(text = "FINALE", color = MaterialTheme.colorScheme.tertiary)
+                                        if (progress.isNew || progress.isPremiere || progress.isFinale) {
+                                            Box(modifier = Modifier.padding(start = 4.dp)) {
+                                                if (progress.isNew) {
+                                                    WatchlistBadge(text = "NEW", color = MaterialTheme.colorScheme.primary)
+                                                } else if (progress.isPremiere) {
+                                                    WatchlistBadge(text = "PREMIERE", color = WatchedGreen)
+                                                } else if (progress.isFinale) {
+                                                    WatchlistBadge(text = "FINALE", color = MaterialTheme.colorScheme.tertiary)
+                                                }
                                             }
                                         }
                                     }
