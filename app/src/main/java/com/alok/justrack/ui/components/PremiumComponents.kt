@@ -1489,28 +1489,28 @@ fun StatsHorizontalRow(
         ) {
             // 1. TV Watch Time
             WatchTimeStatCard(
-                label = "TV time",
+                label = "Show Time",
                 watchTime = stats.showWatchTime,
                 icon = Icons.Outlined.Tv
             )
 
             // 2. Episodes Watched
             SimpleStatCard(
-                label = "Episodes watched",
+                label = "Episodes Watched",
                 value = stats.episodesWatched.toString(),
                 icon = Icons.Outlined.LibraryBooks
             )
 
             // 3. Movie Watch Time
             WatchTimeStatCard(
-                label = "Movie time",
+                label = "Movie Time",
                 watchTime = stats.movieWatchTime,
                 icon = Icons.Outlined.Movie
             )
 
             // 4. Movies Watched
             SimpleStatCard(
-                label = "Movies watched",
+                label = "Movies Watched",
                 value = stats.moviesWatched.toString(),
                 icon = Icons.Outlined.LocalActivity
             )
@@ -1525,13 +1525,13 @@ private fun WatchTimeStatCard(
     icon: ImageVector
 ) {
     Surface(
-        modifier = Modifier.width(220.dp),
+        modifier = Modifier.width(220.dp).height(130.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp),
+            modifier = Modifier.fillMaxSize().padding(vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
@@ -1561,15 +1561,16 @@ private fun WatchTimeStatCard(
                 thickness = 0.5.dp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
             )
-            Spacer(modifier = Modifier.height(16.dp))
             
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                TimeComponent(value = watchTime.months.toString(), label = "MONTHS")
-                TimeComponent(value = watchTime.days.toString(), label = "DAY")
-                TimeComponent(value = watchTime.hours.toString(), label = "HOURS")
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TimeComponent(value = watchTime.months.toString(), label = "MONTHS")
+                    TimeComponent(value = watchTime.days.toString(), label = "DAY")
+                    TimeComponent(value = watchTime.hours.toString(), label = "HOURS")
+                }
             }
         }
     }
@@ -1582,13 +1583,13 @@ private fun SimpleStatCard(
     icon: ImageVector
 ) {
     Surface(
-        modifier = Modifier.width(160.dp),
+        modifier = Modifier.width(180.dp).height(130.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp),
+            modifier = Modifier.fillMaxSize().padding(vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
@@ -1619,17 +1620,14 @@ private fun SimpleStatCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.displaySmall,
+                    style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -1647,7 +1645,7 @@ private fun TimeComponent(value: String, label: String) {
             text = label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 8.sp,
+            fontSize = 9.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
         )
