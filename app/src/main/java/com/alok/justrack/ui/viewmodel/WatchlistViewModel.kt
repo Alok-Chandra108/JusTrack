@@ -241,7 +241,8 @@ class WatchlistViewModel @Inject constructor(
         val watchedCount: Int,
         val totalCount: Int,
         val isSyncing: Boolean = false,
-        val isWatchLater: Boolean = false
+        val isWatchLater: Boolean = false,
+        val formattedEpisodeInfo: String = ""
     )
 
     private val _isGridView = MutableStateFlow(false)
@@ -287,7 +288,8 @@ class WatchlistViewModel @Inject constructor(
         val showName: String,
         val showPosterPath: String?,
         val episode: Episode,
-        val daysAway: Long? // Negative = aired, 0 = today, positive = future days
+        val daysAway: Long?, // Negative = aired, 0 = today, positive = future days
+        val formattedAirDate: String = ""
     )
 
     // Watchlist tab: shows next unwatched episode for each show in watchlist
@@ -333,7 +335,8 @@ class WatchlistViewModel @Inject constructor(
                             watchedCount = data.watchedCount,
                             totalCount = data.totalCount,
                             isSyncing = false,
-                            isWatchLater = show.isWatchLater
+                            isWatchLater = show.isWatchLater,
+                            formattedEpisodeInfo = "S%02d | E%02d".format(java.util.Locale.US, nextEpisode.seasonNumber, nextEpisode.episodeNumber)
                         )
                     } else if (data != null && data.totalCount == 0) {
                         // Show is in watchlist but has no episodes in DB yet -> Syncing
@@ -349,7 +352,8 @@ class WatchlistViewModel @Inject constructor(
                             watchedCount = 0,
                             totalCount = 0,
                             isSyncing = true,
-                            isWatchLater = show.isWatchLater
+                            isWatchLater = show.isWatchLater,
+                            formattedEpisodeInfo = ""
                         )
                     } else {
                         null
@@ -395,13 +399,21 @@ class WatchlistViewModel @Inject constructor(
                         futureEpisodes.forEach { episode ->
                             val daysAway = calculateDaysAway(episode.airDate)
                             if (daysAway != null && daysAway >= 0 && episode.seasonNumber > 0) {
+                                val airDate = DateUtils.parseDate(episode.airDate)
+                                val formattedDate = if (airDate == null) "" else {
+                                    val dayOfWeek = airDate.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+                                    val datePart = airDate.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.US))
+                                    "$dayOfWeek, $datePart"
+                                }
+                                
                                 upcomingList.add(
                                     UpcomingEpisodeItem(
                                         showId = show.id,
                                         showName = show.title,
                                         showPosterPath = show.posterPath,
                                         episode = episode,
-                                        daysAway = daysAway
+                                        daysAway = daysAway,
+                                        formattedAirDate = formattedDate
                                     )
                                 )
                             }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
@@ -160,43 +161,30 @@ private fun WatchlistTabContent(
             }
             else -> {
                 if (isGridView) {
-                    LazyColumn(
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(8.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
-                            if (index > 0) {
-                                item {
+                            if (index > 0 || header.isNotEmpty()) {
+                                item(span = { GridItemSpan(3) }) {
                                     CapsuleHeader(header)
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
-                            item {
-                                // Nested Grid-like layout in LazyColumn to support headers
-                                val chunkedItems = items.chunked(3)
-                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    chunkedItems.forEach { rowItems ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            rowItems.forEach { progress ->
-                                                EpisodeGridItem(
-                                                    progress = progress,
-                                                    sharedTransitionScope = sharedTransitionScope,
-                                                    animatedVisibilityScope = animatedVisibilityScope,
-                                                    modifier = Modifier.weight(1f),
-                                                    onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name)) }
-                                                )
-                                            }
-                                            // Fill empty slots in the last row
-                                            repeat(3 - rowItems.size) {
-                                                Spacer(modifier = Modifier.weight(1f))
-                                            }
-                                        }
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(20.dp))
+                            items(items, key = { it.showId }) { progress ->
+                                EpisodeGridItem(
+                                    progress = progress,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name)) }
+                                )
+                            }
+                            item(span = { GridItemSpan(3) }) {
+                                Spacer(modifier = Modifier.height(12.dp))
                             }
                         }
                     }
@@ -208,7 +196,7 @@ private fun WatchlistTabContent(
                     ) {
                         groupedEpisodes.entries.forEachIndexed { index, (header, items) ->
                             if (index > 0) {
-                                item {
+                                item(key = "divider-$header") {
                                     if (header == "HAVEN'T STARTED" || header == "WATCH LATER") {
                                         HorizontalDivider(
                                             modifier = Modifier.padding(vertical = 12.dp),
@@ -219,7 +207,7 @@ private fun WatchlistTabContent(
                                     CapsuleHeader(header)
                                 }
                             }
-                            items(items, key = { it.showId }) { progress ->
+                            items(items, key = { it.showId }, contentType = { "episode_card" }) { progress ->
                                 EpisodeTrackingCard(
                                     progress = progress,
                                     sharedTransitionScope = sharedTransitionScope,
@@ -369,7 +357,7 @@ private fun UpcomingTabContent(
                                 title = groupName
                             )
                         }
-                        items(episodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }) { episode ->
+                        items(episodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }, contentType = { "upcoming_card" }) { episode ->
                             UpcomingEpisodeCard(
                                 episode = episode,
                                 sharedTransitionScope = sharedTransitionScope,
@@ -674,13 +662,13 @@ fun EpisodeTrackingCard(
                                 label = "episode_header_transition"
                             ) { state ->
                                 if (state != null) {
-                                    val (targetEpisode, targetRemaining) = state
+                                    val (_, targetRemaining) = state
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
-                                            text = "S%02d | E%02d".format(Locale.US, targetEpisode.seasonNumber, targetEpisode.episodeNumber),
+                                            text = progress.formattedEpisodeInfo,
                                             style = MaterialTheme.typography.labelMedium,
                                             color = MaterialTheme.colorScheme.onSurface,
                                             fontWeight = FontWeight.Bold,
@@ -794,15 +782,6 @@ fun UpcomingEpisodeCard(
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
-    val airDateFormatted = remember(ep.airDate) {
-        val date = com.alok.justrack.util.DateUtils.parseDate(ep.airDate)
-        if (date == null) "" else {
-            val dayOfWeek = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-            val datePart = date.format(DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.US))
-            "$dayOfWeek, $datePart"
-        }
-    }
-
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -836,7 +815,7 @@ fun UpcomingEpisodeCard(
             Column(modifier = Modifier.weight(1f)) {
                 // Air Date & Time (Top)
                 Text(
-                    text = if (daysAway == 0L) "AIRING TODAY" else airDateFormatted,
+                    text = if (daysAway == 0L) "AIRING TODAY" else episode.formattedAirDate,
                     style = MaterialTheme.typography.labelSmall,
                     color = statusColor,
                     fontWeight = FontWeight.Bold,
