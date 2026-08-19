@@ -546,7 +546,9 @@ fun EpisodeTrackingCard(
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
-                if (isSwiping && isLastEpisode) {
+                val showCelebrationOverlay = isSwiping && (isLastEpisode || progress.isFinale)
+                if (showCelebrationOverlay) {
+                    val celebrationText = if (isLastEpisode) "SERIES COMPLETE!" else "SEASON COMPLETE!"
                     Box(
                         modifier = Modifier
                             .matchParentSize()
@@ -568,7 +570,7 @@ fun EpisodeTrackingCard(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "SERIES COMPLETE!",
+                                text = celebrationText,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
@@ -586,7 +588,7 @@ fun EpisodeTrackingCard(
                         .padding(6.dp)
                         .graphicsLayer {
                             // Fade out existing content as badge appears
-                            if (isSwiping && isLastEpisode) {
+                            if (showCelebrationOverlay) {
                                 alpha = (1f - swipeProgress * 2f).coerceIn(0f, 1f)
                             }
                         }

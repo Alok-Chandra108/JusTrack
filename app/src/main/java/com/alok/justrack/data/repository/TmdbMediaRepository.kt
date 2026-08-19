@@ -345,9 +345,19 @@ class TmdbMediaRepository @Inject constructor(
                 }
             }
             
-            checkShowCompletion(showId)
+            val maxEp = getMaxEpisodeNumberForSeason(showId, seasonNumber)
+            val isSeasonFinale = maxEp != null && episodeNumber == maxEp
+            
+            val seriesCompleted = checkShowCompletion(showId)
+            if (isSeasonFinale && !seriesCompleted) {
+                _showCompletionEvents.emit(showId)
+            }
         } else {
             watchedEpisodeDao.delete(showId, seasonNumber, episodeNumber)
+            val existing = watchlistDao.getEntityById(showId)
+            if (existing != null && existing.isWatched) {
+                watchlistDao.insert(existing.copy(isWatched = false, inWatchlist = true))
+            }
         }
         _episodesUpdateEvents.emit(Unit)
     }
@@ -358,11 +368,22 @@ class TmdbMediaRepository @Inject constructor(
                 WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = it)
             }
             watchedEpisodeDao.insertAll(entities)
-            checkShowCompletion(showId)
+            
+            val maxEp = getMaxEpisodeNumberForSeason(showId, seasonNumber)
+            val containsFinale = maxEp != null && episodeNumbers.contains(maxEp)
+            
+            val seriesCompleted = checkShowCompletion(showId)
+            if (containsFinale && !seriesCompleted) {
+                _showCompletionEvents.emit(showId)
+            }
         } else {
             // Not typically used for multi-unmark but implemented for completeness
             episodeNumbers.forEach { 
                 watchedEpisodeDao.delete(showId, seasonNumber, it)
+            }
+            val existing = watchlistDao.getEntityById(showId)
+            if (existing != null && existing.isWatched) {
+                watchlistDao.insert(existing.copy(isWatched = false, inWatchlist = true))
             }
         }
         _episodesUpdateEvents.emit(Unit)
@@ -374,9 +395,17 @@ class TmdbMediaRepository @Inject constructor(
                 WatchedEpisodeEntity(showId = showId, seasonNumber = seasonNumber, episodeNumber = it.episodeNumber) 
             }
             watchedEpisodeDao.insertAll(entities)
-            checkShowCompletion(showId)
+            
+            val seriesCompleted = checkShowCompletion(showId)
+            if (!seriesCompleted) {
+                _showCompletionEvents.emit(showId)
+            }
         } else {
             watchedEpisodeDao.deleteSeason(showId, seasonNumber)
+            val existing = watchlistDao.getEntityById(showId)
+            if (existing != null && existing.isWatched) {
+                watchlistDao.insert(existing.copy(isWatched = false, inWatchlist = true))
+            }
         }
         _episodesUpdateEvents.emit(Unit)
     }
@@ -555,7 +584,7 @@ class TmdbMediaRepository @Inject constructor(
         return watchedEpisodeDao.getLatestWatchActivityForShow(showId)
     }
 
-    private suspend fun checkShowCompletion(showId: String) {
+    private suspend fun checkShowCompletion(showId: String): Boolean {
         val total = episodeDao.getTotalEpisodeCount(showId)
         val watched = episodeDao.getWatchedEpisodeCount(showId)
         
@@ -570,8 +599,12 @@ class TmdbMediaRepository @Inject constructor(
                 )
                 watchlistDao.insert(updated)
                 _showCompletionEvents.emit(showId)
+                return true
+            } else if (existing?.isWatched == true) {
+                return true
             }
         }
+        return false
     }
 
     override suspend fun getPersonDetails(id: String): PersonDetails? {
