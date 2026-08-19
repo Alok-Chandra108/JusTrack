@@ -67,6 +67,10 @@ class ExploreViewModel @Inject constructor(
         setupSearchDebounce()
     }
 
+    fun retry() {
+        loadInitialData()
+    }
+
     private fun setupSearchDebounce() {
         viewModelScope.launch {
             @OptIn(kotlinx.coroutines.FlowPreview::class)

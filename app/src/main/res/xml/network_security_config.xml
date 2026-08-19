@@ -3,6 +3,7 @@
     <base-config cleartextTrafficPermitted="false" />
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">api.themoviedb.org</domain>
+        <domain includeSubdomains="true">api.tmdb.org</domain>
         <domain includeSubdomains="true">image.tmdb.org</domain>
         <domain includeSubdomains="true">supabase.co</domain>
     </domain-config>
