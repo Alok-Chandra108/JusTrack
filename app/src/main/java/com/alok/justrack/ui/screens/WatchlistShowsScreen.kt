@@ -176,11 +176,13 @@ private fun WatchlistTabContent(
                                 }
                             }
                             items(items, key = { it.showId }) { progress ->
+                                val sharedKey = "watchlist-poster-${progress.showId}"
                                 EpisodeGridItem(
                                     progress = progress,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name)) }
+                                    sharedElementKey = sharedKey,
+                                    onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name, sharedKey)) }
                                 )
                             }
                             item(span = { GridItemSpan(3) }) {
@@ -208,10 +210,12 @@ private fun WatchlistTabContent(
                                 }
                             }
                             items(items, key = { it.showId }, contentType = { "episode_card" }) { progress ->
+                                val sharedKey = "watchlist-poster-${progress.showId}"
                                 EpisodeTrackingCard(
                                     progress = progress,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
+                                    sharedElementKey = sharedKey,
                                     onMarkWatched = {
                                         val ep = progress.episode
                                         viewModel.markEpisodeWatched(progress.showId, ep.seasonNumber, ep.episodeNumber)
@@ -222,7 +226,7 @@ private fun WatchlistTabContent(
                                     onStoppedWatching = {
                                         viewModel.removeFromWatchlist(progress.showId)
                                     },
-                                    onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name)) }
+                                    onClick = { navController.navigate(Screen.Detail.createRoute(progress.showId, MediaType.TV.name, sharedKey)) }
                                 )
                             }
                         }
@@ -240,7 +244,8 @@ fun EpisodeGridItem(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sharedElementKey: String? = null
 ) {
     with(sharedTransitionScope) {
         Column(
@@ -255,7 +260,7 @@ fun EpisodeGridItem(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .sharedElement(
-                            rememberSharedContentState(key = "poster-${progress.showId}"),
+                            rememberSharedContentState(key = sharedElementKey ?: "poster-${progress.showId}"),
                             animatedVisibilityScope = animatedVisibilityScope
                         )
                         .aspectRatio(2f / 3f)
@@ -357,15 +362,17 @@ private fun UpcomingTabContent(
                                 title = groupName
                             )
                         }
-                        items(episodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }, contentType = { "upcoming_card" }) { episode ->
-                            UpcomingEpisodeCard(
-                                episode = episode,
-                                sharedTransitionScope = sharedTransitionScope,
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                onClick = { navController.navigate(Screen.Detail.createRoute(episode.showId, MediaType.TV.name)) }
-                            )
-                        }
+                            items(episodes, key = { it.showId + "S${it.episode.seasonNumber}E${it.episode.episodeNumber}" }, contentType = { "upcoming_card" }) { episode ->
+                                val sharedKey = "upcoming-poster-${episode.showId}-${episode.episode.id}"
+                                UpcomingEpisodeCard(
+                                    episode = episode,
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    sharedElementKey = sharedKey,
+                                    onClick = { navController.navigate(Screen.Detail.createRoute(episode.showId, MediaType.TV.name, sharedKey)) }
+                                )
+                            }
                     }
                 }
             }
@@ -383,7 +390,8 @@ fun EpisodeTrackingCard(
     onWatchLaterToggle: () -> Unit,
     onStoppedWatching: () -> Unit,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sharedElementKey: String? = null
 ) {
     val episode = progress.episode
     val showName = progress.showName
@@ -601,7 +609,7 @@ fun EpisodeTrackingCard(
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .sharedElement(
-                                    rememberSharedContentState(key = "poster-${progress.showId}"),
+                                    rememberSharedContentState(key = sharedElementKey ?: "poster-${progress.showId}"),
                                     animatedVisibilityScope = animatedVisibilityScope
                                 )
                                 .size(58.dp, 84.dp)
@@ -771,7 +779,8 @@ fun UpcomingEpisodeCard(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sharedElementKey: String? = null
 ) {
     val showName = episode.showName
     val showPosterPath = episode.showPosterPath
@@ -802,11 +811,12 @@ fun UpcomingEpisodeCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .sharedElement(
-                            rememberSharedContentState(key = "poster-${episode.showId}"),
+                            rememberSharedContentState(key = sharedElementKey ?: "poster-${episode.showId}"),
                             animatedVisibilityScope = animatedVisibilityScope
                         )
                         .size(60.dp, 90.dp)
                         .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 )
             }

@@ -50,8 +50,12 @@ object TmdbMapper {
         }
         val displayTitle = title ?: name ?: "Untitled"
         val rawDate = releaseDate ?: firstAirDate ?: ""
-        val posterUrl = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" }
-        val backdropUrl = backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" }
+        val posterUrl = posterPath?.let { 
+            if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" 
+        }
+        val backdropUrl = backdropPath?.let { 
+            if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" 
+        }
 
         val isAnimation = genres?.any { it.id == 16 } == true
         val avgRuntime = when {
@@ -148,7 +152,9 @@ object TmdbMapper {
             id = id.toString(),
             name = name,
             overview = overview ?: "",
-            posterPath = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+            posterPath = posterPath?.let { 
+                if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" 
+            },
             seasonNumber = seasonNumber,
             episodeCount = if (episodeCount != null && episodeCount > 0) episodeCount else mappedEpisodes.size,
             airDate = airDate,
@@ -161,7 +167,9 @@ object TmdbMapper {
             id = id.toString(),
             name = name,
             overview = overview ?: "",
-            stillPath = stillPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W300}$it" },
+            stillPath = stillPath?.let { 
+                if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W300}$it" 
+            },
             seasonNumber = seasonNumber,
             episodeNumber = episodeNumber,
             airDate = airDate,
@@ -179,7 +187,9 @@ object TmdbMapper {
             title = name,
             overview = overview,
             airDate = airDate,
-            stillPath = stillPath,
+            stillPath = stillPath?.let { 
+                if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W300}$it" 
+            },
             voteAverage = voteAverage,
             runtime = if (runtime != null && runtime > 0) runtime else fallbackRuntime
         )

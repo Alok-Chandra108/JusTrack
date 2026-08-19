@@ -434,7 +434,7 @@ class TmdbMediaRepository @Inject constructor(
                 id = "${entity.showId}_${entity.seasonNumber}_${entity.episodeNumber}",
                 name = entity.title,
                 overview = entity.overview ?: "",
-                stillPath = entity.stillPath,
+                stillPath = entity.stillPath?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W300}$it" },
                 seasonNumber = entity.seasonNumber,
                 episodeNumber = entity.episodeNumber,
                 airDate = entity.airDate,
@@ -459,7 +459,7 @@ class TmdbMediaRepository @Inject constructor(
                     id = "${entity.showId}_${entity.seasonNumber}_${entity.episodeNumber}",
                     name = entity.title,
                     overview = entity.overview ?: "",
-                    stillPath = entity.stillPath,
+                    stillPath = entity.stillPath?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W300}$it" },
                     seasonNumber = entity.seasonNumber,
                     episodeNumber = entity.episodeNumber,
                     airDate = entity.airDate,
@@ -570,7 +570,7 @@ class TmdbMediaRepository @Inject constructor(
                 id = "${entity.showId}_${entity.seasonNumber}_${entity.episodeNumber}",
                 name = entity.title,
                 overview = entity.overview ?: "",
-                stillPath = entity.stillPath,
+                stillPath = entity.stillPath?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W300}$it" },
                 seasonNumber = entity.seasonNumber,
                 episodeNumber = entity.episodeNumber,
                 airDate = entity.airDate,
@@ -618,21 +618,26 @@ class TmdbMediaRepository @Inject constructor(
 
     // ---- Mappers ----
 
-    private fun WatchlistEntity.toMediaItem(): MediaItem = MediaItem(
-        id = id,
-        title = title,
-        overview = overview,
-        posterPath = posterPath,
-        backdropPath = backdropPath,
-        rating = rating,
-        releaseDate = releaseDate,
-        mediaType = MediaType.valueOf(mediaType),
-        isWatched = isWatched,
-        inWatchlist = inWatchlist,
-        isWatchLater = isWatchLater,
-        runtime = runtime,
-        addedAt = addedAt
-    )
+    private fun WatchlistEntity.toMediaItem(): MediaItem {
+        val poster = if (customPosterPath.isNullOrBlank()) posterPath else customPosterPath
+        val backdrop = if (customBackdropPath.isNullOrBlank()) backdropPath else customBackdropPath
+
+        return MediaItem(
+            id = id,
+            title = title,
+            overview = overview,
+            posterPath = poster?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+            backdropPath = backdrop?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
+            rating = rating,
+            releaseDate = releaseDate,
+            mediaType = MediaType.valueOf(mediaType),
+            isWatched = isWatched,
+            inWatchlist = inWatchlist,
+            isWatchLater = isWatchLater,
+            runtime = runtime,
+            addedAt = addedAt
+        )
+    }
 
     private fun MediaItem.toWatchlistEntity(inWatchlist: Boolean): WatchlistEntity = WatchlistEntity(
         id = id,
@@ -654,8 +659,8 @@ class TmdbMediaRepository @Inject constructor(
         id = mediaId,
         title = title,
         overview = "",
-        posterPath = posterPath,
-        backdropPath = backdropPath,
+        posterPath = posterPath?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+        backdropPath = backdropPath?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
         rating = 0.0,
         releaseDate = "",
         mediaType = MediaType.valueOf(mediaType)
@@ -674,8 +679,8 @@ class TmdbMediaRepository @Inject constructor(
         id = mediaId,
         title = title,
         overview = "",
-        posterPath = posterPath,
-        backdropPath = backdropPath,
+        posterPath = posterPath?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+        backdropPath = backdropPath?.let { if (it.startsWith("http")) it else "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
         rating = 0.0,
         releaseDate = "",
         mediaType = MediaType.valueOf(mediaType)
