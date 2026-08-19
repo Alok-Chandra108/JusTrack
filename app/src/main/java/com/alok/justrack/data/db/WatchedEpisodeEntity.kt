@@ -16,5 +16,7 @@ data class WatchedEpisodeEntity(
     val showId: String,
     val seasonNumber: Int,
     val episodeNumber: Int,
-    val watchedAt: Long = System.currentTimeMillis()
+    val watchedAt: Long = System.currentTimeMillis(),
+    val userId: String? = null,
+    val lastSyncAt: Long? = null
 )

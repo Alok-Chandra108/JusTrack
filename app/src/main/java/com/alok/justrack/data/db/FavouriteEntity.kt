@@ -11,5 +11,7 @@ data class FavouriteEntity(
     val title: String,
     val posterPath: String?,
     val backdropPath: String?,
-    val addedAt: Long = System.currentTimeMillis()
+    val addedAt: Long = System.currentTimeMillis(),
+    val userId: String? = null,
+    val lastSyncAt: Long? = null
 )

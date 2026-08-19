@@ -19,5 +19,7 @@ data class WatchlistEntity(
     val addedAt: Long = System.currentTimeMillis(),
     val isWatched: Boolean = false,
     val inWatchlist: Boolean = false,
-    val isWatchLater: Boolean = false
+    val isWatchLater: Boolean = false,
+    val userId: String? = null,
+    val lastSyncAt: Long? = null
 )

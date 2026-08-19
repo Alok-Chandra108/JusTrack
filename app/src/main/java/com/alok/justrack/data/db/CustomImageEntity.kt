@@ -8,5 +8,7 @@ data class CustomImageEntity(
     @PrimaryKey val mediaId: String,
     val mediaType: String,
     val customPosterPath: String? = null,
-    val customBackdropPath: String? = null
+    val customBackdropPath: String? = null,
+    val userId: String? = null,
+    val lastSyncAt: Long? = null
 )

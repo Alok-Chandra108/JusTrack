@@ -30,6 +30,17 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun episodeDao(): EpisodeDao // Added for episode tracking
 
     companion object {
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add sync fields to all user-data tables
+                val tables = listOf("watchlist", "favourites", "custom_lists", "list_items", "custom_images", "watched_episodes")
+                for (table in tables) {
+                    database.execSQL("ALTER TABLE `$table` ADD COLUMN `userId` TEXT")
+                    database.execSQL("ALTER TABLE `$table` ADD COLUMN `lastSyncAt` INTEGER")
+                }
+            }
+        }
+
         val MIGRATION_11_12 = object : Migration(11, 12) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE custom_lists ADD COLUMN position INTEGER NOT NULL DEFAULT 0")

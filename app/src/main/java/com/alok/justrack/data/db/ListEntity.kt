@@ -8,5 +8,7 @@ data class ListEntity(
     @PrimaryKey val id: String,
     val name: String,
     val position: Int = 0,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val userId: String? = null,
+    val lastSyncAt: Long? = null
 )
