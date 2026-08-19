@@ -391,7 +391,7 @@ fun EpisodeTrackingCard(
     val isLastEpisode = progress.remainingCount == 0
 
     // Animation state for Color Swipe (Sheen)
-    var isSwiping by remember(progress.showId) { mutableStateOf(false) }
+    var isSwiping by remember(progress.showId, episode.id) { mutableStateOf(false) }
 
     val swipeProgress by animateFloatAsState(
         targetValue = if (isSwiping) 1f else 0f,
@@ -400,7 +400,7 @@ fun EpisodeTrackingCard(
     )
 
     // Track the ID to synchronize data arrival with animation
-    var startedSwipingWithId by remember { mutableStateOf("") }
+    var startedSwipingWithId by remember(progress.showId, episode.id) { mutableStateOf("") }
 
     // Trigger data update
     LaunchedEffect(isSwiping) {
@@ -414,7 +414,7 @@ fun EpisodeTrackingCard(
     }
 
     // Swipe to Watch Later State
-    val offsetX = remember { Animatable(0f) }
+    val offsetX = remember(progress.showId, episode.id) { Animatable(0f) }
     val scope = rememberCoroutineScope()
 
     Box(
