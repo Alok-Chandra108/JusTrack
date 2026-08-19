@@ -18,7 +18,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WatchedEpisodeEntity::class,
         EpisodeEntity::class // Added for episode tracking
     ],
-    version = 12, // Incremented to 12 to add position to custom_lists
+    version = 13, // Incremented to 13 to add sync fields (userId, lastSyncAt)
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

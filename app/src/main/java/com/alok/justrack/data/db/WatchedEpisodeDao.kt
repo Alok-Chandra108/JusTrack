@@ -38,4 +38,10 @@ interface WatchedEpisodeDao {
     
     @Query("SELECT * FROM watched_episodes")
     fun getAllWatchedEpisodesFlow(): Flow<List<WatchedEpisodeEntity>>
+
+    @Query("SELECT * FROM watched_episodes WHERE userId IS NULL OR lastSyncAt IS NULL")
+    suspend fun getUnsynced(): List<WatchedEpisodeEntity>
+
+    @Query("UPDATE watched_episodes SET userId = :userId, lastSyncAt = :lastSyncAt WHERE localId IN (:ids)")
+    suspend fun updateSyncStatus(ids: List<Long>, userId: String, lastSyncAt: Long)
 }

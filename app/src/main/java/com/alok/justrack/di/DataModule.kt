@@ -11,6 +11,7 @@ import com.alok.justrack.data.db.FavouriteDao
 import com.alok.justrack.data.db.ListDao
 import com.alok.justrack.data.db.WatchedEpisodeDao
 import com.alok.justrack.data.db.WatchlistDao
+import com.alok.justrack.data.supabase.SupabaseClientProvider
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.data.repository.TmdbMediaRepository
 import dagger.Binds
@@ -19,6 +20,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.jan.supabase.SupabaseClient
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -79,6 +81,10 @@ abstract class DataModule {
         @Provides
         @Singleton
         fun provideEpisodeDao(db: AppDatabase): EpisodeDao = db.episodeDao()
+
+        @Provides
+        @Singleton
+        fun provideSupabaseClient(): SupabaseClient = SupabaseClientProvider.client
 
         @Provides
         @Singleton

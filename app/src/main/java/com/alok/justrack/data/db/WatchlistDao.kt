@@ -45,6 +45,12 @@ interface WatchlistDao {
     @Query("UPDATE watchlist SET customBackdropPath = :backdropPath WHERE id = :id")
     suspend fun updateCustomBackdrop(id: String, backdropPath: String?)
 
+    @Query("SELECT * FROM watchlist WHERE userId IS NULL OR lastSyncAt IS NULL")
+    suspend fun getUnsynced(): List<WatchlistEntity>
+
+    @Query("UPDATE watchlist SET userId = :userId, lastSyncAt = :lastSyncAt WHERE id IN (:ids)")
+    suspend fun updateSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
+
     @Query("SELECT customPosterPath FROM watchlist WHERE id = :id")
     suspend fun getCustomPoster(id: String): String?
 

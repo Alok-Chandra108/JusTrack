@@ -44,4 +44,18 @@ interface ListDao {
 
     @Query("SELECT DISTINCT listId FROM list_items WHERE mediaId = :mediaId AND mediaType = :mediaType")
     suspend fun getListsForMedia(mediaId: String, mediaType: String): List<String>
+
+    // Sync methods for custom_lists
+    @Query("SELECT * FROM custom_lists WHERE userId IS NULL OR lastSyncAt IS NULL")
+    suspend fun getUnsyncedLists(): List<ListEntity>
+
+    @Query("UPDATE custom_lists SET userId = :userId, lastSyncAt = :lastSyncAt WHERE id IN (:ids)")
+    suspend fun updateListSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
+
+    // Sync methods for list_items
+    @Query("SELECT * FROM list_items WHERE userId IS NULL OR lastSyncAt IS NULL")
+    suspend fun getUnsyncedItems(): List<ListItemEntity>
+
+    @Query("UPDATE list_items SET userId = :userId, lastSyncAt = :lastSyncAt WHERE id IN (:ids)")
+    suspend fun updateItemSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
 }

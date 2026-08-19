@@ -2,7 +2,9 @@ package com.alok.justrack.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "list_items")
 data class ListItemEntity(
     @PrimaryKey val id: String,

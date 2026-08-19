@@ -20,4 +20,10 @@ interface FavouriteDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM favourites WHERE mediaId = :mediaId AND mediaType = :mediaType LIMIT 1)")
     suspend fun exists(mediaId: String, mediaType: String): Boolean
+
+    @Query("SELECT * FROM favourites WHERE userId IS NULL OR lastSyncAt IS NULL")
+    suspend fun getUnsynced(): List<FavouriteEntity>
+
+    @Query("UPDATE favourites SET userId = :userId, lastSyncAt = :lastSyncAt WHERE id IN (:ids)")
+    suspend fun updateSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
 }

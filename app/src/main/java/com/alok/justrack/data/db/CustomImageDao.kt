@@ -22,4 +22,10 @@ interface CustomImageDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM custom_images WHERE mediaId = :mediaId LIMIT 1)")
     suspend fun exists(mediaId: String): Boolean
+
+    @Query("SELECT * FROM custom_images WHERE userId IS NULL OR lastSyncAt IS NULL")
+    suspend fun getUnsynced(): List<CustomImageEntity>
+
+    @Query("UPDATE custom_images SET userId = :userId, lastSyncAt = :lastSyncAt WHERE mediaId IN (:ids)")
+    suspend fun updateSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
 }
