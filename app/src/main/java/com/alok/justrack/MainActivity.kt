@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -39,10 +40,12 @@ class MainActivity : ComponentActivity() {
                 val uiState by authViewModel.uiState.collectAsState()
 
                 if (user == null) {
+                    val context = LocalContext.current
                     LoginScreen(
                         state = uiState,
                         onLoginClick = { email, password -> authViewModel.login(email, password) },
                         onSignUpClick = { email, password -> authViewModel.signUp(email, password) },
+                        onGoogleSignInClick = { authViewModel.loginWithGoogle(context) },
                         onErrorDismiss = { authViewModel.clearError() }
                     )
                 } else {

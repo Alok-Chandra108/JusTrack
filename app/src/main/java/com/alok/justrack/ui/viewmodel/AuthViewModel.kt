@@ -1,9 +1,15 @@
 package com.alok.justrack.ui.viewmodel
 
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alok.justrack.BuildConfig
 import com.alok.justrack.data.repository.AuthRepository
 import com.alok.justrack.data.repository.SyncRepository
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +55,44 @@ class AuthViewModel @Inject constructor(
                 .onFailure { error ->
                     _uiState.value = AuthUiState.Error(error.message ?: "Sign up failed")
                 }
+        }
+    }
+
+    fun loginWithGoogle(context: Context) {
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            try {
+                val credentialManager = CredentialManager.create(context)
+                
+                // You will need to add GOOGLE_WEB_CLIENT_ID to your secrets.properties later
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                    .setAutoSelectEnabled(true)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(context, request)
+                val credential = result.credential
+
+                if (credential is GoogleIdTokenCredential) {
+                    authRepository.signInWithGoogle(credential.idToken)
+                        .onSuccess {
+                            _uiState.value = AuthUiState.Success
+                            syncRepository.performFullSync()
+                        }
+                        .onFailure { error ->
+                            _uiState.value = AuthUiState.Error(error.message ?: "Google login failed")
+                        }
+                } else {
+                    _uiState.value = AuthUiState.Error("Unexpected credential type")
+                }
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState.Error(e.message ?: "Google Sign-In failed")
+            }
         }
     }
 

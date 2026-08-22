@@ -31,6 +31,7 @@ android {
         buildConfigField("String", "TMDB_API_KEY", "\"${secrets.getProperty("TMDB_API_KEY", "")}\"")
         buildConfigField("String", "SUPABASE_URL", "\"${secrets.getProperty("SUPABASE_URL", "")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secrets.getProperty("SUPABASE_ANON_KEY", "")}\"")
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${secrets.getProperty("GOOGLE_WEB_CLIENT_ID", "")}\"")
     }
 
     buildTypes {
@@ -98,6 +99,11 @@ dependencies {
     implementation(libs.supabase.auth)
     implementation(libs.supabase.realtime)
     implementation(libs.ktor.okhttp)
+
+    // Google Auth & Credentials
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services)
+    implementation(libs.googleid)
 
     // Konfetti
     implementation(libs.konfetti.compose)
