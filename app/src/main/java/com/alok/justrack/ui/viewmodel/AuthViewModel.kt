@@ -28,8 +28,8 @@ class AuthViewModel @Inject constructor(
             authRepository.signIn(email, password)
                 .onSuccess {
                     _uiState.value = AuthUiState.Success
-                    // Trigger sync immediately after login
-                    syncRepository.syncAll()
+                    // Trigger full sync immediately after login
+                    syncRepository.performFullSync()
                 }
                 .onFailure { error ->
                     _uiState.value = AuthUiState.Error(error.message ?: "Login failed")
@@ -43,8 +43,8 @@ class AuthViewModel @Inject constructor(
             authRepository.signUp(email, password)
                 .onSuccess {
                     _uiState.value = AuthUiState.Success
-                    // Trigger sync (usually empty for new user, but good practice)
-                    syncRepository.syncAll()
+                    // Trigger full sync
+                    syncRepository.performFullSync()
                 }
                 .onFailure { error ->
                     _uiState.value = AuthUiState.Error(error.message ?: "Sign up failed")

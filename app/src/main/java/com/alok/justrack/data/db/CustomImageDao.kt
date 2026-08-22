@@ -14,6 +14,9 @@ interface CustomImageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: CustomImageEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<CustomImageEntity>)
+
     @Query("UPDATE custom_images SET customPosterPath = :url WHERE mediaId = :mediaId")
     suspend fun updatePoster(mediaId: String, url: String?)
 

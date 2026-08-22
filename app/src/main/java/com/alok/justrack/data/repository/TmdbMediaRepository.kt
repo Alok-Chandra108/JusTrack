@@ -27,7 +27,8 @@ class TmdbMediaRepository @Inject constructor(
     private val listDao: ListDao,
     private val customImageDao: CustomImageDao,
     private val episodeDao: EpisodeDao,
-    private val watchedEpisodeDao: WatchedEpisodeDao
+    private val watchedEpisodeDao: WatchedEpisodeDao,
+    private val syncRepository: SyncRepository
 ) : MediaRepository {
 
     private val _episodesUpdateEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -35,6 +36,14 @@ class TmdbMediaRepository @Inject constructor(
 
     private val _showCompletionEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
     override val showCompletionEvents: Flow<String> = _showCompletionEvents.asSharedFlow()
+
+    private val repositoryScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    private fun triggerSync() {
+        repositoryScope.launch {
+            syncRepository.syncAll()
+        }
+    }
 
     override suspend fun getTrending(): List<MediaItem> {
         return try {
@@ -92,6 +101,7 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun addToWatchlist(item: MediaItem) {
         val entity = item.toWatchlistEntity(inWatchlist = true).copy(addedAt = System.currentTimeMillis())
         watchlistDao.insert(entity)
+        triggerSync()
     }
 
     override suspend fun removeFromWatchlist(id: String) {
@@ -108,6 +118,7 @@ class TmdbMediaRepository @Inject constructor(
                 // Delete entirely only if there's no progress
                 watchlistDao.deleteById(id)
             }
+            triggerSync()
         }
     }
 
@@ -137,6 +148,7 @@ class TmdbMediaRepository @Inject constructor(
                     watchedEpisodeDao.insertAll(entities)
                 }
             }
+            triggerSync()
         } else {
             // Unmarking as watched: If also not in wishlist, delete entirely
             val existing = watchlistDao.getEntityById(item.id)
@@ -146,6 +158,7 @@ class TmdbMediaRepository @Inject constructor(
                 } else {
                     watchlistDao.deleteById(item.id)
                 }
+                triggerSync()
 
                 // If unmarking a show, we don't necessarily unmark episodes 
                 // as that might be destructive to specific progress. 
@@ -160,6 +173,7 @@ class TmdbMediaRepository @Inject constructor(
 
     override suspend fun toggleWatchLater(id: String, isWatchLater: Boolean) {
         watchlistDao.updateWatchLater(id, isWatchLater)
+        triggerSync()
     }
 
     override fun getFavouritesFlow(): Flow<List<MediaItem>> = favouriteDao.getAllFlow()
@@ -176,6 +190,7 @@ class TmdbMediaRepository @Inject constructor(
         } else {
             favouriteDao.insert(item.toFavouriteEntity())
         }
+        triggerSync()
         return !exists
     }
 
@@ -190,29 +205,35 @@ class TmdbMediaRepository @Inject constructor(
         val existingLists = listDao.getAllLists()
         val nextPosition = (existingLists.maxByOrNull { it.position }?.position ?: -1) + 1
         listDao.createList(ListEntity(id = UUID.randomUUID().toString(), name = name, position = nextPosition))
+        triggerSync()
     }
 
     override suspend fun renameList(listId: String, newName: String) {
         listDao.updateListName(listId, newName)
+        triggerSync()
     }
 
     override suspend fun deleteList(listId: String) {
         listDao.deleteList(listId)
         listDao.deleteListItems(listId)
+        triggerSync()
     }
 
     override suspend fun reorderLists(listIds: List<String>) {
         listIds.forEachIndexed { index, id ->
             listDao.updateListPosition(id, index)
         }
+        triggerSync()
     }
 
     override suspend fun addToList(listId: String, item: MediaItem) {
         listDao.addItem(item.toListItemEntity(listId))
+        triggerSync()
     }
 
     override suspend fun removeFromList(listId: String, mediaId: String, mediaType: MediaType) {
         listDao.removeItem(listId, mediaId, mediaType.name)
+        triggerSync()
     }
 
     override suspend fun isInList(listId: String, mediaId: String, mediaType: MediaType): Boolean {
@@ -253,11 +274,13 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun saveCustomPoster(id: String, url: String?) {
         customImageDao.updatePoster(id, url)
         watchlistDao.updateCustomPoster(id, url)
+        triggerSync()
     }
 
     override suspend fun saveCustomBackdrop(id: String, url: String?) {
         customImageDao.updateBackdrop(id, url)
         watchlistDao.updateCustomBackdrop(id, url)
+        triggerSync()
     }
 
     override suspend fun getCustomPoster(id: String): String? {
@@ -352,12 +375,14 @@ class TmdbMediaRepository @Inject constructor(
             if (isSeasonFinale && !seriesCompleted) {
                 _showCompletionEvents.emit(showId)
             }
+            triggerSync()
         } else {
             watchedEpisodeDao.delete(showId, seasonNumber, episodeNumber)
             val existing = watchlistDao.getEntityById(showId)
             if (existing != null && existing.isWatched) {
                 watchlistDao.insert(existing.copy(isWatched = false, inWatchlist = true))
             }
+            triggerSync()
         }
         _episodesUpdateEvents.emit(Unit)
     }
@@ -376,6 +401,7 @@ class TmdbMediaRepository @Inject constructor(
             if (containsFinale && !seriesCompleted) {
                 _showCompletionEvents.emit(showId)
             }
+            triggerSync()
         } else {
             // Not typically used for multi-unmark but implemented for completeness
             episodeNumbers.forEach { 
@@ -385,6 +411,7 @@ class TmdbMediaRepository @Inject constructor(
             if (existing != null && existing.isWatched) {
                 watchlistDao.insert(existing.copy(isWatched = false, inWatchlist = true))
             }
+            triggerSync()
         }
         _episodesUpdateEvents.emit(Unit)
     }
@@ -400,12 +427,14 @@ class TmdbMediaRepository @Inject constructor(
             if (!seriesCompleted) {
                 _showCompletionEvents.emit(showId)
             }
+            triggerSync()
         } else {
             watchedEpisodeDao.deleteSeason(showId, seasonNumber)
             val existing = watchlistDao.getEntityById(showId)
             if (existing != null && existing.isWatched) {
                 watchlistDao.insert(existing.copy(isWatched = false, inWatchlist = true))
             }
+            triggerSync()
         }
         _episodesUpdateEvents.emit(Unit)
     }

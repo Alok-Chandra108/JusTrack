@@ -13,6 +13,9 @@ interface FavouriteDao {
     fun getByTypeFlow(mediaType: String): Flow<List<FavouriteEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<FavouriteEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: FavouriteEntity)
 
     @Query("DELETE FROM favourites WHERE mediaId = :mediaId AND mediaType = :mediaType")

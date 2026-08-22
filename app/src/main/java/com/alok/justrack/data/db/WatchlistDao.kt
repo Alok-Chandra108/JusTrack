@@ -13,6 +13,9 @@ interface WatchlistDao {
     suspend fun getAllOnce(): List<WatchlistEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<WatchlistEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: WatchlistEntity)
 
     @Query("DELETE FROM watchlist WHERE id = :id")

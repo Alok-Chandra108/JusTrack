@@ -15,6 +15,9 @@ interface ListDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun createList(entity: ListEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllLists(entities: List<ListEntity>)
+
     @Query("UPDATE custom_lists SET name = :name WHERE id = :listId")
     suspend fun updateListName(listId: String, name: String)
 
@@ -29,6 +32,9 @@ interface ListDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addItem(entity: ListItemEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllItems(entities: List<ListItemEntity>)
 
     @Query("DELETE FROM list_items WHERE listId = :listId AND mediaId = :mediaId AND mediaType = :mediaType")
     suspend fun removeItem(listId: String, mediaId: String, mediaType: String)
