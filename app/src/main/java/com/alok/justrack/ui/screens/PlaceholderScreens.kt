@@ -443,7 +443,8 @@ fun ProfileScreen(
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
-    viewModel: WatchlistViewModel = hiltViewModel()
+    viewModel: WatchlistViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val stats by viewModel.stats.collectAsState()
@@ -481,12 +482,14 @@ fun ProfileScreen(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
-            Icon(
-                imageVector = Icons.Rounded.MoreHoriz,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(28.dp)
-            )
+            IconButton(onClick = { authViewModel.logout() }) {
+                Icon(
+                    imageVector = Icons.Rounded.Logout,
+                    contentDescription = "Logout",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
 
         // Main content

@@ -51,6 +51,9 @@ interface WatchlistDao {
     @Query("UPDATE watchlist SET userId = :userId, lastSyncAt = :lastSyncAt WHERE id IN (:ids)")
     suspend fun updateSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
 
+    @Query("UPDATE watchlist SET userId = :userId WHERE userId IS NULL")
+    suspend fun claimLocalData(userId: String)
+
     @Query("SELECT customPosterPath FROM watchlist WHERE id = :id")
     suspend fun getCustomPoster(id: String): String?
 

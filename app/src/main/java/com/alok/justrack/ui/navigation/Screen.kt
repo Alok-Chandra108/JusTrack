@@ -15,4 +15,5 @@ sealed class Screen(val route: String, val label: String) {
     object Person : Screen("person/{id}", "Person") {
         fun createRoute(id: String) = "person/$id"
     }
+    object Login : Screen("login", "Login")
 }

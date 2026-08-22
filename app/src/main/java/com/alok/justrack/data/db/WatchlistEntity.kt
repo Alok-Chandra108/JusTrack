@@ -3,6 +3,7 @@ package com.alok.justrack.data.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 @Entity(tableName = "watchlist")
@@ -10,18 +11,18 @@ data class WatchlistEntity(
     @PrimaryKey val id: String,
     val title: String,
     val overview: String,
-    val posterPath: String?,
-    val backdropPath: String?,
-    val customPosterPath: String? = null,
-    val customBackdropPath: String? = null,
+    @SerialName("posterpath") val posterPath: String?,
+    @SerialName("backdroppath") val backdropPath: String?,
+    @SerialName("customposterpath") val customPosterPath: String? = null,
+    @SerialName("custombackdroppath") val customBackdropPath: String? = null,
     val rating: Double,
-    val releaseDate: String,
-    val mediaType: String,
+    @SerialName("releasedate") val releaseDate: String,
+    @SerialName("mediatype") val mediaType: String,
     val runtime: Int = 0,
-    val addedAt: Long = System.currentTimeMillis(),
-    val isWatched: Boolean = false,
-    val inWatchlist: Boolean = false,
-    val isWatchLater: Boolean = false,
-    val userId: String? = null,
-    val lastSyncAt: Long? = null
+    @SerialName("addedat") val addedAt: Long = System.currentTimeMillis(),
+    @SerialName("iswatched") val isWatched: Boolean = false,
+    @SerialName("inwatchlist") val inWatchlist: Boolean = false,
+    @SerialName("iswatchlater") val isWatchLater: Boolean = false,
+    @SerialName("userid") val userId: String? = null,
+    @SerialName("lastsyncat") val lastSyncAt: Long? = null
 )

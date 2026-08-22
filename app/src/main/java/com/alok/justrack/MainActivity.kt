@@ -22,6 +22,9 @@ import com.alok.justrack.ui.navigation.NavGraph
 import com.alok.justrack.ui.navigation.Screen
 import androidx.compose.ui.graphics.Color
 import com.alok.justrack.ui.theme.*
+import com.alok.justrack.ui.viewmodel.AuthViewModel
+import com.alok.justrack.ui.screens.LoginScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -31,7 +34,20 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             JusTrackTheme {
-                MainScaffold()
+                val authViewModel: AuthViewModel = viewModel()
+                val user by authViewModel.currentUser.collectAsState(initial = null)
+                val uiState by authViewModel.uiState.collectAsState()
+
+                if (user == null) {
+                    LoginScreen(
+                        state = uiState,
+                        onLoginClick = { email, password -> authViewModel.login(email, password) },
+                        onSignUpClick = { email, password -> authViewModel.signUp(email, password) },
+                        onErrorDismiss = { authViewModel.clearError() }
+                    )
+                } else {
+                    MainScaffold()
+                }
             }
         }
     }

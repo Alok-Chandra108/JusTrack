@@ -19,24 +19,38 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alok.justrack.ui.theme.JusTrackTheme
+import com.alok.justrack.ui.viewmodel.AuthUiState
 
 @Composable
 fun LoginScreen(
-    onLoginClick: (String, String) -> Unit = { _, _ -> },
-    onSignUpClick: () -> Unit = {},
-    onGoogleSignInClick: () -> Unit = {}
+    state: AuthUiState,
+    onLoginClick: (String, String) -> Unit,
+    onSignUpClick: (String, String) -> Unit,
+    onGoogleSignInClick: () -> Unit = {},
+    onErrorDismiss: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isSignUpMode by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state) {
+        if (state is AuthUiState.Error) {
+            snackbarHostState.showSnackbar(state.message)
+            onErrorDismiss()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -51,7 +65,7 @@ fun LoginScreen(
             )
             
             Text(
-                text = "Your movie journey starts here",
+                text = if (isSignUpMode) "Create your movie journey" else "Your movie journey starts here",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 48.dp)
@@ -65,7 +79,8 @@ fun LoginScreen(
                 placeholder = { Text("Enter your email") },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = state !is AuthUiState.Loading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -87,55 +102,74 @@ fun LoginScreen(
                 },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = state !is AuthUiState.Loading
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Login Button
+            // Action Button
             Button(
-                onClick = { onLoginClick(email, password) },
+                onClick = { 
+                    if (isSignUpMode) onSignUpClick(email, password) 
+                    else onLoginClick(email, password) 
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
+                enabled = email.isNotBlank() && password.length >= 6 && state !is AuthUiState.Loading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text(
-                    text = "Log In",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
-                )
+                if (state is AuthUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = if (isSignUpMode) "Create Account" else "Log In",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Google Sign In (Optional/Alternative)
-            OutlinedButton(
-                onClick = onGoogleSignInClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(text = "Sign in with Google")
+            if (!isSignUpMode) {
+                OutlinedButton(
+                    onClick = onGoogleSignInClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = state !is AuthUiState.Loading
+                ) {
+                    Text(text = "Sign in with Google")
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Sign Up Link
+            // Toggle Link
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Don't have an account? ",
+                    text = if (isSignUpMode) "Already have an account? " else "Don't have an account? ",
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(onClick = onSignUpClick) {
+                TextButton(
+                    onClick = { isSignUpMode = !isSignUpMode },
+                    enabled = state !is AuthUiState.Loading
+                ) {
                     Text(
-                        text = "Sign Up",
+                        text = if (isSignUpMode) "Log In" else "Sign Up",
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
@@ -149,6 +183,10 @@ fun LoginScreen(
 @Composable
 fun LoginPreview() {
     JusTrackTheme {
-        LoginScreen()
+        LoginScreen(
+            state = AuthUiState.Idle,
+            onLoginClick = { _, _ -> },
+            onSignUpClick = { _, _ -> }
+        )
     }
 }

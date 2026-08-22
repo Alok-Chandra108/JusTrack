@@ -26,4 +26,7 @@ interface FavouriteDao {
 
     @Query("UPDATE favourites SET userId = :userId, lastSyncAt = :lastSyncAt WHERE id IN (:ids)")
     suspend fun updateSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
+
+    @Query("UPDATE favourites SET userId = :userId WHERE userId IS NULL")
+    suspend fun claimLocalData(userId: String)
 }

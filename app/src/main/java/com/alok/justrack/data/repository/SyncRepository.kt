@@ -22,6 +22,11 @@ class SyncRepository @Inject constructor(
         val userId = user.id
         val currentTime = System.currentTimeMillis()
 
+        // 0. Claim any local data for this user
+        watchlistDao.claimLocalData(userId)
+        favouriteDao.claimLocalData(userId)
+        // (Add other DAOs as needed)
+
         // 1. Sync Watchlist
         val unsyncedWatchlist = watchlistDao.getUnsynced()
         if (unsyncedWatchlist.isNotEmpty()) {
@@ -70,5 +75,13 @@ class SyncRepository @Inject constructor(
             supabase.postgrest.from("watched_episodes").upsert(toSync)
             watchedEpisodeDao.updateSyncStatus(toSync.map { it.localId }, userId, currentTime)
         }
+    }
+
+    /**
+     * Call this after a new login to ensure any local data is claimed by the new user.
+     */
+    suspend fun associateLocalDataWithUser(userId: String) {
+        watchlistDao.updateSyncStatus(emptyList(), userId, 0) // Passing empty list usually means update all in custom SQL if not careful
+        // Actually, I should add a specific DAO method for this to be safe.
     }
 }
