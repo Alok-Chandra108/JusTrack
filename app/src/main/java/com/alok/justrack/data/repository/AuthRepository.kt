@@ -44,6 +44,15 @@ class AuthRepository @Inject constructor(
     }
 
     /**
+     * Sign in with Google ID Token.
+     */
+    suspend fun signInWithGoogle(idToken: String): Result<Unit> = runCatching {
+        supabase.auth.signInWith(IDToken) {
+            this.idToken = idToken
+        }
+    }
+
+    /**
      * Sign out.
      */
     suspend fun signOut(): Result<Unit> = runCatching {
