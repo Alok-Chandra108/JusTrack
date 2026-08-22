@@ -64,4 +64,10 @@ interface ListDao {
 
     @Query("UPDATE list_items SET userId = :userId, lastSyncAt = :lastSyncAt WHERE id IN (:ids)")
     suspend fun updateItemSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
+
+    @Query("UPDATE custom_lists SET userId = :userId WHERE userId IS NULL")
+    suspend fun claimLocalLists(userId: String)
+
+    @Query("UPDATE list_items SET userId = :userId WHERE userId IS NULL")
+    suspend fun claimLocalItems(userId: String)
 }

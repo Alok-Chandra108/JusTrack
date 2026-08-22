@@ -44,4 +44,7 @@ interface WatchedEpisodeDao {
 
     @Query("UPDATE watched_episodes SET userId = :userId, lastSyncAt = :lastSyncAt WHERE localId IN (:ids)")
     suspend fun updateSyncStatus(ids: List<Long>, userId: String, lastSyncAt: Long)
+
+    @Query("UPDATE watched_episodes SET userId = :userId WHERE userId IS NULL")
+    suspend fun claimLocalData(userId: String)
 }

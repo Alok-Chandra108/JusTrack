@@ -39,6 +39,12 @@ class MainActivity : ComponentActivity() {
                 val user by authViewModel.currentUser.collectAsState(initial = null)
                 val uiState by authViewModel.uiState.collectAsState()
 
+                LaunchedEffect(user) {
+                    if (user != null) {
+                        authViewModel.sync()
+                    }
+                }
+
                 if (user == null) {
                     val context = LocalContext.current
                     LoginScreen(

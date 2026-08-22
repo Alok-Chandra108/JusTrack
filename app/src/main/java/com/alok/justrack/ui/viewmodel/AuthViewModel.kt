@@ -102,6 +102,12 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun sync() {
+        viewModelScope.launch {
+            syncRepository.performFullSync()
+        }
+    }
+
     fun clearError() {
         _uiState.value = AuthUiState.Idle
     }

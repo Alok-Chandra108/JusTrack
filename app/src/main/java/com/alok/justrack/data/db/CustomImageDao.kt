@@ -31,4 +31,7 @@ interface CustomImageDao {
 
     @Query("UPDATE custom_images SET userId = :userId, lastSyncAt = :lastSyncAt WHERE mediaId IN (:ids)")
     suspend fun updateSyncStatus(ids: List<String>, userId: String, lastSyncAt: Long)
+
+    @Query("UPDATE custom_images SET userId = :userId WHERE userId IS NULL")
+    suspend fun claimLocalData(userId: String)
 }
