@@ -555,7 +555,9 @@ fun ProfileScreen(
                         },
                         onDeleteClick = { id ->
                             viewModel.deleteList(id)
-                        }
+                        },
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope
                     )
                     
                     Spacer(modifier = Modifier.height(24.dp))
