@@ -219,6 +219,17 @@ object TmdbMapper {
         )
     }
 
+    fun TmdbCollectionDto.toMediaCollection(): MediaCollection {
+        return MediaCollection(
+            id = id.toString(),
+            name = name,
+            overview = overview ?: "",
+            posterPath = posterPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W500}$it" },
+            backdropPath = backdropPath?.let { "${Constants.TMDB_IMAGE_BASE_URL_W780}$it" },
+            parts = parts.map { it.toMediaItem(MediaType.MOVIE) }.sortedBy { it.releaseDate }
+        )
+    }
+
     private fun formatDate(dateStr: String): String {
         val date = com.alok.justrack.util.DateUtils.parseDate(dateStr) ?: return dateStr.ifBlank { "-" }
         return try {

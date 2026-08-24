@@ -9,6 +9,7 @@ import com.alok.justrack.data.mapper.TmdbMapper.toSeason
 import com.alok.justrack.data.mapper.TmdbMapper.toEpisode
 import com.alok.justrack.data.mapper.TmdbMapper.toEntity
 import com.alok.justrack.data.mapper.TmdbMapper.toPersonDetails
+import com.alok.justrack.data.mapper.TmdbMapper.toMediaCollection
 import com.alok.justrack.util.Constants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -69,11 +70,44 @@ class TmdbMediaRepository @Inject constructor(
 
     override suspend fun getMediaDetail(id: String, mediaType: MediaType): MovieDetails? {
         return try {
-            val detail = when (mediaType) {
+            val detailDto = when (mediaType) {
                 MediaType.MOVIE -> apiService.getMovieDetails(id)
                 MediaType.TV -> apiService.getTvDetails(id)
             }
-            detail.toMovieDetails(mediaType)
+            
+            var movieDetails = detailDto.toMovieDetails(mediaType)
+            
+            coroutineScope {
+                val collectionDeferred: Deferred<MediaCollection?>? = detailDto.belongsToCollection?.let { summary ->
+                    async {
+                        try {
+                            apiService.getCollectionDetails(summary.id.toString()).toMediaCollection()
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                }
+                
+                val directorDeferred: Deferred<List<MediaItem>>? = if (mediaType == MediaType.MOVIE && movieDetails.director.isNotEmpty() && movieDetails.director.first().id != "-1") {
+                    val directorId = movieDetails.director.first().id
+                    async {
+                        try {
+                            apiService.discoverMovies(withCrew = directorId).results
+                                .map { it.toMediaItem(MediaType.MOVIE) }
+                                .filter { it.id != id }
+                        } catch (e: Exception) {
+                            emptyList()
+                        }
+                    }
+                } else null
+                
+                movieDetails = movieDetails.copy(
+                    collection = collectionDeferred?.await(),
+                    moreFromDirector = directorDeferred?.await() ?: emptyList()
+                )
+            }
+            
+            movieDetails
         } catch (e: Exception) {
             e.printStackTrace()
             null

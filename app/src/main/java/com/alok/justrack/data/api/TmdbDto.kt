@@ -30,6 +30,7 @@ data class TmdbMediaDto(
     @SerializedName("status") val status: String?,
     @SerializedName("budget") val budget: Long?,
     @SerializedName("revenue") val revenue: Long?,
+    @SerializedName("belongs_to_collection") val belongsToCollection: TmdbCollectionSummaryDto?,
     @SerializedName("production_companies") val productionCompanies: List<TmdbProductionCompanyDto>?,
     @SerializedName("number_of_episodes") val numberOfEpisodes: Int?,
     @SerializedName("seasons") val seasons: List<TmdbSeasonDto>?,
@@ -111,6 +112,22 @@ data class TmdbProductionCompanyDto(
     @SerializedName("name") val name: String,
     @SerializedName("logo_path") val logoPath: String?,
     @SerializedName("origin_country") val originCountry: String?
+)
+
+data class TmdbCollectionSummaryDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("backdrop_path") val backdropPath: String?
+)
+
+data class TmdbCollectionDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("backdrop_path") val backdropPath: String?,
+    @SerializedName("parts") val parts: List<TmdbMediaDto>
 )
 
 data class TmdbCreditsDto(

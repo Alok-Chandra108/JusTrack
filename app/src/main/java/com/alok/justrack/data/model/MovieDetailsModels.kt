@@ -29,6 +29,15 @@ data class ProductionCompany(
     val logoUrl: String?
 )
 
+data class MediaCollection(
+    val id: String,
+    val name: String,
+    val overview: String,
+    val posterPath: String?,
+    val backdropPath: String?,
+    val parts: List<MediaItem>
+)
+
 data class WatchProviders(
     val stream: List<WatchProvider> = emptyList(),
     val rent: List<WatchProvider> = emptyList(),
@@ -53,6 +62,8 @@ data class MovieDetails(
     val budget: Long = 0,
     val revenue: Long = 0,
     val productionCompanies: List<ProductionCompany> = emptyList(),
+    val collection: MediaCollection? = null,
+    val moreFromDirector: List<MediaItem> = emptyList(),
     val numberOfEpisodes: Int = 0,
     val mediaType: MediaType = MediaType.MOVIE,
     val genreIds: List<Int> = emptyList(),

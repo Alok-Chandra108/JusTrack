@@ -400,7 +400,29 @@ fun MovieDetailsScreen(
                         originalLanguage = movie.originalLanguage,
                         productionCompanies = movie.productionCompanies
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    movie.collection?.let { collection ->
+                        CollectionSection(
+                            collection = collection,
+                            currentMovieId = movie.id,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            onMovieClick = onRecommendationClick
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    if (movie.moreFromDirector.isNotEmpty()) {
+                        DirectorMoviesSection(
+                            directorName = movie.director.firstOrNull()?.name ?: "Director",
+                            items = movie.moreFromDirector,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            onMovieClick = onRecommendationClick
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
 
                     RecommendationsSection(
                         recommendations = movie.recommendations, 
@@ -473,7 +495,29 @@ fun TvShowAboutSection(
             originalLanguage = movie.originalLanguage,
             productionCompanies = movie.productionCompanies
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        movie.collection?.let { collection ->
+            CollectionSection(
+                collection = collection,
+                currentMovieId = movie.id,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                onMovieClick = onRecommendationClick
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        if (movie.moreFromDirector.isNotEmpty()) {
+            DirectorMoviesSection(
+                directorName = movie.director.firstOrNull()?.name ?: "Director",
+                items = movie.moreFromDirector,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                onMovieClick = onRecommendationClick
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         RecommendationsSection(
             recommendations = movie.recommendations, 

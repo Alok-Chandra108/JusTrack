@@ -37,8 +37,13 @@ interface TmdbApiService {
     @GET("3/movie/{movie_id}")
     suspend fun getMovieDetails(
         @Path("movie_id") id: String,
-        @Query("append_to_response") appendToResponse: String = "credits,release_dates,recommendations,watch/providers"
+        @Query("append_to_response") appendToResponse: String = "credits,release_dates,recommendations,watch/providers,belongs_to_collection"
     ): TmdbMediaDto
+
+    @GET("3/collection/{collection_id}")
+    suspend fun getCollectionDetails(
+        @Path("collection_id") id: String
+    ): TmdbCollectionDto
 
     @GET("3/tv/{tv_id}")
     suspend fun getTvDetails(
@@ -92,6 +97,7 @@ interface TmdbApiService {
         @Query("region") region: String? = null,
         @Query("with_original_language") originalLanguage: String? = null,
         @Query("with_cast") withCast: String? = null,
+        @Query("with_crew") withCrew: String? = null,
         @Query("with_genres") withGenres: String? = null
     ): TmdbPaginatedResponse<TmdbMediaDto>
 

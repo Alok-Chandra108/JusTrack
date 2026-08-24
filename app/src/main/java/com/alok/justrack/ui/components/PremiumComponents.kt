@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.alok.justrack.data.model.CastMember
+import com.alok.justrack.data.model.MediaCollection
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MovieDetails
 import com.alok.justrack.data.model.ProductionCompany
@@ -448,6 +449,89 @@ fun CastSection(cast: List<CastMember>, onCastClick: (CastMember) -> Unit = {}) 
             }
         }
     }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun CollectionSection(
+    collection: MediaCollection,
+    currentMovieId: String,
+    sharedTransitionScope: SharedTransitionScope?,
+    animatedVisibilityScope: AnimatedVisibilityScope?,
+    onMovieClick: (MediaItem, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = collection.name,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(collection.parts) { item ->
+                val isCurrent = item.id == currentMovieId
+                val sharedKey = "collection-${collection.id}-${item.id}"
+                
+                Column(
+                    modifier = Modifier.width(130.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    PosterCard(
+                        item = item,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        onClick = { onMovieClick(item, sharedKey) },
+                        modifier = Modifier.fillMaxWidth().then(
+                            if (isCurrent) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+                            else Modifier
+                        ),
+                        sharedElementKey = sharedKey
+                    )
+                    
+                    if (isCurrent) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "CURRENT",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun DirectorMoviesSection(
+    directorName: String,
+    items: List<MediaItem>,
+    sharedTransitionScope: SharedTransitionScope?,
+    animatedVisibilityScope: AnimatedVisibilityScope?,
+    onMovieClick: (MediaItem, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (items.isEmpty()) return
+
+    HorizontalSection(
+        title = "More from $directorName",
+        items = items,
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        onItemClick = onMovieClick,
+        onViewAllClick = { /* Can implement view all if needed */ },
+        modifier = modifier
+    )
 }
 
 @Composable
