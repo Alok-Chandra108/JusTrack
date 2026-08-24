@@ -211,6 +211,21 @@ fun ExploreScreen(
                                 }
                             }
 
+                            // Trending in India
+                            if (state.trendingIndia.isNotEmpty()) {
+                                item {
+                                    ExploreSection(
+                                        title = "Trending in India",
+                                        items = state.trendingIndia,
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
+                                        onItemLongPress = { longPressItem = it; showLongPressSheet = true },
+                                        onLoadMore = { }
+                                    )
+                                }
+                            }
+
                             // Popular Movies
                             item {
                                 ExploreSectionLazy(

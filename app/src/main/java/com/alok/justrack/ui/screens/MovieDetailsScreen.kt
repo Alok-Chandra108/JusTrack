@@ -397,6 +397,7 @@ fun MovieDetailsScreen(
                         status = movie.status,
                         budget = movie.budget,
                         revenue = movie.revenue,
+                        originalLanguage = movie.originalLanguage,
                         productionCompanies = movie.productionCompanies
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -469,6 +470,7 @@ fun TvShowAboutSection(
             status = movie.status,
             budget = movie.budget,
             revenue = movie.revenue,
+            originalLanguage = movie.originalLanguage,
             productionCompanies = movie.productionCompanies
         )
         Spacer(modifier = Modifier.height(20.dp))

@@ -106,15 +106,17 @@ object TmdbMapper {
         val cert = when (detectedType) {
             MediaType.MOVIE -> {
                 val results = releaseDates?.results
+                val inCert = results?.find { it.iso31661 == "IN" }?.releaseDates?.firstOrNull { it.certification.isNotBlank() }?.certification
                 val usCert = results?.find { it.iso31661 == "US" }?.releaseDates?.firstOrNull { it.certification.isNotBlank() }?.certification
                 val gbCert = results?.find { it.iso31661 == "GB" }?.releaseDates?.firstOrNull { it.certification.isNotBlank() }?.certification
-                usCert ?: gbCert ?: results?.flatMap { it.releaseDates }?.firstOrNull { it.certification.isNotBlank() }?.certification ?: "-"
+                inCert ?: usCert ?: gbCert ?: results?.flatMap { it.releaseDates }?.firstOrNull { it.certification.isNotBlank() }?.certification ?: "-"
             }
             MediaType.TV -> {
                 val results = contentRatings?.results
+                val inCert = results?.find { it.iso31661 == "IN" }?.rating
                 val usCert = results?.find { it.iso31661 == "US" }?.rating
                 val gbCert = results?.find { it.iso31661 == "GB" }?.rating
-                usCert ?: gbCert ?: results?.firstOrNull { it.rating.isNotBlank() }?.rating ?: "-"
+                inCert ?: usCert ?: gbCert ?: results?.firstOrNull { it.rating.isNotBlank() }?.rating ?: "-"
             }
         }
 

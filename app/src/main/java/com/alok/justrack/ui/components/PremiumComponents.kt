@@ -455,9 +455,12 @@ fun BusinessInfoSection(
     status: String,
     budget: Long,
     revenue: Long,
+    originalLanguage: String,
     productionCompanies: List<ProductionCompany>,
     modifier: Modifier = Modifier
 ) {
+    val isIndianContent = originalLanguage == "hi" || originalLanguage == "te" || originalLanguage == "ta" || originalLanguage == "ml" || originalLanguage == "kn"
+
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Text(
             text = "Information",
@@ -481,14 +484,18 @@ fun BusinessInfoSection(
                     if (status.isNotBlank()) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
                     }
-                    InfoRow(label = "Budget", value = "$${String.format(Locale.US, "%,d", budget)}")
+                    val usdValue = "$${String.format(Locale.US, "%,d", budget)}"
+                    val inrValue = if (isIndianContent) formatToINR(budget * 83) else null
+                    InfoRow(label = "Budget", value = inrValue?.let { "$it ($usdValue)" } ?: usdValue)
                 }
                 
                 if (revenue > 0) {
                     if (status.isNotBlank() || budget > 0) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
                     }
-                    InfoRow(label = "Revenue", value = "$${String.format(Locale.US, "%,d", revenue)}")
+                    val usdValue = "$${String.format(Locale.US, "%,d", revenue)}"
+                    val inrValue = if (isIndianContent) formatToINR(revenue * 83) else null
+                    InfoRow(label = "Revenue", value = inrValue?.let { "$it ($usdValue)" } ?: usdValue)
                 }
 
                 if (productionCompanies.isNotEmpty()) {
@@ -551,6 +558,14 @@ fun BusinessInfoSection(
                 }
             }
         }
+    }
+}
+
+private fun formatToINR(amount: Long): String {
+    return when {
+        amount >= 100_000_000 -> "₹${String.format(Locale.US, "%.1f", amount / 10_000_000.0)} Cr"
+        amount >= 100_000 -> "₹${String.format(Locale.US, "%.1f", amount / 100_000.0)} L"
+        else -> "₹${String.format(Locale.US, "%,d", amount)}"
     }
 }
 

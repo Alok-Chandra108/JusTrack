@@ -19,6 +19,7 @@ sealed class ExploreUiState {
     data class Success(
         val bannerItems: List<MediaItem> = emptyList(),
         val trending: List<MediaItem> = emptyList(),
+        val trendingIndia: List<MediaItem> = emptyList(),
         val popularMovies: List<MediaItem> = emptyList(),
         val popularTv: List<MediaItem> = emptyList(),
         val topRatedMovies: List<MediaItem> = emptyList(),
@@ -91,16 +92,27 @@ class ExploreViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val trending = loadWithCache("trending") { fetchTrending() }
+                val trendingIndia = loadWithCache("trending_india") { fetchTrendingIndia() }
                 val genres = loadGenres()
 
                 _internalUiState.value = ExploreUiState.Success(
                     bannerItems = trending.take(10),
                     trending = trending,
+                    trendingIndia = trendingIndia,
                     genres = genres
                 )
             } catch (e: Exception) {
                 _internalUiState.value = ExploreUiState.Error(e.message ?: "Failed to load explore data")
             }
+        }
+    }
+
+    private suspend fun fetchTrendingIndia(): List<MediaItem> {
+        return try {
+            val movies = apiService.discoverMovies(region = "IN", sortBy = "popularity.desc").results
+            movies.map { it.toMediaItem(MediaType.MOVIE) }
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 
