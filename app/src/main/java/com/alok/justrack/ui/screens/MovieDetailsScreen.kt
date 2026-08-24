@@ -392,6 +392,15 @@ fun MovieDetailsScreen(
                         onPersonClick(com.alok.justrack.data.model.Person(castMember.id, castMember.name)) 
                     })
                     Spacer(modifier = Modifier.height(20.dp))
+                    
+                    BusinessInfoSection(
+                        status = movie.status,
+                        budget = movie.budget,
+                        revenue = movie.revenue,
+                        productionCompanies = movie.productionCompanies
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     RecommendationsSection(
                         recommendations = movie.recommendations, 
                         sharedTransitionScope = sharedTransitionScope,
@@ -455,6 +464,15 @@ fun TvShowAboutSection(
             onPersonClick(com.alok.justrack.data.model.Person(castMember.id, castMember.name)) 
         })
         Spacer(modifier = Modifier.height(20.dp))
+
+        BusinessInfoSection(
+            status = movie.status,
+            budget = movie.budget,
+            revenue = movie.revenue,
+            productionCompanies = movie.productionCompanies
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
         RecommendationsSection(
             recommendations = movie.recommendations, 
             sharedTransitionScope = sharedTransitionScope,

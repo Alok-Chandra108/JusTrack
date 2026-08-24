@@ -23,6 +23,12 @@ data class WatchProvider(
     val logoUrl: String
 )
 
+data class ProductionCompany(
+    val id: Int,
+    val name: String,
+    val logoUrl: String?
+)
+
 data class WatchProviders(
     val stream: List<WatchProvider> = emptyList(),
     val rent: List<WatchProvider> = emptyList(),
@@ -44,6 +50,9 @@ data class MovieDetails(
     val director: List<Person>,
     val originalLanguage: String = "",
     val status: String = "",
+    val budget: Long = 0,
+    val revenue: Long = 0,
+    val productionCompanies: List<ProductionCompany> = emptyList(),
     val numberOfEpisodes: Int = 0,
     val mediaType: MediaType = MediaType.MOVIE,
     val genreIds: List<Int> = emptyList(),

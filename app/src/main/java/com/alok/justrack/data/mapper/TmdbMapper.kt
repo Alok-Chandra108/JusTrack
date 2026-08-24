@@ -133,6 +133,11 @@ object TmdbMapper {
             director = directorPeople,
             originalLanguage = originalLanguage ?: "en",
             status = status ?: "",
+            budget = budget ?: 0L,
+            revenue = revenue ?: 0L,
+            productionCompanies = productionCompanies?.map { 
+                ProductionCompany(it.id, it.name, it.logoPath?.let { path -> "${Constants.TMDB_IMAGE_BASE_URL_W154}$path" }) 
+            } ?: emptyList(),
             numberOfEpisodes = numberOfEpisodes ?: 0,
             mediaType = detectedType,
             genreIds = genres?.map { it.id } ?: emptyList(),

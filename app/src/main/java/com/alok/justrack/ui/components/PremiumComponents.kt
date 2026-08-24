@@ -67,6 +67,7 @@ import coil.compose.AsyncImage
 import com.alok.justrack.data.model.CastMember
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MovieDetails
+import com.alok.justrack.data.model.ProductionCompany
 import com.alok.justrack.ui.theme.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -446,6 +447,133 @@ fun CastSection(cast: List<CastMember>, onCastClick: (CastMember) -> Unit = {}) 
                 CastItem(member, onClick = { onCastClick(member) })
             }
         }
+    }
+}
+
+@Composable
+fun BusinessInfoSection(
+    status: String,
+    budget: Long,
+    revenue: Long,
+    productionCompanies: List<ProductionCompany>,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Text(
+            text = "Information",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (status.isNotBlank()) {
+                    InfoRow(label = "Status", value = status)
+                }
+                
+                if (budget > 0) {
+                    if (status.isNotBlank()) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                    }
+                    InfoRow(label = "Budget", value = "$${String.format(Locale.US, "%,d", budget)}")
+                }
+                
+                if (revenue > 0) {
+                    if (status.isNotBlank() || budget > 0) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                    }
+                    InfoRow(label = "Revenue", value = "$${String.format(Locale.US, "%,d", revenue)}")
+                }
+
+                if (productionCompanies.isNotEmpty()) {
+                    if (status.isNotBlank() || budget > 0 || revenue > 0) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                    }
+                    Text(
+                        text = "Production",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        productionCompanies.forEach { company ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.width(80.dp)
+                            ) {
+                                Surface(
+                                    modifier = Modifier.size(60.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.White,
+                                    tonalElevation = 2.dp
+                                ) {
+                                    if (company.logoUrl != null) {
+                                        AsyncImage(
+                                            model = company.logoUrl,
+                                            contentDescription = company.name,
+                                            modifier = Modifier.padding(8.dp).fillMaxSize(),
+                                            contentScale = ContentScale.Fit
+                                        )
+                                    } else {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = company.name.take(1),
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = Color.DarkGray
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = company.name,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    lineHeight = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 

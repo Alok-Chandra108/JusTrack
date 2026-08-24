@@ -28,6 +28,9 @@ data class TmdbMediaDto(
     @SerializedName("content_ratings") val contentRatings: TmdbContentRatingsResponse?,
     @SerializedName("created_by") val createdBy: List<TmdbCreatedByDto>?,
     @SerializedName("status") val status: String?,
+    @SerializedName("budget") val budget: Long?,
+    @SerializedName("revenue") val revenue: Long?,
+    @SerializedName("production_companies") val productionCompanies: List<TmdbProductionCompanyDto>?,
     @SerializedName("number_of_episodes") val numberOfEpisodes: Int?,
     @SerializedName("seasons") val seasons: List<TmdbSeasonDto>?,
     @SerializedName("genres") val genres: List<TmdbGenreDto>?,
@@ -101,6 +104,13 @@ data class TmdbContentRatingResult(
 data class TmdbCreatedByDto(
     @SerializedName("id") val id: Long,
     @SerializedName("name") val name: String
+)
+
+data class TmdbProductionCompanyDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("logo_path") val logoPath: String?,
+    @SerializedName("origin_country") val originCountry: String?
 )
 
 data class TmdbCreditsDto(
