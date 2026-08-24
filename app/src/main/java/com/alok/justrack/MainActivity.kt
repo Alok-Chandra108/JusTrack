@@ -27,17 +27,25 @@ import com.alok.justrack.ui.viewmodel.AuthViewModel
 import com.alok.justrack.ui.screens.LoginScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import io.github.jan.supabase.auth.status.SessionStatus
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             JusTrackTheme {
                 val authViewModel: AuthViewModel = viewModel()
                 val user by authViewModel.currentUser.collectAsState(initial = null)
+                val sessionStatus by authViewModel.sessionStatus.collectAsState()
                 val uiState by authViewModel.uiState.collectAsState()
+
+                splashScreen.setKeepOnScreenCondition {
+                    sessionStatus == SessionStatus.Initializing
+                }
 
                 LaunchedEffect(user) {
                     if (user != null) {
@@ -45,17 +53,19 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (user == null) {
-                    val context = LocalContext.current
-                    LoginScreen(
-                        state = uiState,
-                        onLoginClick = { email, password -> authViewModel.login(email, password) },
-                        onSignUpClick = { email, password -> authViewModel.signUp(email, password) },
-                        onGoogleSignInClick = { authViewModel.loginWithGoogle(context) },
-                        onErrorDismiss = { authViewModel.clearError() }
-                    )
-                } else {
-                    MainScaffold()
+                if (sessionStatus != SessionStatus.Initializing) {
+                    if (user == null) {
+                        val context = LocalContext.current
+                        LoginScreen(
+                            state = uiState,
+                            onLoginClick = { email, password -> authViewModel.login(email, password) },
+                            onSignUpClick = { email, password -> authViewModel.signUp(email, password) },
+                            onGoogleSignInClick = { authViewModel.loginWithGoogle(context) },
+                            onErrorDismiss = { authViewModel.clearError() }
+                        )
+                    } else {
+                        MainScaffold()
+                    }
                 }
             }
         }
