@@ -76,7 +76,6 @@ import java.util.Locale
 fun BackdropHeader(
     backdropUrl: String?,
     onBackClick: () -> Unit,
-    onShareClick: () -> Unit,
     onMoreClick: () -> Unit
 ) {
     Box(
@@ -132,9 +131,6 @@ fun BackdropHeader(
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
             }
             Row {
-                IconButton(onClick = onShareClick) {
-                    Icon(Icons.Outlined.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface)
-                }
                 IconButton(onClick = onMoreClick) {
                     Icon(Icons.Outlined.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurface)
                 }

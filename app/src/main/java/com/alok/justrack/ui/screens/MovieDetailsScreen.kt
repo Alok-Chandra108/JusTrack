@@ -287,7 +287,6 @@ fun MovieDetailsScreen(
             BackdropHeader(
                 backdropUrl = movie.backdropPath,
                 onBackClick = onBackClick,
-                onShareClick = {},
                 onMoreClick = onMoreClick
             )
 
