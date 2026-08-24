@@ -1545,7 +1545,7 @@ private fun WatchTimeStatCard(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.CalendarToday,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(14.dp)
@@ -1603,7 +1603,7 @@ private fun SimpleStatCard(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.CalendarToday,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(14.dp)
@@ -1628,8 +1628,8 @@ private fun SimpleStatCard(
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Normal,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
