@@ -106,6 +106,11 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.androidx.core.splashscreen)
 
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+
     // Konfetti
     implementation(libs.konfetti.compose)
 

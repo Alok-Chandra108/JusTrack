@@ -1,9 +1,14 @@
 package com.alok.justrack
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -43,6 +49,25 @@ class MainActivity : ComponentActivity() {
                 val sessionStatus by authViewModel.sessionStatus.collectAsState()
                 val uiState by authViewModel.uiState.collectAsState()
 
+                // Permission Launcher
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    // Handle permission result if needed
+                }
+
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ContextCompat.checkSelfPermission(
+                                this@MainActivity,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                }
+
                 splashScreen.setKeepOnScreenCondition {
                     sessionStatus == SessionStatus.Initializing
                 }
@@ -64,7 +89,10 @@ class MainActivity : ComponentActivity() {
                             onErrorDismiss = { authViewModel.clearError() }
                         )
                     } else {
-                        MainScaffold()
+                        MainScaffold(
+                            mediaId = intent.getIntExtra("MEDIA_ID", -1),
+                            mediaType = intent.getStringExtra("MEDIA_TYPE")
+                        )
                     }
                 }
             }
@@ -73,10 +101,17 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScaffold() {
+fun MainScaffold(mediaId: Int = -1, mediaType: String? = null) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    // Handle deep link from notification
+    LaunchedEffect(mediaId, mediaType) {
+        if (mediaId != -1 && mediaType != null) {
+            navController.navigate("detail/$mediaId/$mediaType")
+        }
+    }
 
     val items = listOf(
         BottomNavItem(Screen.Shows, Icons.Rounded.Tv, "Shows"),
