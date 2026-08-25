@@ -19,6 +19,7 @@ JusTrack is a modern Android application built with Jetpack Compose designed to 
 - **Local Database**: [Room](https://developer.android.com/training/data-storage/room)
 - **Networking**: [Retrofit](https://square.github.io/retrofit/) & OkHttp
 - **Backend as a Service**: [Supabase](https://supabase.com/) (Postgrest, Auth, Realtime)
+- **Background Tasks**: [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager)
 - **Image Loading**: [Coil](https://coil-kt.github.io/coil/)
 - **JSON Serialization**: [Kotlinx Serialization](https://github.com/Kotlin/kotlinx.serialization)
 - **Animations**: Konfetti for celebratory effects
@@ -47,5 +48,8 @@ JusTrack is a modern Android application built with Jetpack Compose designed to 
    Open the project in Android Studio and run the `:app` module.
 
 ## 📝 Recent Updates
-- Fixed poster loading issues in the Upcoming Shows tab by correctly prepending TMDB image base URLs in `TmdbMediaRepository`.
-- Resolved compilation issues and stabilized build configuration.
+- **AirDate Notifications**: Implemented `AirDateWorker` to automatically schedule local notifications for TV show episodes and movie releases.
+- **Movie Detail Enhancements**: Improved UI with US certifications (PG, R, etc.), creator/director logic, and a more minimal description layout.
+- **Shows Tab Polish**: Refactored tracking cards for better visual consistency, larger images, and improved accessibility.
+- **Navigation & Stability**: Resolved `ProfileScreen` navigation issues and stabilized build configurations.
+- **Data Persistence**: Fully implemented `TmdbMediaRepository` with Room persistence and episode synchronization.
