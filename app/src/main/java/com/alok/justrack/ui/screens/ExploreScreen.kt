@@ -34,6 +34,7 @@ import coil.compose.AsyncImage
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
 import com.alok.justrack.ui.components.*
+import com.alok.justrack.ui.components.SkeletonBox
 import com.alok.justrack.ui.navigation.Screen
 import com.alok.justrack.ui.theme.*
 import com.alok.justrack.ui.viewmodel.ExploreSearchUiState

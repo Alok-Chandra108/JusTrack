@@ -106,14 +106,6 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    private suspend fun fetchTrendingIndia(): List<MediaItem> {
-        return try {
-            val movies = apiService.discoverMovies(region = "IN", sortBy = "popularity.desc").results
-            movies.map { it.toMediaItem(MediaType.MOVIE) }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
 
     fun loadSection(section: ExploreSection) {
         val currentState = _internalUiState.value as? ExploreUiState.Success ?: return
