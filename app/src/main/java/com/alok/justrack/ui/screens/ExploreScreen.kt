@@ -37,6 +37,7 @@ import com.alok.justrack.ui.components.*
 import com.alok.justrack.ui.navigation.Screen
 import com.alok.justrack.ui.theme.*
 import com.alok.justrack.ui.viewmodel.ExploreSearchUiState
+import com.alok.justrack.ui.viewmodel.ExploreSection
 import com.alok.justrack.ui.viewmodel.ExploreUiState
 import com.alok.justrack.ui.viewmodel.ExploreViewModel
 import com.alok.justrack.ui.viewmodel.Genre
@@ -235,7 +236,7 @@ fun ExploreScreen(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
-                                    onLoadMore = { viewModel.loadSection("popular_movies") }
+                                    onLoadMore = { viewModel.loadSection(ExploreSection.POPULAR_MOVIES) }
                                 )
                             }
 
@@ -248,7 +249,7 @@ fun ExploreScreen(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
-                                    onLoadMore = { viewModel.loadSection("popular_tv") }
+                                    onLoadMore = { viewModel.loadSection(ExploreSection.POPULAR_TV) }
                                 )
                             }
 
@@ -261,7 +262,7 @@ fun ExploreScreen(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
-                                    onLoadMore = { viewModel.loadSection("top_rated_movies") }
+                                    onLoadMore = { viewModel.loadSection(ExploreSection.TOP_RATED_MOVIES) }
                                 )
                             }
 
@@ -274,7 +275,7 @@ fun ExploreScreen(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
-                                    onLoadMore = { viewModel.loadSection("top_rated_tv") }
+                                    onLoadMore = { viewModel.loadSection(ExploreSection.TOP_RATED_TV) }
                                 )
                             }
 
@@ -287,7 +288,7 @@ fun ExploreScreen(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
-                                    onLoadMore = { viewModel.loadSection("upcoming_movies") },
+                                    onLoadMore = { viewModel.loadSection(ExploreSection.UPCOMING_MOVIES) },
                                     showDate = true
                                 )
                             }
@@ -301,7 +302,7 @@ fun ExploreScreen(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     onItemClick = { item, key -> navController.navigate(Screen.Detail.createRoute(item.id, item.mediaType.name, key)) },
                                     onItemLongPress = { longPressItem = it; showLongPressSheet = true },
-                                    onLoadMore = { viewModel.loadSection("on_the_air_tv") }
+                                    onLoadMore = { viewModel.loadSection(ExploreSection.ON_THE_AIR_TV) }
                                 )
                             }
                         }

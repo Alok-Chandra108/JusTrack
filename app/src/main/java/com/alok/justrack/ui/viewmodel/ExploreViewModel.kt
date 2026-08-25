@@ -2,12 +2,11 @@ package com.alok.justrack.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alok.justrack.data.api.TmdbApiService
 import com.alok.justrack.data.model.MediaItem
 import com.alok.justrack.data.model.MediaType
-import com.alok.justrack.data.mapper.TmdbMapper.toMediaItem
+import com.alok.justrack.domain.repository.ExploreRepository
 import com.alok.justrack.data.repository.MediaRepository
-import com.alok.justrack.util.DateUtils
+import com.alok.justrack.domain.usecase.SearchMediaUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -41,8 +40,9 @@ sealed class ExploreSearchUiState {
 
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
-    private val apiService: TmdbApiService,
-    private val repository: MediaRepository
+    private val exploreRepository: ExploreRepository,
+    private val repository: MediaRepository,
+    private val searchMediaUseCase: SearchMediaUseCase
 ) : ViewModel() {
 
     private val _internalUiState = MutableStateFlow<ExploreUiState>(ExploreUiState.Loading)
@@ -115,31 +115,29 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    fun loadSection(sectionName: String) {
+    fun loadSection(section: ExploreSection) {
         val currentState = _internalUiState.value as? ExploreUiState.Success ?: return
-        if (isSectionLoaded(sectionName, currentState)) return
+        if (isSectionLoaded(section, currentState)) return
 
         viewModelScope.launch {
             try {
-                val items = loadWithCache(sectionName) {
-                    when (sectionName) {
-                        "popular_movies" -> fetchPopularMovies()
-                        "popular_tv" -> fetchPopularTv()
-                        "top_rated_movies" -> fetchTopRatedMovies()
-                        "top_rated_tv" -> fetchTopRatedTv()
-                        "upcoming_movies" -> fetchUpcomingMovies()
-                        "on_the_air_tv" -> fetchOnTheAirTv()
-                        else -> emptyList()
+                val items = loadWithCache(section.key) {
+                    when (section) {
+                        ExploreSection.POPULAR_MOVIES -> exploreRepository.getPopularMovies()
+                        ExploreSection.POPULAR_TV -> exploreRepository.getPopularTv()
+                        ExploreSection.TOP_RATED_MOVIES -> exploreRepository.getTopRatedMovies()
+                        ExploreSection.TOP_RATED_TV -> exploreRepository.getTopRatedTv()
+                        ExploreSection.UPCOMING_MOVIES -> exploreRepository.getUpcomingMovies()
+                        ExploreSection.ON_THE_AIR_TV -> exploreRepository.getOnTheAirTv()
                     }
                 }
-                _internalUiState.value = when (sectionName) {
-                    "popular_movies" -> currentState.copy(popularMovies = items)
-                    "popular_tv" -> currentState.copy(popularTv = items)
-                    "top_rated_movies" -> currentState.copy(topRatedMovies = items)
-                    "top_rated_tv" -> currentState.copy(topRatedTv = items)
-                    "upcoming_movies" -> currentState.copy(upcomingMovies = items)
-                    "on_the_air_tv" -> currentState.copy(onTheAirTv = items)
-                    else -> currentState
+                _internalUiState.value = when (section) {
+                    ExploreSection.POPULAR_MOVIES -> currentState.copy(popularMovies = items)
+                    ExploreSection.POPULAR_TV -> currentState.copy(popularTv = items)
+                    ExploreSection.TOP_RATED_MOVIES -> currentState.copy(topRatedMovies = items)
+                    ExploreSection.TOP_RATED_TV -> currentState.copy(topRatedTv = items)
+                    ExploreSection.UPCOMING_MOVIES -> currentState.copy(upcomingMovies = items)
+                    ExploreSection.ON_THE_AIR_TV -> currentState.copy(onTheAirTv = items)
                 }
             } catch (e: Exception) {
                 // Keep existing state on error for individual sections
@@ -147,15 +145,14 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    private fun isSectionLoaded(sectionName: String, state: ExploreUiState.Success): Boolean {
-        return when (sectionName) {
-            "popular_movies" -> state.popularMovies.isNotEmpty()
-            "popular_tv" -> state.popularTv.isNotEmpty()
-            "top_rated_movies" -> state.topRatedMovies.isNotEmpty()
-            "top_rated_tv" -> state.topRatedTv.isNotEmpty()
-            "upcoming_movies" -> state.upcomingMovies.isNotEmpty()
-            "on_the_air_tv" -> state.onTheAirTv.isNotEmpty()
-            else -> false
+    private fun isSectionLoaded(section: ExploreSection, state: ExploreUiState.Success): Boolean {
+        return when (section) {
+            ExploreSection.POPULAR_MOVIES -> state.popularMovies.isNotEmpty()
+            ExploreSection.POPULAR_TV -> state.popularTv.isNotEmpty()
+            ExploreSection.TOP_RATED_MOVIES -> state.topRatedMovies.isNotEmpty()
+            ExploreSection.TOP_RATED_TV -> state.topRatedTv.isNotEmpty()
+            ExploreSection.UPCOMING_MOVIES -> state.upcomingMovies.isNotEmpty()
+            ExploreSection.ON_THE_AIR_TV -> state.onTheAirTv.isNotEmpty()
         }
     }
 
@@ -166,46 +163,8 @@ class ExploreViewModel @Inject constructor(
     private suspend fun performSearch(query: String) = coroutineScope {
         _internalSearchState.value = ExploreSearchUiState.Searching
         
-        // 1. Extract potential year (e.g., "Welcome 2007" -> "Welcome", 2007)
-        val yearRegex = Regex("\\b(19|20)\\d{2}\\b")
-        val yearMatch = yearRegex.find(query)
-        val year = yearMatch?.value?.toIntOrNull()
-        val cleanQuery = if (year != null) query.replace(yearMatch.value, "").trim() else query
-
         try {
-            // 2. Parallel Targeted Searching
-            val multiGlobal = async { 
-                apiService.searchMulti(query = query, includeAdult = false).results 
-            }
-            
-            val multiIndia = async { 
-                apiService.searchMulti(query = query, includeAdult = false, region = "IN").results 
-            }
-
-            val movieYear = if (year != null && cleanQuery.isNotBlank()) async {
-                apiService.searchMovie(query = cleanQuery, year = year, includeAdult = false).results
-            } else null
-
-            val tvYear = if (year != null && cleanQuery.isNotBlank()) async {
-                apiService.searchTv(query = cleanQuery, year = year, includeAdult = false).results
-            } else null
-
-            // 3. Collect Results
-            val results = mutableListOf<MediaItem>()
-            
-            // Prioritize year matches if searched with year
-            movieYear?.await()?.let { results.addAll(it.map { dto -> dto.toMediaItem(MediaType.MOVIE) }) }
-            tvYear?.await()?.let { results.addAll(it.map { dto -> dto.toMediaItem(MediaType.TV) }) }
-            
-            // Add India targeted and Global results
-            results.addAll(multiIndia.await().map { it.toMediaItem() })
-            results.addAll(multiGlobal.await().map { it.toMediaItem() })
-
-            // 4. Smart Deduplication & Ranking
-            val finalItems = results
-                .distinctBy { it.id + it.mediaType.name }
-                .take(40)
-
+            val finalItems = searchMediaUseCase(query)
             _internalSearchState.value = ExploreSearchUiState.Results(finalItems)
         } catch (e: Exception) {
             _internalSearchState.value = ExploreSearchUiState.Error(e.message ?: "Search failed")
@@ -228,11 +187,7 @@ class ExploreViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val items = loadWithCache("genre_${genre.id}") {
-                    val movieResults = apiService.discoverMoviesByGenre(genre.id).results
-                    val tvResults = apiService.discoverTvByGenre(genre.id).results
-                    (movieResults + tvResults)
-                        .map { it.toMediaItem() }
-                        .sortedByDescending { it.rating }
+                    exploreRepository.discoverByGenre(genre.id)
                 }
                 _internalUiState.value = currentState.copy(genreResults = items, selectedGenre = genre)
             } catch (e: Exception) {
@@ -338,86 +293,14 @@ class ExploreViewModel @Inject constructor(
     }
 
     private suspend fun loadGenres(): List<Genre> {
-        return try {
-            val movieGenres = apiService.getMovieGenres().genres
-            val tvGenres = apiService.getTvGenres().genres
-            val allGenres = (movieGenres + tvGenres).distinctBy { it.id }.sortedBy { it.name }
-            allGenres.map { Genre(it.id, it.name) }
-        } catch (e: Exception) {
-            emptyList()
-        }
+        return exploreRepository.getGenres()
     }
 
     private suspend fun fetchTrending(): List<MediaItem> {
-        val response = apiService.getTrending()
-        return response.results.map { it.toMediaItem() }
+        return exploreRepository.getTrending()
     }
 
-    private suspend fun fetchPopularMovies(): List<MediaItem> {
-        return apiService.getPopularMovies().results.map { it.toMediaItem(MediaType.MOVIE) }
-    }
-
-    private suspend fun fetchPopularTv(): List<MediaItem> {
-        return apiService.getPopularTv().results.map { it.toMediaItem(MediaType.TV) }
-    }
-
-    private suspend fun fetchTopRatedMovies(): List<MediaItem> {
-        return apiService.getTopRatedMovies().results.map { it.toMediaItem(MediaType.MOVIE) }
-    }
-
-    private suspend fun fetchTopRatedTv(): List<MediaItem> {
-        return apiService.getTopRatedTv().results.map { it.toMediaItem(MediaType.TV) }
-    }
-
-    private suspend fun fetchUpcomingMovies(): List<MediaItem> = coroutineScope {
-        val today = DateUtils.getTodayIST()
-        val tomorrow = today.plusDays(1).toString()
-
-        try {
-            // Fetch Global Hyped/Buzzing Upcoming
-            val globalDeferred = async {
-                apiService.discoverMovies(
-                    sortBy = "popularity.desc",
-                    releaseDateGte = tomorrow,
-                    includeAdult = false
-                ).results.map { it.toMediaItem(MediaType.MOVIE) }
-            }
-
-            // Fetch Indian Hyped/Buzzing Upcoming
-            val indianLanguages = "hi|te|ta|ml|kn"
-            val indianDeferred = async {
-                apiService.discoverMovies(
-                    sortBy = "popularity.desc",
-                    releaseDateGte = tomorrow,
-                    includeAdult = false,
-                    region = "IN",
-                    originalLanguage = indianLanguages
-                ).results.map { it.toMediaItem(MediaType.MOVIE) }
-            }
-
-            val globalResults = try { globalDeferred.await() } catch (e: Exception) { emptyList() }
-            val indianResults = try { indianDeferred.await() } catch (e: Exception) { emptyList() }
-
-            (globalResults + indianResults)
-                .distinctBy { it.id }
-                .filter { item ->
-                    val releaseDate = DateUtils.parseDate(item.releaseDate)
-                    releaseDate != null && releaseDate.isAfter(today)
-                }
-                .sortedBy { DateUtils.parseDate(it.releaseDate) }
-        } catch (e: Exception) {
-            // Fallback to standard upcoming if discover fails
-            apiService.getUpcomingMovies().results
-                .map { it.toMediaItem(MediaType.MOVIE) }
-                .filter { item ->
-                    val releaseDate = DateUtils.parseDate(item.releaseDate)
-                    releaseDate != null && releaseDate.isAfter(today)
-                }
-                .sortedBy { DateUtils.parseDate(it.releaseDate) }
-        }
-    }
-
-    private suspend fun fetchOnTheAirTv(): List<MediaItem> {
-        return apiService.getOnTheAirTv().results.map { it.toMediaItem(MediaType.TV) }
+    private suspend fun fetchTrendingIndia(): List<MediaItem> {
+        return exploreRepository.getTrendingIndia()
     }
 }

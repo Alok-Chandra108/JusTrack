@@ -14,6 +14,8 @@ import com.alok.justrack.data.db.WatchlistDao
 import com.alok.justrack.data.supabase.SupabaseClientProvider
 import com.alok.justrack.data.repository.MediaRepository
 import com.alok.justrack.data.repository.TmdbMediaRepository
+import com.alok.justrack.domain.repository.ExploreRepository
+import com.alok.justrack.data.repository.TmdbExploreRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -38,6 +40,12 @@ abstract class DataModule {
     abstract fun bindMediaRepository(
         tmdbMediaRepository: TmdbMediaRepository
     ): MediaRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExploreRepository(
+        tmdbExploreRepository: TmdbExploreRepository
+    ): ExploreRepository
 
     companion object {
 
