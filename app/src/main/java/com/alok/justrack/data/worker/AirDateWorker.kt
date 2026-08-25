@@ -25,19 +25,26 @@ class AirDateWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val watchlist = repository.getWatchlist()
+        
+        // Handle TV Shows
         val tvShows = watchlist.filter { it.mediaType == MediaType.TV }
-
         for (show in tvShows) {
             val futureEpisodes = repository.getFutureEpisodes(show.id)
             for (episode in futureEpisodes) {
-                scheduleNotification(show.title, episode, show.id)
+                scheduleEpisodeNotification(show.title, episode, show.id)
             }
+        }
+
+        // Handle Movies
+        val movies = watchlist.filter { it.mediaType == MediaType.MOVIE && !it.isWatched }
+        for (movie in movies) {
+            scheduleMovieNotification(movie)
         }
 
         return Result.success()
     }
 
-    private fun scheduleNotification(showName: String, episode: com.alok.justrack.data.model.Episode, showId: String) {
+    private fun scheduleEpisodeNotification(showName: String, episode: com.alok.justrack.data.model.Episode, showId: String) {
         val airDateStr = episode.airDate ?: return
         val airDate = DateUtils.parseDate(airDateStr) ?: return
         
@@ -63,6 +70,39 @@ class AirDateWorker @AssistedInject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        scheduleAlarm(epochMillis, pendingIntent)
+    }
+
+    private fun scheduleMovieNotification(movie: com.alok.justrack.data.model.MediaItem) {
+        val releaseDateStr = movie.releaseDate
+        val releaseDate = DateUtils.parseDate(releaseDateStr) ?: return
+        
+        // Use 10 AM IST for movie release notifications
+        val notificationTime = releaseDate.atTime(10, 0)
+        val epochMillis = notificationTime.atZone(ZoneId.of("Asia/Kolkata")).toInstant().toEpochMilli()
+
+        if (epochMillis < System.currentTimeMillis()) return
+
+        val intent = Intent(applicationContext, NotificationReceiver::class.java).apply {
+            action = "com.alok.justrack.SHOW_NOTIFICATION"
+            putExtra("NOTIFICATION_ID", movie.id.hashCode())
+            putExtra("TITLE", "Movie Release: ${movie.title}")
+            putExtra("MESSAGE", "${movie.title} is releasing today!")
+            putExtra("MEDIA_ID", movie.id.toIntOrNull() ?: -1)
+            putExtra("MEDIA_TYPE", "movie")
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext,
+            movie.id.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        scheduleAlarm(epochMillis, pendingIntent)
+    }
+
+    private fun scheduleAlarm(epochMillis: Long, pendingIntent: PendingIntent) {
         val alarmManager = applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         
         try {
@@ -72,10 +112,8 @@ class AirDateWorker @AssistedInject constructor(
                 } else {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, epochMillis, pendingIntent)
                 }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, epochMillis, pendingIntent)
             } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, epochMillis, pendingIntent)
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, epochMillis, pendingIntent)
             }
         } catch (e: Exception) {
             // Fallback for security exceptions or other issues
