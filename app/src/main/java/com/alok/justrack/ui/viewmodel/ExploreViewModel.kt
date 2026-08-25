@@ -11,7 +11,6 @@ import com.alok.justrack.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.time.LocalDate
 import javax.inject.Inject
 
 sealed class ExploreUiState {
@@ -371,8 +370,8 @@ class ExploreViewModel @Inject constructor(
     }
 
     private suspend fun fetchUpcomingMovies(): List<MediaItem> = coroutineScope {
-        val tomorrow = LocalDate.now().plusDays(1).toString()
-        val today = LocalDate.now()
+        val today = DateUtils.getTodayIST()
+        val tomorrow = today.plusDays(1).toString()
 
         try {
             // Fetch Global Hyped/Buzzing Upcoming

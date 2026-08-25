@@ -70,7 +70,7 @@ object TmdbMapper {
             }
             MediaType.TV -> {
                 // Initial estimate of total aired duration
-                val today = java.time.LocalDate.now()
+                val today = com.alok.justrack.util.DateUtils.getTodayIST()
                 val airedEpisodesCount = seasons?.filter { it.seasonNumber > 0 }
                     ?.filter { 
                         val airDate = com.alok.justrack.util.DateUtils.parseDate(it.airDate)

@@ -1,12 +1,18 @@
 package com.alok.justrack.util
 
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 object DateUtils {
+    private val IST_ZONE = ZoneId.of("Asia/Kolkata")
     private val tmdbDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     private val displayDateFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.ENGLISH)
+
+    fun getTodayIST(): LocalDate = LocalDate.now(IST_ZONE)
+
+    fun getTodayISTString(): String = getTodayIST().format(DateTimeFormatter.ISO_LOCAL_DATE)
 
     fun parseDate(dateStr: String?): LocalDate? {
         if (dateStr.isNullOrBlank()) return null
@@ -29,7 +35,7 @@ object DateUtils {
      */
     fun getDaysUntil(airDate: String?): Long? {
         val targetDate = parseDate(airDate) ?: return null
-        val today = LocalDate.now()
+        val today = getTodayIST()
         return ChronoUnit.DAYS.between(today, targetDate)
     }
 

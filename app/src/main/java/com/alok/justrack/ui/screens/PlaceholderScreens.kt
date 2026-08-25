@@ -331,7 +331,7 @@ fun UpcomingMovieCard(
     val daysAway = remember(movie.releaseDate) {
         val date = com.alok.justrack.util.DateUtils.parseDate(movie.releaseDate)
         if (date != null) {
-            java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), date)
+            java.time.temporal.ChronoUnit.DAYS.between(com.alok.justrack.util.DateUtils.getTodayIST(), date)
         } else null
     }
 

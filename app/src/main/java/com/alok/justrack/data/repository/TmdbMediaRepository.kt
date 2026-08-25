@@ -485,7 +485,7 @@ class TmdbMediaRepository @Inject constructor(
             }
 
     override suspend fun getNextEpisodeToWatch(showId: String, onlyReleased: Boolean): Episode? {
-        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val today = com.alok.justrack.util.DateUtils.getTodayISTString()
         val nextEntity = if (onlyReleased) {
             episodeDao.getNextReleasedUnwatchedEpisode(showId, today)
         } else {
@@ -510,7 +510,7 @@ class TmdbMediaRepository @Inject constructor(
     override suspend fun getWatchlistEpisodesData(showIds: List<String>): Map<String, WatchlistDataBatch> {
         if (showIds.isEmpty()) return emptyMap()
 
-        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val today = com.alok.justrack.util.DateUtils.getTodayISTString()
         val allNextEpisodes = episodeDao.getAllNextReleasedUnwatchedEpisodes(showIds, today)
         val watchedCounts = episodeDao.getWatchedCountsForShows(showIds).associateBy { it.showId }
         val totalCounts = episodeDao.getTotalCountsForShows(showIds).associateBy { it.showId }
@@ -556,12 +556,12 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     override suspend fun getReleasedEpisodeCount(showId: String): Int {
-        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val today = com.alok.justrack.util.DateUtils.getTodayISTString()
         return episodeDao.getReleasedEpisodeCount(showId, today)
     }
 
     override fun getTotalAiredRuntimeFlow(showId: String): Flow<Int> {
-        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val today = com.alok.justrack.util.DateUtils.getTodayISTString()
         return episodeDao.getTotalAiredRuntimeFlow(showId, today)
             .map { it ?: 0 }
     }
@@ -625,7 +625,7 @@ class TmdbMediaRepository @Inject constructor(
     }
 
     override suspend fun getFutureEpisodes(showId: String): List<Episode> {
-        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val today = com.alok.justrack.util.DateUtils.getTodayISTString()
         return episodeDao.getFutureEpisodes(showId, today)
             .filter { it.seasonNumber > 0 }
             .map { entity ->

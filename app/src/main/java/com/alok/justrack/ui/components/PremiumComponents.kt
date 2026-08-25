@@ -274,7 +274,7 @@ fun ActionButtons(
     val isReleased = remember(releaseDate) {
         val date = com.alok.justrack.util.DateUtils.parseDate(releaseDate)
         if (date == null) true else {
-            val today = java.time.LocalDate.now()
+            val today = com.alok.justrack.util.DateUtils.getTodayIST()
             !date.isAfter(today)
         }
     }

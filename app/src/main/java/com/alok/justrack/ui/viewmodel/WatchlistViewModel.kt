@@ -261,7 +261,7 @@ class WatchlistViewModel @Inject constructor(
 
     // Grouped upcoming movies for the UI
     val groupedUpcomingMovies = explicitWatchlistItems.map { items ->
-        val today = LocalDate.now()
+        val today = DateUtils.getTodayIST()
         val movies = items.filter { it.mediaType == MediaType.MOVIE }
         
         movies.mapNotNull { movie ->
@@ -428,7 +428,7 @@ class WatchlistViewModel @Inject constructor(
 
     // Grouped upcoming episodes for the UI
     val groupedUpcomingEpisodes = upcomingEpisodes.map { items ->
-        val today = LocalDate.now()
+        val today = DateUtils.getTodayIST()
         items.groupBy { item ->
             val airDate = DateUtils.parseDate(item.episode.airDate) ?: return@groupBy "LATER"
             
@@ -470,7 +470,7 @@ class WatchlistViewModel @Inject constructor(
 
     private fun calculateDaysAway(airDateString: String?): Long? {
         val airDate = DateUtils.parseDate(airDateString) ?: return null
-        val today = LocalDate.now()
+        val today = DateUtils.getTodayIST()
         return ChronoUnit.DAYS.between(today, airDate)
     }
 
