@@ -1385,13 +1385,12 @@ fun CustomListsSection(
                 }
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                lists.forEach { (id, name, items) ->
+                items(lists) { (id, name, items) ->
                     PremiumListCard(
                         name = name,
                         items = items,
@@ -1420,7 +1419,7 @@ fun PremiumListCard(
 
     Surface(
         modifier = modifier
-            .fillMaxWidth()
+            .width(300.dp)
             .height(160.dp)
             .clickable { onClick() },
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
